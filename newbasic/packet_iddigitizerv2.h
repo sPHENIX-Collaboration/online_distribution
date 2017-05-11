@@ -46,7 +46,7 @@ protected:
   int _nchannels;
   int _is_decoded;
 
-  int array[32][128];
+  int array[32][4*64];
 
 };
 

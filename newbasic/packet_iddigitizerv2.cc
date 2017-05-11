@@ -78,9 +78,8 @@ int Packet_iddigitizerv2::decode ()
   _fem_clock       = SubeventData[8] & 0xffff;
 
   //  _l1_delay    = (SubeventData[0] >> 16 ) & 0xff;
-  _nr_modules =  1;
+  _nr_modules =  0;
 
-  _nchannels = _nr_modules * 64;
 
   int index = getDataLength() -2;
   _even_checksum = SubeventData[index] & 0xffff;
@@ -104,8 +103,41 @@ int Packet_iddigitizerv2::decode ()
   for ( int index  = 0; index  < dlength ; index++)
     {
       
-      int tag = ((k[index] >> 16) & 0x3fff) -9;
+      int rawtag = ((k[index] >> 16) & 0x3fff); // just so we can print it...
+      int realtag = rawtag -9;
+
+      // now we are getting into some kludginess...
+      // if we have more than one card, he xmit injects 6 header words at the beginning.
+      // so we are skipping that header here. 
+
+      int module = 0;
+      for ( module = 0; module < 4; module++)
+	{
+	  if ( realtag < (module+1) * 64 * _nsamples + 6*module ) break;
+	}
+
+      if ( module +1 > _nr_modules)
+	{
+	  _nr_modules = module +1;
+	  _nchannels =  _nr_modules * 64;
+	}
+
+      // from now on, we now have to subtract those, too
+      // so for module 0, we substract 0, module 1, 6 and module 2, 12, ...
+      int tag = realtag - 6*module;
+      
       int value = k[index] & 0xffff;
+
+      //no quite done... we now have to cut out the extra header words
+      // so if we have one of those 6 words, we skip
+
+      if ( module > 0 && realtag < ( module*64*_nsamples + 6*module )  )
+	{
+	  //	  cout << __FILE__ << " " << __LINE__ << " skipping module " << module << " realtag: " << realtag << "  " << module*64*_nsamples + 6*module << "  " << hex << value << dec << endl;
+
+	  continue;
+	}
+
       
       int channelpair = (tag / _nsamples) & 0xfffe;
       int ch = channelpair;  // even tag -> lower channel
@@ -114,7 +146,10 @@ int Packet_iddigitizerv2::decode ()
       int sample = (tag/2) % _nsamples;
       
       // cout << __FILE__ << " " << __LINE__  
-      // 	   << " tagword " << tag 
+      // 	   << " rawtag " << hex << rawtag  
+      // 	   << " realtag " << dec << realtag 
+      // 	   << " tagword " << dec << tag 
+      // 	   << " module  " << dec << module  
       // 	   << " channel " << dec << " " << ch
       // 	   << " sample " << sample 
       // 	   << " value " << hex << "  " << value << dec << endl; 
@@ -246,11 +281,11 @@ void  Packet_iddigitizerv2::dump ( OSTREAM& os )
 
   os << "Evt Nr:      " << iValue(0,"EVTNR") << std::endl;
   os << "Clock:       " << iValue(0,"CLOCK") << std::endl;
+  os << "Nr Modules:  " << iValue(0,"NRMODULES") << std::endl;
   os << "Channels:    " << iValue(0,"CHANNELS") << std::endl;
   os << "Samples:     " << iValue(0,"SAMPLES") << std::endl;
-  os << "Det. ID:     " << iValue(0,"DETID") << std::endl;
-  os << "Mod. Addr:   " << iValue(0,"MODULEADDRESS") << std::endl;
-  os << "Nr Modules:  " << iValue(0,"NRMODULES") << std::endl;
+  os << "Det. ID:     " << hex << "0x" << iValue(0,"DETID") << dec <<  std::endl;
+  os << "Mod. Addr:   " << hex << "0x" << iValue(0,"MODULEADDRESS") << dec << std::endl;
   os << "FEM Slot:    " << iValue(0,"FEMSLOT") << std::endl;
   os << "FEM Evt nr:  " << iValue(0,"FEMEVTNR") << std::endl;
   os << "FEM Clock:   " << iValue(0,"FEMCLOCK") << std::endl;
@@ -261,13 +296,13 @@ void  Packet_iddigitizerv2::dump ( OSTREAM& os )
   os << "Odd chksum:  0x" << hex << iValue(0,"ODDCHECKSUM")  << "   calculated:  0x" <<  iValue(0,"CALCODDCHECKSUM");
   if ( iValue(0,"ODDCHECKSUMOK") == 1) os << " ok" << endl;
   else if ( iValue(0,"ODDCHECKSUMOK") == 0) os << " **wrong" << endl;
-  os << endl;
+  os << dec << endl;
 
   for ( int c = 0; c < _nchannels; c++)
     {
       os << setw(4) << c << " | ";
 
-      //     os << hex;
+      os << hex;
       for ( int s = 0; s < _nsamples; s++)
 	{
 	  os << setw(6) << iValue(s,c);
