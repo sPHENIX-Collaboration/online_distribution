@@ -14,9 +14,12 @@ Packet_iddigitizerv2::Packet_iddigitizerv2(PACKET_ptr data)
  _detid = 0;
  _module_address  = 0;
  _clock = 0;
- _fem_slot = 0;
- _fem_evtnr = 0;
- _fem_clock = 0;
+ for ( int i = 0; i < 4; i++)
+   {
+     _fem_slot[i] = 0;
+     _fem_evtnr[i] = 0;
+     _fem_clock[i] = 0;
+   }
 
  _even_checksum = 0;
  _odd_checksum = 0;
@@ -73,9 +76,9 @@ int Packet_iddigitizerv2::decode ()
   // they are 31 samples wide. 
   if ( _nsamples == 0xff) _nsamples = 31;
 
-  _fem_slot        = SubeventData[6] & 0xffff;
-  _fem_evtnr       = SubeventData[7] & 0xffff;
-  _fem_clock       = SubeventData[8] & 0xffff;
+  _fem_slot[0]        = SubeventData[6] & 0xffff;
+  _fem_evtnr[0]       = SubeventData[7] & 0xffff;
+  _fem_clock[0]       = SubeventData[8] & 0xffff;
 
   //  _l1_delay    = (SubeventData[0] >> 16 ) & 0xff;
   _nr_modules =  0;
@@ -133,11 +136,20 @@ int Packet_iddigitizerv2::decode ()
 
       if ( module > 0 && realtag < ( module*64*_nsamples + 6*module )  )
 	{
-	  //	  cout << __FILE__ << " " << __LINE__ << " skipping module " << module << " realtag: " << realtag << "  " << module*64*_nsamples + 6*module << "  " << hex << value << dec << endl;
 
+	  if ( realtag == module*64*_nsamples +2 + 6*(module -1)  ) //  leftover FEM header word
+	    {
+	      _fem_slot[module] =  k[index+1]  & 0xff;  // slot number
+	      _fem_evtnr[module] = k[index+2]  & 0xffff;  // fem event nr
+	      _fem_clock[module] = k[index+3]  & 0xffff;  // fem clock 
+
+	    }
+	  
+	  //	  cout << __FILE__ << " " << __LINE__ << " skipping module " << module << " realtag: " << realtag << "  " << module*64*_nsamples + 6*module << "  " << hex << value << dec << endl;
+	  
 	  continue;
 	}
-
+      
       
       int channelpair = (tag / _nsamples) & 0xfffe;
       int ch = channelpair;  // even tag -> lower channel
@@ -157,14 +169,14 @@ int Packet_iddigitizerv2::decode ()
       array[sample][ch]    =  value;
       
     }
- 
-
+  
+  
   for ( index = 5; index < getDataLength()-3; index+=2)  // -3 to spare the CS fields out
     {
       _calculated_even_checksum ^= SubeventData[index] & 0xffff;
       _calculated_odd_checksum ^= SubeventData[index+1] & 0xffff;
     }
-
+  
   return 0;
 }
 
@@ -224,17 +236,20 @@ int Packet_iddigitizerv2::iValue(const int n, const char *what)
 
   if ( strcmp(what,"FEMSLOT") == 0 )
   {
-    return _fem_slot;
+    if ( n < 0 || n >= _nr_modules) return 0;
+    return _fem_slot[n];
   }
 
   if ( strcmp(what,"FEMEVTNR") == 0 )
   {
-    return _fem_evtnr;
+    if ( n < 0 || n >= _nr_modules) return 0;
+    return _fem_evtnr[n];
   }
 
   if ( strcmp(what,"FEMCLOCK") == 0 )
   {
-    return _fem_clock;
+    if ( n < 0 || n >= _nr_modules) return 0;
+    return _fem_clock[n];
   }
 
   if ( strcmp(what,"EVENCHECKSUM") == 0 )
@@ -286,9 +301,19 @@ void  Packet_iddigitizerv2::dump ( OSTREAM& os )
   os << "Samples:     " << iValue(0,"SAMPLES") << std::endl;
   os << "Det. ID:     " << hex << "0x" << iValue(0,"DETID") << dec <<  std::endl;
   os << "Mod. Addr:   " << hex << "0x" << iValue(0,"MODULEADDRESS") << dec << std::endl;
-  os << "FEM Slot:    " << iValue(0,"FEMSLOT") << std::endl;
-  os << "FEM Evt nr:  " << iValue(0,"FEMEVTNR") << std::endl;
-  os << "FEM Clock:   " << iValue(0,"FEMCLOCK") << std::endl;
+
+  os << "FEM Slot:    ";
+  for ( int i = 0; i < iValue(0,"NRMODULES"); i++) os << setw(8) << iValue(i,"FEMSLOT");
+  os <<  std::endl;
+
+  os << "FEM Evt nr:  ";
+  for ( int i = 0; i < iValue(0,"NRMODULES"); i++)  os << setw(8) << iValue(i,"FEMEVTNR");
+  os << std::endl;
+
+  os << "FEM Clock:   ";
+  for ( int i = 0; i < iValue(0,"NRMODULES"); i++)  os << setw(8) << iValue(i,"FEMCLOCK");
+  os << std::endl;
+
   os << "Even chksum: 0x" << hex << iValue(0,"EVENCHECKSUM")  << "   calculated:  0x" <<  iValue(0,"CALCEVENCHECKSUM");
   if ( iValue(0,"EVENCHECKSUMOK") == 1) os << " ok" << endl;
   else if ( iValue(0,"EVENCHECKSUMOK") == 0) os << " **wrong" << endl;
