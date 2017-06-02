@@ -641,7 +641,9 @@ Packet *A_Event::makePacket(PHDWORD *pp, const int hitFormat)
       return new Packet_id4scaler(pp);
       break;
 
-    case IDDIGITIZERV2:
+    case IDDIGITIZER_12S:
+    case IDDIGITIZER_16S:
+    case IDDIGITIZER_31S:
       return new Packet_iddigitizerv2(pp);
       break;
 

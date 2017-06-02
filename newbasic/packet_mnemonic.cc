@@ -20,7 +20,9 @@ const char *get_mnemonic (const int structure, const int format)
     case(ID4EVT): return "ID4EVT";
     case(ID2SUP): return "ID2SUP";
     case(ID4SCALER): return "ID4SCALER";
-    case(IDDIGITIZERV2): return "IDDIGITIZERV2";
+    case(IDDIGITIZER_12S): return "IDDIGITIZER_12S";
+    case(IDDIGITIZER_16S): return "IDDIGITIZER_16S";
+    case(IDDIGITIZER_31S): return "IDDIGITIZER_31S";
     case(IDHAMMOND): return "IDHAMMOND";
     case(IDSAM): return "IDSAM";
     case(IDDCFEM): return "IDDCFEM";

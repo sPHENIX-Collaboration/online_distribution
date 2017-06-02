@@ -63,18 +63,27 @@ int Packet_iddigitizerv2::decode ()
 
   int *SubeventData = (int *) findPacketDataStart(packet); 
 
-  //  _nsamples    = (SubeventData[0] >> 24 ) & 0xff;
+  switch ( getHitFormat() )
+    {
+    case IDDIGITIZER_12S:
+      _nsamples    = 12;
+      break;
+
+    case IDDIGITIZER_16S:
+      _nsamples    = 16;
+      break;
+
+    default:
+      _nsamples    = 31;
+      break;
+    }
+
 
   _evtnr           =  SubeventData[0]  & 0xffff;
   _detid           =  SubeventData[2]  & 0xffff;
 
   _module_address  = SubeventData[3] & 0xffff;
   _clock           = SubeventData[4] & 0xffff;
-  _nsamples      = SubeventData[5] & 0xff;
-
-  // if we are looking at older data without the nr_samples encoded,
-  // they are 31 samples wide. 
-  if ( _nsamples == 0xff) _nsamples = 31;
 
   _fem_slot[0]        = SubeventData[6] & 0xffff;
   _fem_evtnr[0]       = SubeventData[7] & 0xffff;
