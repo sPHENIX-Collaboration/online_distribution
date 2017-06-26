@@ -136,5 +136,5 @@ AC_ARG_ENABLE(demos,
 	demos=true)
 AM_CONDITIONAL(DEMOS, test "$demos" = true)
 
-AC_OUTPUT(Makefile)
-
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT
