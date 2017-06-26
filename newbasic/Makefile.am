@@ -336,7 +336,11 @@ msg_dict.C : \
   filter_msg_buffer.h \
   remote_msg_buffer.h \
   msgLinkDef.h
+if ROOT_GE_6
+	rootcint -f $@ -noIncludePaths -c $(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $(+F)
+else
 	rootcint -f $@ -c $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $^
+endif
 
 libRootmessage_la_LIBADD = libmessage.la
 
@@ -364,8 +368,11 @@ event_dict.C : \
   packet.h \
   testEventiterator.h \
   eventLinkDef.h
+if ROOT_GE_6
+	rootcint -f $@ -noIncludePaths -c $(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $(+F)
+else
 	rootcint -f $@ -c $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $^
-
+endif
 
 
 # clean cache dir on Solaris 5.8
