@@ -223,7 +223,7 @@ msgheaders = \
   remote_msg_buffer.h \
   strnstr.h 
 
-INCLUDES = -I$(includedir)  -I@ROOTINC@ -I$(OPT_SPHENIX)/include
+AM_CPPFLAGS = -I$(includedir)  -I@ROOTINC@ -I$(OPT_SPHENIX)/include
 
 noinst_HEADERS = \
   eventLinkDef.h \
@@ -336,11 +336,7 @@ msg_dict.C : \
   filter_msg_buffer.h \
   remote_msg_buffer.h \
   msgLinkDef.h
-if ROOT_GE_6
-	rootcint -f $@ -noIncludePaths -c $(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $(+F)
-else
-	rootcint -f $@ -c $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $^
-endif
+	rootcint -f $@ @CINTDEFS@ -c $(DEFS) $(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $^
 
 libRootmessage_la_LIBADD = libmessage.la
 
@@ -368,16 +364,13 @@ event_dict.C : \
   packet.h \
   testEventiterator.h \
   eventLinkDef.h
-if ROOT_GE_6
-	rootcint -f $@ -noIncludePaths -c $(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $(+F)
-else
-	rootcint -f $@ -c $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $^
-endif
+	rootcint -f $@ @CINTDEFS@ -c $(DEFS) $(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $^
 
 
 # clean cache dir on Solaris 5.8
 clean-local:
 	rm -rf SunWS_cache
+	rm -f *.pcm
 
 #if VXWORKS
 endif

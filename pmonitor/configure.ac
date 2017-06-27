@@ -25,9 +25,12 @@ ROOTLIBS=`root-config --libs`
 ROOTINC=`root-config --incdir`
 AC_SUBST(ROOTLIBS)
 AC_SUBST(ROOTINC)
-dnl test for root 6
-AM_CONDITIONAL(ROOT_GE_6,test `root-config --version | gawk '{print $1>=6.?"1":"0"}'` = 1)
 
+dnl test for root 6
+if test `root-config --version | gawk '{print $1>=6.?"1":"0"}'` = 1; then
+CINTDEFS=" -noIncludePaths  -inlineInputHeader "
+AC_SUBST(CINTDEFS)
+fi
 
 AC_CHECK_FILE( $OFFLINE_MAIN/include/FROG.h,have_frog=yes, have_frog=no)
 AC_MSG_RESULT([$have_frog])
