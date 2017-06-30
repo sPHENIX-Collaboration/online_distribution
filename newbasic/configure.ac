@@ -1,4 +1,4 @@
-AC_INIT(Event, [1.0])
+AC_INIT(configure.ac)
 AC_CONFIG_SRCDIR([configure.ac])
 
 
@@ -49,7 +49,7 @@ dnl  CXXFLAGS="+p -mt -g -xildoff"
   ;;
 esac
 
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE(Event,1.00)
 
 AC_PROG_INSTALL
 
