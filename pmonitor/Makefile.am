@@ -20,7 +20,7 @@ BUILT_SOURCES = pmonitor_dict.C
 #ROOTCINT =  $(ROOTSYS)/bin/rootcint 
 ROOTCINT =  rootcint 
 
-INCLUDES =  -I$(includedir) -I$(ONLINE_MAIN)/include -I@ROOTINC@
+AM_CPPFLAGS =  -I$(includedir) -I$(ONLINE_MAIN)/include -I@ROOTINC@
 
 lib_LTLIBRARIES = libpmonitor.la
 
@@ -60,10 +60,10 @@ endif
 
 
 pmonitor_dict.C: pmonitor.h pmonstate.h pmondisplay.h pmongui.h $(LINKFILE)
-	$(ROOTCINT) -f $@ -c $(DEFAULT_INCLUDES) $(INCLUDES) $^
-
+	$(ROOTCINT) -f $@ @CINTDEFS@ -c $(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $^
 
 bin_SCRIPTS = writePmonProject.pl
 
 clean-local:
 	rm *_dict.*
+	rm -f *.pcm

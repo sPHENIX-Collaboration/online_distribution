@@ -1,16 +1,17 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT(configure.in)
+AC_INIT(pmonitor,[1.00])
+AC_CONFIG_SRCDIR([configure.ac])
 
 dnl Checks for C++ compiler and sets default flags
 AC_PROG_CXX(cxx CC g++)
 
-AM_INIT_AUTOMAKE(pmonitor,1.00)
+AM_INIT_AUTOMAKE
 
 
 AC_CANONICAL_HOST
 
-AC_ENABLE_STATIC(no)
-AC_PROG_LIBTOOL
+LT_INIT([disable-static])
+
 AC_PROG_INSTALL
 
 
@@ -25,6 +26,11 @@ ROOTINC=`root-config --incdir`
 AC_SUBST(ROOTLIBS)
 AC_SUBST(ROOTINC)
 
+dnl test for root 6
+if test `root-config --version | gawk '{print $1>=6.?"1":"0"}'` = 1; then
+CINTDEFS=" -noIncludePaths  -inlineInputHeader "
+AC_SUBST(CINTDEFS)
+fi
 
 AC_CHECK_FILE( $OFFLINE_MAIN/include/FROG.h,have_frog=yes, have_frog=no)
 AC_MSG_RESULT([$have_frog])
@@ -35,6 +41,5 @@ if test $have_frog = yes; then
   AC_DEFINE(HAVE_FROG)
 fi
 
-
-
-AC_OUTPUT(Makefile)
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT

@@ -1,5 +1,6 @@
+AC_INIT(configure.ac)
+AC_CONFIG_SRCDIR([configure.ac])
 
-AC_INIT(configure.in)
 
 AM_CONDITIONAL(VXWORKS, false)
 AM_CONDITIONAL(LINUX, false)
@@ -13,15 +14,13 @@ AC_PROG_CXX(cxx CC g++)
 case "$host" in
   *-*-linux*)
     CPPFLAGS="$CPPFLAGS -DLinux"
-    AC_ENABLE_STATIC(no)
-    AC_ENABLE_SHARED(yes)
+    LT_INIT([disable-static])
     AM_CONDITIONAL(LINUX, true)
   ;;
   *-*-osf*)
     CPPFLAGS="$CPPFLAGS -DOSF1 -D_BSD"
     LIBS="-lm"
-    AC_ENABLE_STATIC(no)
-    AC_ENABLE_SHARED(yes)
+    LT_INIT([disable-static])
   ;;
   *-*-solaris2.6)
   ;;
@@ -31,8 +30,7 @@ dnl Chris: default flags with optimizer screw shared lib
 dnl  CXXFLAGS="+p -mt -g -xildoff"
     CXXFLAGS="$CXXFLAGS +p -mt -fast -xO5"
     LIBS="-lm -lc -lsocket -lrt -lnsl -lresolv"
-    AC_ENABLE_STATIC(yes)
-    AC_ENABLE_SHARED(no)
+    LT_INIT([disable-shared])
   ;;
   powerpc-wrs-vxworks)
     AM_CONDITIONAL(VXWORKS, true)
@@ -55,8 +53,6 @@ AM_INIT_AUTOMAKE(Event,1.00)
 
 AC_PROG_INSTALL
 
-AC_PROG_LIBTOOL
-
 dnl   no point in suppressing warnings people should 
 dnl   at least see them, so here we go for g++: -Wall
 if test $ac_cv_prog_gxx = yes; then
@@ -72,6 +68,11 @@ ROOTGLIBS=`root-config --glibs`
 ROOTINC=`root-config --incdir`
 AC_SUBST(ROOTGLIBS)
 AC_SUBST(ROOTINC)
+dnl test for root 6
+if test `root-config --version | gawk '{print $1>=6.?"1":"0"}'` = 1; then
+CINTDEFS=" -noIncludePaths  -inlineInputHeader "
+AC_SUBST(CINTDEFS)
+fi
 
 LZOLIB="-llzo2"
 AC_SUBST(LZOLIB)
@@ -137,5 +138,5 @@ AC_ARG_ENABLE(demos,
 	demos=true)
 AM_CONDITIONAL(DEMOS, test "$demos" = true)
 
-AC_OUTPUT(Makefile)
-
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT
