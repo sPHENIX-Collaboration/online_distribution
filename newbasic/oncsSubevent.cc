@@ -409,10 +409,10 @@ void oncsSubevent_w4::gdump(const int i, OSTREAM& out) const
 	  out << std::endl << SETW(5) << j << " |  ";
 	  for (l=0;l<4;l++)
 	    {
-	      out << std::hex << SETW(8) << SubeventData[j++] << " ";
-	      if (j>=SubeventHdr->sub_length-SEVTHEADERLENGTH) break;
+	      out << std::hex << SETW(8) << std::setfill ('0') << SubeventData[j++] << std::setfill(' ') << " " << std::dec;
+	      if (j>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) break;
 	    }
-	  if (j>=SubeventHdr->sub_length-SEVTHEADERLENGTH) break;
+	  if (j>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) break;
 	}
       break;
 
@@ -425,9 +425,9 @@ void oncsSubevent_w4::gdump(const int i, OSTREAM& out) const
 	  for (l=0;l<6;l++)
 	    {
 	      out << SETW(10) << SubeventData[j++] << " ";
-	      if (j>=SubeventHdr->sub_length-SEVTHEADERLENGTH) break;
+	      if (j>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) break;
 	    }
-	  if (j>=SubeventHdr->sub_length-SEVTHEADERLENGTH) break;
+	  if (j>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) break;
 	}
       break;
 
@@ -455,10 +455,10 @@ void oncsSubevent_w2::gdump(const int i, OSTREAM& out) const
 	  out << std::dec<< std::endl << SETW(5) << j << " |  ";
 	  for (l=0;l<8;l++)
 	    {
-	      out << std::hex << SETW(4) << SubeventData[j++] << " ";
-	      if (j>=2*(SubeventHdr->sub_length-SEVTHEADERLENGTH) ) break;
+	      out << std::hex << SETW(4) << std::setfill ('0') << SubeventData[j++] << std::setfill(' ') << " " << std::dec;
+	      if (j>=2*(SubeventHdr->sub_length-SEVTHEADERLENGTH  - SubeventHdr->sub_padding) ) break;
 	    }
-	  if (j>=2*(SubeventHdr->sub_length-SEVTHEADERLENGTH) ) break;
+	  if (j>=2*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) break;
 	}
       break;
 
@@ -470,9 +470,9 @@ void oncsSubevent_w2::gdump(const int i, OSTREAM& out) const
 	  for (l=0;l<8;l++)
 	    {
 	      out << std::dec << SETW(6) << SubeventData[j++] << " ";
-	      if (j>=2*(SubeventHdr->sub_length-SEVTHEADERLENGTH) ) break;
+	      if (j>=2*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) break;
 	    }
-	  if (j>=2*(SubeventHdr->sub_length-SEVTHEADERLENGTH) ) break;
+	  if (j>=2*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) break;
 	}
       break;
 
@@ -501,7 +501,7 @@ void oncsSubevent_w1::gdump(const int i, OSTREAM& out) const
 	  out << std::dec << std::endl << SETW(5) << j << " |  ";
 	  for (l=0;l<16;l++)
 	    {
-	      if (j < 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH) ) 
+	      if (j < 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) 
 		{
 		  *c++ = SubeventData[j];
 		  out << std::hex << SETW(2) << SubeventData[j++] << " ";
@@ -514,7 +514,7 @@ void oncsSubevent_w1::gdump(const int i, OSTREAM& out) const
 	    }
 	  *c = 0;
 	  out << "  | " << cstring;
-	  if (j >= 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH) ) break;
+	  if (j >= 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) break;
 	}
       break;
 
@@ -525,7 +525,7 @@ void oncsSubevent_w1::gdump(const int i, OSTREAM& out) const
 	  out << std::dec << std::endl << SETW(5) << j << " |  ";
 	  for (l=0;l<12;l++)
 	    {
-	      if (j < 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH) ) 
+	      if (j < 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) 
 		{
 		  *c++ = SubeventData[j];
 		  out << std::hex << SETW(4) << SubeventData[j++] << " ";
@@ -538,7 +538,7 @@ void oncsSubevent_w1::gdump(const int i, OSTREAM& out) const
 	    }
 	  *c = 0;
 	  out << "  | " << cstring;
-	  if (j >= 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH) ) break;
+	  if (j >= 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) break;
 	}
       break;
 
