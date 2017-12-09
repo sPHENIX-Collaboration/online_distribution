@@ -96,6 +96,7 @@ allheaders = \
   oncsSub_idfnalmwpcv2.h \
   oncsSub_iddrs4v1.h \
   oncsSub_iddigitizerv1.h \
+  oncsSub_idmvtxv0.h \
   oncsSubevent.h \
   packet.h \
   packetConstants.h \
@@ -180,6 +181,7 @@ allsources = \
   oncsSub_idfnalmwpcv2.cc \
   oncsSub_iddrs4v1.cc \
   oncsSub_iddigitizerv1.cc \
+  oncsSub_idmvtxv0.cc \
   oncsSubevent.cc \
   oncs_mnemonic.cc \
   packet_A.cc \

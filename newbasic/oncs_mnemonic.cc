@@ -39,7 +39,7 @@ const char *oncs_get_mnemonic (const int structure, const int format)
     case(IDFNALMWPCV2): return "IDFNALMWPCV2";
     case(IDDRS4V1): return "IDDRS4V1";
     case(IDCAENV1742): return  "IDCAENV1742";
-    case(IDDIGITIZERV1): return  "IDDIGITIZERV1";
+    case(IDMVTXV0): return  "IDMVTXV0";
 
   }
   return "UNKNOWN";
