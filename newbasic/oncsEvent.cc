@@ -242,9 +242,9 @@ Packet *oncsEvent::makePacket(PHDWORD *pp, const int hitFormat)
 	oncsSub_iddrs4v1( sevt_ptr );
       break;
 	
-    case (IDDIGITIZERV1):
+    case (IDMVTXV0):
       return new 
-	oncsSub_iddigitizerv1( sevt_ptr );
+	oncsSub_idmvtxv0( sevt_ptr );
       break;
 	
 	
