@@ -47,11 +47,11 @@ protected:
     int data[];
   } *buffer_ptr;
 
-  buffer_ptr bptr;
   int *data_ptr;
   int buffer_size;
   int max_length;
   int current_index;
+  buffer_ptr bptr;
 };
 
 #endif
