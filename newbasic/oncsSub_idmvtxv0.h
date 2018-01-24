@@ -19,6 +19,7 @@ public:
   int    iValue(const int chip, const int region, const int row);
   
   void  dump ( OSTREAM& os = COUT) ;
+  void  gdump ( const int how=EVT_HEXADECIMAL, OSTREAM& os = COUT) const; // add this to override the generic gdump
 
 protected:
   int *decode ();

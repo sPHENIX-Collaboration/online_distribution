@@ -141,7 +141,8 @@ int *oncsSub_idmvtxv0::decode ()
 		  
 		  bunchcounter = b;
 		  //  cout << __FILE__ << " " << __LINE__ << " chip header, chip id= " << hex << chip_id << " bunchctr= " << bunchcounter << dec << endl;
-		  if ( chip_id ==0 )  // for now ... we'll see what gives with multiple chips
+		  //if ( chip_id ==0 )  // for now ... we'll see what gives with multiple chips
+		  if ( chip_id <9 )  // 12/21/17 enable multiple chips?
 		    {
 		      the_chip = chip_id;
 		      if ( the_chip > _highest_chip) _highest_chip = the_chip; 
@@ -393,5 +394,82 @@ void  oncsSub_idmvtxv0::dump ( OSTREAM& os )
 	}
     }
   
+}
+
+
+
+//copied from oncsSubevent.cc for a generic dump 12/21/17
+void oncsSub_idmvtxv0::gdump(const int i, OSTREAM& out) const
+{
+
+  int *SubeventData = &SubeventHdr->data;
+  int dword_to_print;
+  int j,l;
+  identify(out);
+
+  int current_offset;
+  const int DWORDS_PER_WORD = 8;
+  
+  switch (i)
+    {
+    case (EVT_HEXADECIMAL):
+      //j = 0;
+      current_offset = 0;
+      while (1)
+	{
+	  out << std::endl << SETW(5) << current_offset << " |  ";
+	  //for (l=0;l<DWORDS_PER_WORD;l++)
+	  
+          //FELIX header
+	  out << std::hex << SETW(4) << std::setfill ('0') << ((SubeventData[current_offset+7]>>16) & 0xffff) << std::setfill(' ') << " " << std::dec;
+
+          //RU word 2
+	  out << std::hex << SETW(4) << std::setfill ('0') << (SubeventData[current_offset+7] & 0xffff);
+	  out << std::hex << SETW(8) << std::setfill ('0') << (SubeventData[current_offset+6]);
+	  out << std::hex << SETW(8) << std::setfill ('0') << (SubeventData[current_offset+5]) << std::setfill(' ') << " " << std::dec;
+
+          //RU word 1
+	  out << std::hex << SETW(8) << std::setfill ('0') << (SubeventData[current_offset+4]);
+	  out << std::hex << SETW(8) << std::setfill ('0') << (SubeventData[current_offset+3]);
+	  out << std::hex << SETW(4) << std::setfill ('0') << ((SubeventData[current_offset+2]>>16) & 0xffff) << std::setfill(' ') << " " << std::dec;
+
+          //RU word 0
+	  out << std::hex << SETW(4) << std::setfill ('0') << (SubeventData[current_offset+2] & 0xffff);
+	  out << std::hex << SETW(8) << std::setfill ('0') << (SubeventData[current_offset+1]);
+	  out << std::hex << SETW(8) << std::setfill ('0') << (SubeventData[current_offset+0]) << std::setfill(' ') << " " << std::dec;
+
+          //for (l=DWORDS_PER_WORD-1; l>=0; l--)
+	    //{
+              //dword_to_print = SubeventData[current_offset + l];
+	      //if (current_offset + l >=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4) dword_to_print = 0;
+	      //out << std::hex << SETW(8) << std::setfill ('0') << dword_to_print << std::setfill(' ') << " " << std::dec;
+	      ////if (current_offset + l >=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) break;
+	    //}
+          current_offset += DWORDS_PER_WORD;
+	  //if (current_offset>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) break;
+	  if (current_offset>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4) break; //hack to deal with our incorrect padding in daq_device_felix.cc
+	}
+      break;
+
+    case (EVT_DECIMAL):
+      j = 0;
+      while (1)
+	{
+	  out << std::dec << std::endl << SETW(5) << j << " |  ";
+
+	  for (l=0;l<6;l++)
+	    {
+	      out << SETW(10) << SubeventData[j++] << " ";
+	      if (j>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) break;
+	    }
+	  if (j>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) break;
+	}
+      break;
+
+    default: 
+      break;
+    }
+  out << std::endl;
+
 }
 
