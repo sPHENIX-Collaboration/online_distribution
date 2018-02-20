@@ -262,7 +262,7 @@ int *oncsSub_idmvtxv0::decode ()
 	      if ( region_id <32)
 		{
 		  the_region = region_id;
-		  if ( the_chip >=0) _highest_region[the_chip] = region_id;
+		  if ( chip_id >=0) _highest_region[chip_id] = region_id;
 		}
 	      else
 		{
@@ -386,25 +386,37 @@ void  oncsSub_idmvtxv0::dump ( OSTREAM& os )
       os << "  *** Chip " << ichip << "  ***" << endl;
       for ( int irow = 0; irow < iValue(0,"HIGHEST_ROW")+1; irow++)
 	{
-	  os << "  Row  Region" << endl;
-	  for ( int iregion = 0; iregion < iValue(ichip, "HIGHEST_REGION")+1; iregion++)
+          bool has_hit = false;
+	  for ( int iregion = 0; iregion < iValue(ichip, "HIGHEST_REGION")+1; iregion++) // check if there are any hits in this row
 	    {
-	      os << setw(4) << irow << "  " << setw(4) << iregion << " | ";
-	      unsigned int bits =  iValue(0,iregion, irow);
-	      for ( int i = 0; i < 32; i++)
-		{
-		  if ( (bits >> i) & 1)
-		    {
-		      os << "X";
-		    }
-		  else
-		    {
-		      os << "-";
-		    }
-		}
+                if (iValue(ichip,iregion, irow) != 0)
+                {
+                    has_hit = true;
+                    break;
+                }
+            }
+          if (has_hit)
+            {
+	    os << "  Row  Region" << endl;
+	    for ( int iregion = 0; iregion < iValue(ichip, "HIGHEST_REGION")+1; iregion++)
+	      {
+	        os << setw(4) << irow << "  " << setw(4) << iregion << " | ";
+	        unsigned int bits =  iValue(ichip,iregion, irow);
+	        for ( int i = ichip; i < 32; i++)
+		  {
+		    if ( (bits >> i) & 1)
+		      {
+		        os << "X";
+		      }
+		    else
+		      {
+		        os << "-";
+		      }
+		  }
+	        os << endl;
+	      }
 	      os << endl;
-	    }
-	  os << endl;
+            }
 	}
     }
   
