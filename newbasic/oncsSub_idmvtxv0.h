@@ -10,6 +10,7 @@ class WINDOWSEXPORT oncsSub_idmvtxv0 : public  oncsSubevent_w4 {
 class  oncsSub_idmvtxv0 : public  oncsSubevent_w4 {
 #endif
 
+#define MAXRUCHN     9
 public:
   oncsSub_idmvtxv0( subevtdata_ptr);
   ~oncsSub_idmvtxv0();
@@ -19,6 +20,7 @@ public:
   int    iValue(const int chip, const int region, const int row);
   
   void  dump ( OSTREAM& os = COUT) ;
+  void  gdump ( const int how=EVT_HEXADECIMAL, OSTREAM& os = COUT) const; // add this to override the generic gdump
 
 protected:
   int *decode ();
@@ -34,7 +36,7 @@ protected:
   unsigned int encoder_id;
 
   // this is one "row" of 32 pixels
-  unsigned int chip_row[512][32];
+  unsigned int chip_row[9][512][32];
 
 };
 
