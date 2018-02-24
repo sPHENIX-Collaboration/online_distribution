@@ -10,6 +10,7 @@ class WINDOWSEXPORT oncsSub_idmvtxv0 : public  oncsSubevent_w4 {
 class  oncsSub_idmvtxv0 : public  oncsSubevent_w4 {
 #endif
 
+#define MAXRUCHN     9
 public:
   oncsSub_idmvtxv0( subevtdata_ptr);
   ~oncsSub_idmvtxv0();

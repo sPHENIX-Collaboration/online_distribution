@@ -101,7 +101,7 @@ int *oncsSub_idmvtxv0::decode ()
   map<int, int> map_chip_ru;
   vector<chipdata> running_chip_data;
 
-  vector<unsigned char> ruchn_stream[9];
+  vector<unsigned char> ruchn_stream[MAXRUCHN+1];
 
   int status = 0;
 
@@ -132,20 +132,24 @@ int *oncsSub_idmvtxv0::decode ()
 	{
 	  unsigned int ruchn = (unsigned int)d32->d0[ichnk][9];
 	    for ( int ibyte = 0; ibyte < 9; ibyte++)
+            {
+	      //cout << __FILE__ << " " << __LINE__ << hex << " --- ruchn " << ruchn << " byte " << (unsigned int) d32->d0[ichnk][ibyte] << dec << endl;
 	      ruchn_stream[ruchn].push_back(d32->d0[ichnk][ibyte]);
+            }
 	} // ichnk
 
       pos += sizeof(*d32);
     } // while (pos < the_end)
 
 
-  for ( int iruchn = 1; iruchn < 9; iruchn++)
+  for ( int iruchn = 1; iruchn < MAXRUCHN+1; iruchn++)
     {
+      int ibyte_endofdata = -1;
       for (unsigned int ibyte = 0; ibyte < ruchn_stream[iruchn].size(); ibyte++)
 	{
 	  b = ruchn_stream[iruchn].at(ibyte);
 
-	  //cout << __FILE_ILE__ << " " << __LINE__ << " --- next value " << hex << (unsigned int)  b << dec << " status:" << status << endl;
+	  //cout << __FILE__ << " " << __LINE__ << " --- ruchn " << hex << iruchn << " next value " << (unsigned int)  b << dec << " status:" << status << endl;
 	  
 	  if (status) // we mop up what we started in the last round -
 	              // these are all cases with more than one byte
@@ -170,6 +174,16 @@ int *oncsSub_idmvtxv0::decode ()
 		  
 		  bunchcounter = b;
 		  // cout << __FILE__ << " " << __LINE__ << " chip empty frame " << hex << chip_id << " " << bunchcounter << dec << endl;
+	          // D. McGlinchey -- TEMPORARY! We can ignore the rest of this stream
+                  if ( chip_id <9 )  // 12/21/17 enable multiple chips?
+                    {
+                    if ( (int)chip_id > _highest_chip) 
+                      {
+                        _highest_chip = chip_id; 
+                      }
+                    }
+                  if ( chip_id >=0) _highest_region[chip_id] = 0;
+                  ibyte_endofdata = ibyte;
 		  status = 0;
 		  break;
 
@@ -228,6 +242,7 @@ int *oncsSub_idmvtxv0::decode ()
 	      continue;
 	    }
 	    
+          if (ibyte_endofdata != -1) break;
 
 	  if ( b == 0xff)  // Idle byte, skip
 	    {
@@ -245,15 +260,14 @@ int *oncsSub_idmvtxv0::decode ()
 	    {
 	      // cout << __FILE__ << " " << __LINE__ << " chip trailer, chip id= " << hex << chip_id << dec << endl;
 	      // break out of the loop, done with this chip
+              ibyte_endofdata = ibyte;
 	      break;
 	    }
 
 	  else if ( ( b >> 4) == 0xE) // we have a chip empty frame
 	    {
 	      chip_id = ( b & 0xf);
-	      // D. McGlinchey -- TEMPORARY! We can ignore the rest of this stream
-	      break;
-	      //status = CHIPEMPTYFRAME;
+	      status = CHIPEMPTYFRAME;
 	    }
 
 	  else if ( ( b >> 5) == 0x6) // we have a region header
@@ -289,10 +303,17 @@ int *oncsSub_idmvtxv0::decode ()
        
 	  else
 	    {
-	      cout << __FILE__ << " " << __LINE__ << " unexpected word " << hex << (unsigned int) b << dec << " at pos " << ( c-start) << endl;
+	      cout << __FILE__ << " " << __LINE__ << " unexpected word " << hex << (unsigned int) b << dec << " at ibyte " << ibyte << endl;
 	    }
 
 	} // ibyte
+
+	//cout << __FILE__ << " " << __LINE__ << "  ruchn " << iruchn << "  ibyte_endofdata " << ibyte_endofdata << endl;
+        for (unsigned int ibyte = ibyte_endofdata+1; ibyte < ruchn_stream[iruchn].size(); ibyte++)
+	  {
+	    b = ruchn_stream[iruchn].at(ibyte);
+            if (b!=0) cout << __FILE__ << " " << __LINE__ << " --- ruchn " << hex << iruchn << " unexpected nonzero value " << (unsigned int)  b << dec << " at ibyte " << ibyte << " after ibyte_endofdata " << ibyte_endofdata << endl;
+          }
     } // iruchn
 
 
@@ -402,7 +423,7 @@ void  oncsSub_idmvtxv0::dump ( OSTREAM& os )
 	      {
 	        os << setw(4) << irow << "  " << setw(4) << iregion << " | ";
 	        unsigned int bits =  iValue(ichip,iregion, irow);
-	        for ( int i = ichip; i < 32; i++)
+	        for ( int i = 0; i < 32; i++)
 		  {
 		    if ( (bits >> i) & 1)
 		      {
