@@ -29,6 +29,10 @@ protected:
   int _is_decoded;
   int _highest_chip;
   int _highest_region[32];
+  int _excess_data_bytes;
+  int _bunchcounter[32];
+  bool _header_found[32];
+  bool _trailer_found[32];
   
   unsigned int bunchcounter;
   unsigned int chip_id;

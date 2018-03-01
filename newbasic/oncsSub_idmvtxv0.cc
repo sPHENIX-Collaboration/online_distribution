@@ -15,7 +15,14 @@ oncsSub_idmvtxv0::oncsSub_idmvtxv0(subevtdata_ptr data)
   _is_decoded = 0;
   _highest_chip = -1;
   memset ( chip_row, 0, 9*512*32*sizeof(unsigned int));
-  for ( int i = 0; i < 32; i++) _highest_region[i] = -1;
+  for ( int i = 0; i < 32; i++)
+  {
+      _highest_region[i] = -1;
+      _bunchcounter[i] = -1;
+      _header_found[i] = false;
+      _trailer_found[i] = false;
+  }
+  _excess_data_bytes = 0;
 }
   
 oncsSub_idmvtxv0::~oncsSub_idmvtxv0()
@@ -168,6 +175,8 @@ int *oncsSub_idmvtxv0::decode ()
 			}
 		    }
 		  status = 0;
+                  _header_found[chip_id] = true;
+                  _bunchcounter[chip_id] = bunchcounter;
 		  break;
 
 		case CHIPEMPTYFRAME:
@@ -184,6 +193,9 @@ int *oncsSub_idmvtxv0::decode ()
                     }
                   if ( chip_id >=0) _highest_region[chip_id] = 0;
                   ibyte_endofdata = ibyte;
+                  _header_found[chip_id] = true;
+                  _trailer_found[chip_id] = true;
+                  _bunchcounter[chip_id] = bunchcounter;
 		  status = 0;
 		  break;
 
@@ -261,6 +273,7 @@ int *oncsSub_idmvtxv0::decode ()
 	      // cout << __FILE__ << " " << __LINE__ << " chip trailer, chip id= " << hex << chip_id << dec << endl;
 	      // break out of the loop, done with this chip
               ibyte_endofdata = ibyte;
+              _trailer_found[chip_id] = true;
 	      break;
 	    }
 
@@ -312,7 +325,11 @@ int *oncsSub_idmvtxv0::decode ()
         for (unsigned int ibyte = ibyte_endofdata+1; ibyte < ruchn_stream[iruchn].size(); ibyte++)
 	  {
 	    b = ruchn_stream[iruchn].at(ibyte);
-            if (b!=0) cout << __FILE__ << " " << __LINE__ << " --- ruchn " << hex << iruchn << " unexpected nonzero value " << (unsigned int)  b << dec << " at ibyte " << ibyte << " after ibyte_endofdata " << ibyte_endofdata << endl;
+            if (b!=0)
+            {
+                //cout << __FILE__ << " " << __LINE__ << " --- ruchn " << hex << iruchn << " unexpected nonzero value " << (unsigned int)  b << dec << " at ibyte " << ibyte << " after ibyte_endofdata " << ibyte_endofdata << endl;
+                _excess_data_bytes++;
+            }
           }
     } // iruchn
 
@@ -338,6 +355,26 @@ int oncsSub_idmvtxv0::iValue(const int ich,const char *what)
   else if ( strcmp(what,"HIGHEST_ROW") == 0 )
   {
     return _highest_row_overall;
+  }
+
+  else if ( strcmp(what,"EXCESS_DATA_BYTES") == 0 )
+  {
+    return _excess_data_bytes;
+  }
+
+  else if ( strcmp(what,"BUNCHCOUNTER") == 0 )
+  {
+    return _bunchcounter[ich];
+  }
+
+  else if ( strcmp(what,"HEADER_FOUND") == 0 )
+  {
+    return _header_found[ich]?1:0;
+  }
+
+  else if ( strcmp(what,"TRAILER_FOUND") == 0 )
+  {
+    return _trailer_found[ich]?1:0;
   }
 
   return 0;
