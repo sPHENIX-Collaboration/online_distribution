@@ -11,6 +11,7 @@ class  oncsSub_idmvtxv0 : public  oncsSubevent_w4 {
 #endif
 
 #define MAXRUCHN     9
+#define MAXCHIPID     9
 public:
   oncsSub_idmvtxv0( subevtdata_ptr);
   ~oncsSub_idmvtxv0();
@@ -35,6 +36,7 @@ protected:
   int _bunchcounter[32];
   bool _header_found[32];
   bool _trailer_found[32];
+  int _readout_flags[32];
   
   unsigned int bunchcounter;
   int chip_id;
@@ -42,10 +44,12 @@ protected:
   unsigned int encoder_id;
 
   // this is one "row" of 32 pixels
-  unsigned int chip_row[9][512][32];
-  unsigned int chip_rowmap[9][512];
+  unsigned int chip_row[MAXCHIPID][512][32];
+  unsigned int chip_rowmap[MAXCHIPID][512];
 
 };
+
+int decode_thebit (int the_row, int encoder_id, int address); //helper function to decode the column number
 
 
 #endif /* __ONCSSUB_IDMVTXV0_H__ */

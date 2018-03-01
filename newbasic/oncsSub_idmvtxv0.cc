@@ -23,6 +23,7 @@ oncsSub_idmvtxv0::oncsSub_idmvtxv0(subevtdata_ptr data)
       _bunchcounter[i] = -1;
       _header_found[i] = false;
       _trailer_found[i] = false;
+      _readout_flags[i] = -1;
   }
   _excess_data_bytes = 0;
 }
@@ -54,13 +55,32 @@ typedef struct
 #define DATALONG1      5
 
 
+int decode_thebit (int the_row, int encoder_id, int address)
+{
+  // the numbering "snakes" its way through a column (fig. 4.5 in the Alpide manual)
+  //  0 1  > >    row 0 
+  //  3 2  < <    row 1
+  //  4 5  > >    row 2
+  //  7 6  < <   so we need to know if we are in an even or odd row
+  int is_an_odd_row = the_row & 1;
+  int thebit;
+  if ( is_an_odd_row)
+    {
+      thebit = (encoder_id*2) + (  ( address &1) ^ 1 );
+    }
+  else  
+    {
+      thebit = (encoder_id*2) + ( address&1);
+    }
+  return thebit;
+}
 
 int *oncsSub_idmvtxv0::decode ()
 {
   if ( _is_decoded) return 0;
   _is_decoded = 1;
   
-  int i;
+  //int i;
 
   unsigned int *payload = (unsigned int *) &SubeventHdr->data;  // here begins the payload
 
@@ -68,40 +88,13 @@ int *oncsSub_idmvtxv0::decode ()
   unsigned char *the_end = ( unsigned char *) &payload[dlength+1];
   
   unsigned char *pos = (unsigned char *) payload;
-  unsigned char *start = pos;
+  //unsigned char *start = pos;
 
   //  cout << hex << " pos = " << (unsigned long long ) pos << "  the end  " << (unsigned long long) the_end << dec << endl;
 
-  /*  
-  int framectr = 0;
-  for ( int xc = 0; xc < 32*32; xc++)
-    {
-      if ( framectr ==0 )
-	{
-	  cout << ">> ";
-	}
-      else if ( framectr==30 || framectr==31 )
-	{
-	  cout << "FX ";
-	}
-      else if (  (framectr+1)%10 ==0 )
-	{
-	  cout << "-- ";
-	}
-      else
-	{
-	  cout << "   ";
-	}
-	
-
-      cout << setw(3) << framectr++ << "  " << setw(3) << xc << "  " << hex << setw(2) << setfill('0') << (unsigned int) *pos++ << setfill (' ') << dec << endl;
-      if ( framectr >= 32) framectr = 0;
-    }
-  */
-  
   pos = (unsigned char *) payload;
 
-  int first =1;
+  //int first =1;
 
   unsigned char *c;
   unsigned char b;
@@ -114,12 +107,8 @@ int *oncsSub_idmvtxv0::decode ()
 
   int status = 0;
 
-  int go_on =1;
-  
   //  cout << hex << " pos = " << (unsigned long long ) pos << "  the end  " << (unsigned long long) the_end << dec << endl;
 
-  // here we remember the chip and the region we are in, preset to -1 for "nowhere" 
-  int the_chip  = -1;
   int the_region = -1;
 
   while ( pos < the_end )
@@ -170,7 +159,7 @@ int *oncsSub_idmvtxv0::decode ()
 		  
 		  bunchcounter = b;
 		  //cout << __FILE__ << " " << __LINE__ << " chip header, chip id= " << chip_id << " bunchctr= " << hex << bunchcounter << dec << endl;
-		  if ( chip_id <9 )  // 12/21/17 enable multiple chips?
+		  if ( chip_id < MAXCHIPID ) 
 		    {
 		      if ( (int)chip_id > _highest_chip) 
 			{
@@ -186,8 +175,7 @@ int *oncsSub_idmvtxv0::decode ()
 		  
 		  bunchcounter = b;
 		  // cout << __FILE__ << " " << __LINE__ << " chip empty frame " << hex << chip_id << " " << bunchcounter << dec << endl;
-	          // D. McGlinchey -- TEMPORARY! We can ignore the rest of this stream
-                  if ( chip_id <9 )  // 12/21/17 enable multiple chips?
+                  if ( chip_id < MAXCHIPID )
                     {
                     if ( (int)chip_id > _highest_chip) 
                       {
@@ -205,15 +193,8 @@ int *oncsSub_idmvtxv0::decode ()
 		case DATASHORT:
 		  address += b;	
 		  //cout << __FILE__ << " " << __LINE__ << " data short report, hex:" << hex << address << dec << " enc. id " << encoder_id << " address= " << address << " the_region:" << the_region << " the_chip:" << chip_id;
-		  // warning: we have a wrong address here - fix this:
-		  //if ( address > 1) address=1; 
 		  if ( the_region >= 0 && encoder_id >=0 ) 
 		    {
-		      // the numbering "snakes" its way through a column (fig. 4.5 in the Alpide manual)
-		      //  0 1  > >    row 0 
-		      //  3 2  < <    row 1
-		      //  4 5  > >    row 2
-		      //  7 6  < <   so we need to know if we are in an even or odd row
 		      int the_row = (address >> 1);
 		      if ( the_row > 511)
 			{
@@ -222,16 +203,7 @@ int *oncsSub_idmvtxv0::decode ()
 			}
 		      else
 			{
-			  int is_an_odd_row = the_row & 1;
-			  int thebit;
-			  if ( is_an_odd_row)
-			    {
-			      thebit = (encoder_id*2) + (  ( address &1) ^ 1 );
-			    }
-			  else  
-			    {
-			      thebit = (encoder_id*2) + ( address&1);
-			    }
+			  int thebit = decode_thebit(the_row, encoder_id, address);
 			  //cout << " row:" << the_row << " col:" << the_region*32 + thebit;
 			  //  cout << __FILE__ << " " << __LINE__ << " the bit " << thebit << endl;
 			  chip_row[chip_id][the_row][the_region] |= ( 1<<thebit);
@@ -246,10 +218,43 @@ int *oncsSub_idmvtxv0::decode ()
 		  break;
 
 		case DATALONG0:
+		  address += b;	
 		  status = DATALONG1;
 		  break;
 
 		case DATALONG1:
+                  if ( (b & 0x80) != 0) //required to be 0
+                  {
+                      cout << __FILE__ << " " << __LINE__ << " unexpected word " << hex << (unsigned int) b << dec << " at ibyte " << ibyte << endl;
+                      _unexpected_bytes[chip_id]++;
+                  }
+                  // Loop over the hits in the cluster. The pixel specified by the address always has a hit.
+                  // The next 7 pixels (in priority encoder order) have hits if the corresponding bit in this byte is high. 
+                  // See ALPIDE manual section 3.4.1 on DATA LONG: page 63.
+                  for (int ihit = 0; ihit<8; ihit++)
+                  {
+                      if (ihit>0 && !((b >> ihit) & 1)) continue;
+                      int hit_address = address + ihit;
+                      if ( the_region >= 0 && encoder_id >=0 ) 
+                        {
+                          int the_row = (hit_address >> 1);
+                          if ( the_row > 511)
+                            {
+                              cout << __FILE__ << " " << __LINE__ << " impossible row: " << the_row
+                                   << " encoder " <<  encoder_id << " addr " << hit_address << endl;
+                            }
+                          else
+                            {
+                              int thebit = decode_thebit(the_row, encoder_id, hit_address);
+                              //cout << " row:" << the_row << " col:" << the_region*32 + thebit;
+                              //  cout << __FILE__ << " " << __LINE__ << " the bit " << thebit << endl;
+                              chip_row[chip_id][the_row][the_region] |= ( 1<<thebit);
+                              chip_rowmap[chip_id][the_row] |= ( 1<<the_region);
+                              if ( the_row > _highest_row_overall)  _highest_row_overall = the_row;
+
+                            }
+                        }
+                  }
 		  status = 0;
 		  break;
 		  
@@ -269,6 +274,7 @@ int *oncsSub_idmvtxv0::decode ()
 	  else if ( ( b >> 4) == 0xa) // we have a chip header
 	    {
 	      chip_id = ( b & 0xf);
+              if (chip_id > MAXCHIPID) chip_id = -1;
 	      status = CHIPHEADER;
 	    }
 
@@ -278,6 +284,7 @@ int *oncsSub_idmvtxv0::decode ()
 	      // break out of the loop, done with this chip
               ibyte_endofdata = ibyte;
               _trailer_found[chip_id] = true;
+              _readout_flags[chip_id] = (b & 0xf);
 	      break;
 	    }
 
@@ -306,6 +313,13 @@ int *oncsSub_idmvtxv0::decode ()
 	      encoder_id = ( b>>2) & 0xf;
 	      address = (b & 0x3) << 8;
 	      status = DATASHORT;
+	    }
+
+	  else if ( ( b >> 6) == 0x0) // we have a DATA long report
+	    {
+	      encoder_id = ( b>>2) & 0xf;
+	      address = (b & 0x3) << 8;
+	      status = DATALONG0;
 	    }
 
 	  else if ( b == 0xF1) // we have a BUSY on
@@ -387,37 +401,14 @@ int oncsSub_idmvtxv0::iValue(const int ich,const char *what)
     return _trailer_found[ich]?1:0;
   }
 
+  else if ( strcmp(what,"READOUT_FLAGS") == 0 )
+  {
+    return _readout_flags[ich];
+  }
+
   return 0;
 
 }
-
-/*
-int oncsSub_idmvtxv0::iValue(const int ich,const int hybrid, const char *what)
-{
-
-  if ( nhybrids == 0 ) decoded_data1 = decode(&data1_length);
-
-  std::vector<hybriddata*>::iterator it;
-  std::vector<report *>::iterator reportit;
-
-  if ( ich < 0) return 0;
-
-  if ( strcmp(what,"RAWSAMPLES") == 0 )
-  {
-	    
-    for ( it = hybridlist.begin(); it != hybridlist.end(); ++it)
-      {
-	if ( (*it)->hdmi == hybrid )
-	  {
-	    if ( ich >= (*it)->words) return 0;
-	    return (*it)->adc[ich];
-	  }
-      }
-  }
-
-    return 0;
-}
-*/
 
 int oncsSub_idmvtxv0::iValue(const int chip, const int region, const int row)
 {
@@ -446,7 +437,7 @@ void  oncsSub_idmvtxv0::dump ( OSTREAM& os )
   identify(os);
 
 
-  int x;
+  //int x;
   decode();
   os << "Number of chips:      " << setw(4) << iValue(0, "HIGHEST_CHIP") +1<< endl;
   os << "Regions:              ";
@@ -507,7 +498,7 @@ void oncsSub_idmvtxv0::gdump(const int i, OSTREAM& out) const
 {
 
   int *SubeventData = &SubeventHdr->data;
-  int dword_to_print;
+  //int dword_to_print;
   int j,l;
   identify(out);
 
