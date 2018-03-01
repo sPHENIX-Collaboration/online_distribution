@@ -15,9 +15,11 @@ oncsSub_idmvtxv0::oncsSub_idmvtxv0(subevtdata_ptr data)
   _is_decoded = 0;
   _highest_chip = -1;
   memset ( chip_row, 0, 9*512*32*sizeof(unsigned int));
+  memset ( chip_rowmap, 0, 9*512*sizeof(unsigned int));
   for ( int i = 0; i < 32; i++)
   {
       _highest_region[i] = -1;
+      _unexpected_bytes[i] = 0;
       _bunchcounter[i] = -1;
       _header_found[i] = false;
       _trailer_found[i] = false;
@@ -152,6 +154,7 @@ int *oncsSub_idmvtxv0::decode ()
   for ( int iruchn = 1; iruchn < MAXRUCHN+1; iruchn++)
     {
       int ibyte_endofdata = -1;
+      chip_id = -1;
       for (unsigned int ibyte = 0; ibyte < ruchn_stream[iruchn].size(); ibyte++)
 	{
 	  b = ruchn_stream[iruchn].at(ibyte);
@@ -232,6 +235,7 @@ int *oncsSub_idmvtxv0::decode ()
 			  //cout << " row:" << the_row << " col:" << the_region*32 + thebit;
 			  //  cout << __FILE__ << " " << __LINE__ << " the bit " << thebit << endl;
 			  chip_row[chip_id][the_row][the_region] |= ( 1<<thebit);
+			  chip_rowmap[chip_id][the_row] |= ( 1<<the_region);
 			  if ( the_row > _highest_row_overall)  _highest_row_overall = the_row;
 
 			}
@@ -317,6 +321,7 @@ int *oncsSub_idmvtxv0::decode ()
 	  else
 	    {
 	      cout << __FILE__ << " " << __LINE__ << " unexpected word " << hex << (unsigned int) b << dec << " at ibyte " << ibyte << endl;
+              _unexpected_bytes[chip_id]++;
 	    }
 
 	} // ibyte
@@ -360,6 +365,11 @@ int oncsSub_idmvtxv0::iValue(const int ich,const char *what)
   else if ( strcmp(what,"EXCESS_DATA_BYTES") == 0 )
   {
     return _excess_data_bytes;
+  }
+
+  else if ( strcmp(what,"UNEXPECTED_BYTES") == 0 )
+  {
+    return _unexpected_bytes[ich];
   }
 
   else if ( strcmp(what,"BUNCHCOUNTER") == 0 )
@@ -417,6 +427,16 @@ int oncsSub_idmvtxv0::iValue(const int chip, const int region, const int row)
   if ( region < 0 || region > 31 ) return 0;
   if ( row < 0    || row > 511) return 0;
   return chip_row[chip][row][region];
+ }
+
+
+int oncsSub_idmvtxv0::iValue(const int chip, const int row)
+{
+  decode();
+
+  if ( chip < 0  || chip > _highest_chip) return 0;
+  if ( row < 0    || row > 511) return 0;
+  return chip_rowmap[chip][row];
  }
 
 
