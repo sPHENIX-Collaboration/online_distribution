@@ -201,6 +201,16 @@ int *oncsSub_idmvtxv0::decode ()
 			  cout << __FILE__ << " " << __LINE__ << " impossible row: " << the_row
 			       << " encoder " <<  encoder_id << " addr " << address << endl;
 			}
+		      else if ( the_region > 31) //this should never happen, the_region is checked in region header
+			{
+			  cout << __FILE__ << " " << __LINE__ << " impossible region: " << the_region
+			       << " encoder " <<  encoder_id << " addr " << address << endl;
+			}
+		      else if ( chip_id<0 || chip_id > MAXCHIPID ) //this should never happen, chip_id is checked in chip header
+			{
+			  cout << __FILE__ << " " << __LINE__ << " impossible chip ID: " << chip_id
+			       << " encoder " <<  encoder_id << " addr " << address << endl;
+			}
 		      else
 			{
 			  int thebit = decode_thebit(the_row, encoder_id, address);
@@ -243,6 +253,16 @@ int *oncsSub_idmvtxv0::decode ()
                               cout << __FILE__ << " " << __LINE__ << " impossible row: " << the_row
                                    << " encoder " <<  encoder_id << " addr " << hit_address << endl;
                             }
+		          else if ( the_region > 31) //this should never happen, the_region is checked in region header
+			    {
+			      cout << __FILE__ << " " << __LINE__ << " impossible region: " << the_region
+			           << " encoder " <<  encoder_id << " addr " << address << endl;
+			    }
+		          else if ( chip_id<0 || chip_id > MAXCHIPID ) //this should never happen, chip_id is checked in chip header
+			    {
+			      cout << __FILE__ << " " << __LINE__ << " impossible chip ID: " << chip_id
+			           << " encoder " <<  encoder_id << " addr " << address << endl;
+			    }
                           else
                             {
                               int thebit = decode_thebit(the_row, encoder_id, hit_address);
@@ -274,7 +294,14 @@ int *oncsSub_idmvtxv0::decode ()
 	  else if ( ( b >> 4) == 0xa) // we have a chip header
 	    {
 	      chip_id = ( b & 0xf);
-              if (chip_id > MAXCHIPID) chip_id = -1;
+              if (chip_id > MAXCHIPID)
+		{
+                  chip_id = MAXCHIPID;
+		  cout << __FILE__ << " " << __LINE__ << " impossible chip ID: " << chip_id
+		       << " encoder " <<  encoder_id << " addr " << address << endl;
+	      // break out of the loop, we can't process this chip
+	          break;
+		}
 	      status = CHIPHEADER;
 	    }
 
