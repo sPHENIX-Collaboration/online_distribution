@@ -105,7 +105,6 @@ int *oncsSub_idmvtxv0::decode ()
 
   vector<unsigned char> ruchn_stream[MAXRUCHN+1];
 
-  int status = 0;
 
   //  cout << hex << " pos = " << (unsigned long long ) pos << "  the end  " << (unsigned long long) the_end << dec << endl;
 
@@ -142,6 +141,9 @@ int *oncsSub_idmvtxv0::decode ()
 
   for ( int iruchn = 1; iruchn < MAXRUCHN+1; iruchn++)
     {
+
+      bool header_seen=false;
+      int status = 0;
       int ibyte_endofdata = -1;
       chip_id = -1;
       for (unsigned int ibyte = 0; ibyte < ruchn_stream[iruchn].size(); ibyte++)
@@ -166,6 +168,14 @@ int *oncsSub_idmvtxv0::decode ()
 			  _highest_chip = chip_id; 
 			}
 		    }
+                  else
+		  {
+                    chip_id = MAXCHIPID;
+		    cout << __FILE__ << " " << __LINE__ << " impossible chip ID: " << chip_id
+		         << " encoder " <<  encoder_id << " addr " << address << endl;
+	            // break out of the loop, we can't process this chip
+	            break;
+		  }
 		  status = 0;
                   _header_found[chip_id] = true;
                   _bunchcounter[chip_id] = bunchcounter;
@@ -182,6 +192,14 @@ int *oncsSub_idmvtxv0::decode ()
                         _highest_chip = chip_id; 
                       }
                     }
+                  else
+		  {
+                    chip_id = MAXCHIPID;
+		    cout << __FILE__ << " " << __LINE__ << " impossible chip ID: " << chip_id
+		         << " encoder " <<  encoder_id << " addr " << address << endl;
+	            // break out of the loop, we can't process this chip
+	            break;
+		  }
                   if ( chip_id >=0) _highest_region[chip_id] = 0;
                   ibyte_endofdata = ibyte;
                   _header_found[chip_id] = true;
@@ -201,11 +219,6 @@ int *oncsSub_idmvtxv0::decode ()
 			  cout << __FILE__ << " " << __LINE__ << " impossible row: " << the_row
 			       << " encoder " <<  encoder_id << " addr " << address << endl;
 			}
-		      else if ( the_region > 31) //this should never happen, the_region is checked in region header
-			{
-			  cout << __FILE__ << " " << __LINE__ << " impossible region: " << the_region
-			       << " encoder " <<  encoder_id << " addr " << address << endl;
-			}
 		      else if ( chip_id<0 || chip_id > MAXCHIPID ) //this should never happen, chip_id is checked in chip header
 			{
 			  cout << __FILE__ << " " << __LINE__ << " impossible chip ID: " << chip_id
@@ -214,7 +227,7 @@ int *oncsSub_idmvtxv0::decode ()
 		      else
 			{
 			  int thebit = decode_thebit(the_row, encoder_id, address);
-			  //cout << " row:" << the_row << " col:" << the_region*32 + thebit;
+			  //cout << " row:" << the_row << " col:" << the_region*32 + thebit << endl;
 			  //  cout << __FILE__ << " " << __LINE__ << " the bit " << thebit << endl;
 			  chip_row[chip_id][the_row][the_region] |= ( 1<<thebit);
 			  chip_rowmap[chip_id][the_row] |= ( 1<<the_region);
@@ -238,12 +251,14 @@ int *oncsSub_idmvtxv0::decode ()
                       cout << __FILE__ << " " << __LINE__ << " unexpected word " << hex << (unsigned int) b << dec << " at ibyte " << ibyte << endl;
                       _unexpected_bytes[chip_id]++;
                   }
+		  //cout << __FILE__ << " " << __LINE__ << " data long report, hex:" << hex << address << dec << " enc. id " << encoder_id << " address= " << address << " the_region:" << the_region << " the_chip:" << chip_id << endl;
                   // Loop over the hits in the cluster. The pixel specified by the address always has a hit.
                   // The next 7 pixels (in priority encoder order) have hits if the corresponding bit in this byte is high. 
                   // See ALPIDE manual section 3.4.1 on DATA LONG: page 63.
                   for (int ihit = 0; ihit<8; ihit++)
                   {
-                      if (ihit>0 && !((b >> ihit) & 1)) continue;
+                      if (ihit==0 || ((b >> (ihit-1)) & 1))
+                      {
                       int hit_address = address + ihit;
                       if ( the_region >= 0 && encoder_id >=0 ) 
                         {
@@ -253,11 +268,6 @@ int *oncsSub_idmvtxv0::decode ()
                               cout << __FILE__ << " " << __LINE__ << " impossible row: " << the_row
                                    << " encoder " <<  encoder_id << " addr " << hit_address << endl;
                             }
-		          else if ( the_region > 31) //this should never happen, the_region is checked in region header
-			    {
-			      cout << __FILE__ << " " << __LINE__ << " impossible region: " << the_region
-			           << " encoder " <<  encoder_id << " addr " << address << endl;
-			    }
 		          else if ( chip_id<0 || chip_id > MAXCHIPID ) //this should never happen, chip_id is checked in chip header
 			    {
 			      cout << __FILE__ << " " << __LINE__ << " impossible chip ID: " << chip_id
@@ -266,7 +276,7 @@ int *oncsSub_idmvtxv0::decode ()
                           else
                             {
                               int thebit = decode_thebit(the_row, encoder_id, hit_address);
-                              //cout << " row:" << the_row << " col:" << the_region*32 + thebit;
+                              //cout << " row:" << the_row << " col:" << the_region*32 + thebit << endl;
                               //  cout << __FILE__ << " " << __LINE__ << " the bit " << thebit << endl;
                               chip_row[chip_id][the_row][the_region] |= ( 1<<thebit);
                               chip_rowmap[chip_id][the_row] |= ( 1<<the_region);
@@ -274,6 +284,7 @@ int *oncsSub_idmvtxv0::decode ()
 
                             }
                         }
+                      }
                   }
 		  status = 0;
 		  break;
@@ -294,14 +305,7 @@ int *oncsSub_idmvtxv0::decode ()
 	  else if ( ( b >> 4) == 0xa) // we have a chip header
 	    {
 	      chip_id = ( b & 0xf);
-              if (chip_id > MAXCHIPID)
-		{
-                  chip_id = MAXCHIPID;
-		  cout << __FILE__ << " " << __LINE__ << " impossible chip ID: " << chip_id
-		       << " encoder " <<  encoder_id << " addr " << address << endl;
-	      // break out of the loop, we can't process this chip
-	          break;
-		}
+              header_seen = true;
 	      status = CHIPHEADER;
 	    }
 
@@ -318,6 +322,7 @@ int *oncsSub_idmvtxv0::decode ()
 	  else if ( ( b >> 4) == 0xE) // we have a chip empty frame
 	    {
 	      chip_id = ( b & 0xf);
+              header_seen = true;
 	      status = CHIPEMPTYFRAME;
 	    }
 
@@ -329,7 +334,7 @@ int *oncsSub_idmvtxv0::decode ()
 		  the_region = region_id;
 		  if ( chip_id >=0) _highest_region[chip_id] = region_id;
 		}
-	      else
+	      else //this is impossible since the region ID is 5 bits
 		{
 		  cout << __FILE__ << " " << __LINE__ << " wrong region header, id=  " << hex << region_id << dec << endl;
 		}
@@ -364,6 +369,7 @@ int *oncsSub_idmvtxv0::decode ()
 	      cout << __FILE__ << " " << __LINE__ << " unexpected word " << hex << (unsigned int) b << dec << " at ibyte " << ibyte << endl;
               _unexpected_bytes[chip_id]++;
 	    }
+          if (ibyte==0 && !header_seen) break;//first byte of the ALPIDE stream must be a chip header or chip empty; if not, abort so we don't get confused by bad data
 
 	} // ibyte
 
