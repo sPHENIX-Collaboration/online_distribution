@@ -11,8 +11,10 @@ using namespace std;
 oncsSub_idmvtxv0::oncsSub_idmvtxv0(subevtdata_ptr data)
   :oncsSubevent_w4 (data)
 {
-  _highest_row_overall = -1;
   _is_decoded = 0;
+  _bad_ruchns = 0;
+  _bad_chipids = 0;
+  _highest_row_overall = -1;
   _highest_chip = -1;
   memset ( chip_row, 0, 9*512*32*sizeof(unsigned int));
   memset ( chip_rowmap, 0, 9*512*sizeof(unsigned int));
@@ -128,7 +130,12 @@ int *oncsSub_idmvtxv0::decode ()
       for (int ichnk = 0; ichnk < 3; ichnk++)
 	{
 	  unsigned int ruchn = (unsigned int)d32->d0[ichnk][9];
-	    for ( int ibyte = 0; ibyte < 9; ibyte++)
+            if (ruchn > MAXRUCHN)
+            {
+                _bad_ruchns++;
+                //cout << __FILE__ << " " << __LINE__ << " --- invalid ruchn " << hex << ruchn << " at pos " << pos << dec << endl;
+            }
+            else for ( int ibyte = 0; ibyte < 9; ibyte++)
             {
 	      //cout << __FILE__ << " " << __LINE__ << hex << " --- ruchn " << ruchn << " byte " << (unsigned int) d32->d0[ichnk][ibyte] << dec << endl;
 	      ruchn_stream[ruchn].push_back(d32->d0[ichnk][ibyte]);
@@ -170,9 +177,10 @@ int *oncsSub_idmvtxv0::decode ()
 		    }
                   else
 		  {
-                    chip_id = MAXCHIPID;
-		    cout << __FILE__ << " " << __LINE__ << " impossible chip ID: " << chip_id
-		         << " encoder " <<  encoder_id << " addr " << address << endl;
+                    //chip_id = MAXCHIPID;
+                    _bad_chipids++;
+		    //cout << __FILE__ << " " << __LINE__ << " impossible chip ID: " << chip_id
+		    //     << " encoder " <<  encoder_id << " addr " << address << endl;
 	            // break out of the loop, we can't process this chip
 	            break;
 		  }
@@ -194,9 +202,10 @@ int *oncsSub_idmvtxv0::decode ()
                     }
                   else
 		  {
-                    chip_id = MAXCHIPID;
-		    cout << __FILE__ << " " << __LINE__ << " impossible chip ID: " << chip_id
-		         << " encoder " <<  encoder_id << " addr " << address << endl;
+                    //chip_id = MAXCHIPID;
+                    _bad_chipids++;
+		    //cout << __FILE__ << " " << __LINE__ << " impossible chip ID: " << chip_id
+		    //     << " encoder " <<  encoder_id << " addr " << address << endl;
 	            // break out of the loop, we can't process this chip
 	            break;
 		  }
@@ -248,7 +257,7 @@ int *oncsSub_idmvtxv0::decode ()
 		case DATALONG1:
                   if ( (b & 0x80) != 0) //required to be 0
                   {
-                      cout << __FILE__ << " " << __LINE__ << " unexpected word " << hex << (unsigned int) b << dec << " at ibyte " << ibyte << endl;
+                      //cout << __FILE__ << " " << __LINE__ << " unexpected word " << hex << (unsigned int) b << dec << " at ibyte " << ibyte << endl;
                       _unexpected_bytes[chip_id]++;
                   }
 		  //cout << __FILE__ << " " << __LINE__ << " data long report, hex:" << hex << address << dec << " enc. id " << encoder_id << " address= " << address << " the_region:" << the_region << " the_chip:" << chip_id << endl;
@@ -366,8 +375,9 @@ int *oncsSub_idmvtxv0::decode ()
        
 	  else
 	    {
-	      cout << __FILE__ << " " << __LINE__ << " unexpected word " << hex << (unsigned int) b << dec << " at ibyte " << ibyte << endl;
-              _unexpected_bytes[chip_id]++;
+	      //cout << __FILE__ << " " << __LINE__ << " unexpected word " << hex << (unsigned int) b << dec << " at ibyte " << ibyte << endl;
+              if (chip_id >= 0 && chip_id < MAXCHIPID)
+                _unexpected_bytes[chip_id]++;
 	    }
           if (ibyte==0 && !header_seen) break;//first byte of the ALPIDE stream must be a chip header or chip empty; if not, abort so we don't get confused by bad data
 
@@ -393,7 +403,17 @@ int *oncsSub_idmvtxv0::decode ()
 int oncsSub_idmvtxv0::iValue(const int ich,const char *what)
 {
   decode();
-  if ( strcmp(what,"HIGHEST_CHIP") == 0 )
+  if ( strcmp(what,"BAD_RUCHNS") == 0 )
+  {
+    return _bad_ruchns;
+  }
+
+  else if ( strcmp(what,"BAD_CHIPIDS") == 0 )
+  {
+    return _bad_chipids;
+  }
+
+  else if ( strcmp(what,"HIGHEST_CHIP") == 0 )
   {
     return _highest_chip;
   }

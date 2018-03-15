@@ -27,8 +27,10 @@ public:
 protected:
   int *decode ();
 
-  int _highest_row_overall;
   int _is_decoded;
+  int _bad_ruchns;
+  int _bad_chipids;
+  int _highest_row_overall;
   int _highest_chip;
   int _highest_region[32];
   int _excess_data_bytes;
@@ -37,6 +39,7 @@ protected:
   bool _header_found[32];
   bool _trailer_found[32];
   int _readout_flags[32];
+
   
   unsigned int bunchcounter;
   int chip_id;
