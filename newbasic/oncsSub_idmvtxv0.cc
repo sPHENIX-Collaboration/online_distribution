@@ -12,6 +12,8 @@ oncsSub_idmvtxv0::oncsSub_idmvtxv0(subevtdata_ptr data)
   :oncsSubevent_w4 (data)
 {
   _is_decoded = 0;
+  _unexpected_felix_counter = 0;
+  _bad_ruid = 0;
   _bad_ruchns = 0;
   _bad_chipids = 0;
   _highest_row_overall = -1;
@@ -112,28 +114,41 @@ int *oncsSub_idmvtxv0::decode ()
 
   int the_region = -1;
 
+  int felix_counter = 0;
+
   while ( pos < the_end )
     {
 
       data32 *d32 = ( data32*) pos; 
-      /*
-      if (first)   // we skip the first 10 bytes and start with d1
-	{
-	  c = &d32->d0[0][10];
-	  first =0;
-	}
-      else
-	{
-	  c = d32->d0;
-	}
-      */
-      for (int ichnk = 0; ichnk < 3; ichnk++)
+
+      if (d32->ruid > MAXRUID)
+      {
+        //cout << __FILE__ << " " << __LINE__ << " --- invalid ruid " << hex << (int) d32->ruid << " at pos " << (long) pos << dec << endl;
+        _bad_ruid = d32->ruid;
+        break;
+      }
+      //FELIX counter is 8 bits, max value 256
+      //check that the new counter value is consistent with the previous value (it should have increased by no more than 3, and the amount of the difference is the number of data chunks in this FELIX word)
+      int counter_increment = (d32->counter + 256 - felix_counter)%256;
+      if (counter_increment > 3)
+      {
+        if (d32->counter != 0)
+        {
+          //cout << __FILE__ << " " << __LINE__ << " --- unexpected FELIX counter " << hex << (int) d32->counter << " following previous counter value " << felix_counter << " at pos " << (long) pos << dec << endl;
+          _unexpected_felix_counter = d32->counter;
+        }
+        break;
+      }
+      felix_counter = d32->counter;
+
+      //for (int ichnk = 0; ichnk < 3; ichnk++)
+      for (int ichnk = 0; ichnk < counter_increment; ichnk++)
 	{
 	  unsigned int ruchn = (unsigned int)d32->d0[ichnk][9];
             if (ruchn > MAXRUCHN)
             {
                 _bad_ruchns++;
-                //cout << __FILE__ << " " << __LINE__ << " --- invalid ruchn " << hex << ruchn << " at pos " << pos << dec << endl;
+                cout << __FILE__ << " " << __LINE__ << " --- invalid ruchn " << hex << ruchn << " at pos " << pos << dec << endl;
             }
             else for ( int ibyte = 0; ibyte < 9; ibyte++)
             {
@@ -145,6 +160,13 @@ int *oncsSub_idmvtxv0::decode ()
       pos += sizeof(*d32);
     } // while (pos < the_end)
 
+  //we ignore ruchn 0 (trigger information and padding words) for now
+  /*
+  if (ruchn_stream[0].size()!=9) for ( int iruchn = 0; iruchn < MAXRUCHN+1; iruchn++)
+  {
+    cout << __FILE__ << " " << __LINE__ << " --- ruchn " << iruchn << " has " << ruchn_stream[iruchn].size() << " bytes" << endl;
+  }
+  */
 
   for ( int iruchn = 1; iruchn < MAXRUCHN+1; iruchn++)
     {
@@ -403,7 +425,17 @@ int *oncsSub_idmvtxv0::decode ()
 int oncsSub_idmvtxv0::iValue(const int ich,const char *what)
 {
   decode();
-  if ( strcmp(what,"BAD_RUCHNS") == 0 )
+  if ( strcmp(what,"UNEXPECTED_FELIX_COUNTER") == 0 )
+  {
+    return _unexpected_felix_counter;
+  }
+
+  else if ( strcmp(what,"BAD_RUID") == 0 )
+  {
+    return _bad_ruid;
+  }
+
+  else if ( strcmp(what,"BAD_RUCHNS") == 0 )
   {
     return _bad_ruchns;
   }

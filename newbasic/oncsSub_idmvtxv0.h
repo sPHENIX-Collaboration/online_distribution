@@ -10,7 +10,8 @@ class WINDOWSEXPORT oncsSub_idmvtxv0 : public  oncsSubevent_w4 {
 class  oncsSub_idmvtxv0 : public  oncsSubevent_w4 {
 #endif
 
-#define MAXRUCHN     9
+#define MAXRUID       0
+#define MAXRUCHN      4
 #define MAXCHIPID     9
 public:
   oncsSub_idmvtxv0( subevtdata_ptr);
@@ -28,6 +29,8 @@ protected:
   int *decode ();
 
   int _is_decoded;
+  int _unexpected_felix_counter;
+  int _bad_ruid;
   int _bad_ruchns;
   int _bad_chipids;
   int _highest_row_overall;
