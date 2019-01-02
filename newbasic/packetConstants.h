@@ -47,6 +47,7 @@
 #define ID4EVT    IDOFFSET + 6 
 #define ID2SUP    IDOFFSET + 7 
 #define ID4SCALER IDOFFSET + 8 
+#define IDRTCLOCK IDOFFSET + 9 
 
 // ---------------------------------------------------------------------
 // the next methods are for the hammond/g-2 board.
