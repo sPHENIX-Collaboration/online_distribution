@@ -77,6 +77,10 @@
 #define IDTPCFEEV1     97
 #define IDMVTXV0       98
 
+#define IDTPCFEEV2     99
+
+#define IDVMM3V1      102
+
 
 // the "level 0", meaning the raw untreated FEM data 
 
