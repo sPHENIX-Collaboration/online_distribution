@@ -83,7 +83,7 @@ void  oncsSubevent::identify( OSTREAM& out ) const
   out << std::dec
       << "Packet " << SETW(5) <<  getIdentifier() 
       << " " << SETW(5) << getLength() 
-      << " -1"  << " (ONCS Packet)";
+      << " -1"  << " (sPHENIX Packet) ";
 
   out << SETW(3) << getHitFormat() 
       << " (" << oncs_get_mnemonic( getStructure(), getHitFormat()) << ")" << std::endl;
@@ -279,6 +279,15 @@ oncsSubevent::fillIntArray (int iarr[],
       for (int i=0; i<getLength(); i++) *iarr++ = *from++;
 
       *nwout = getLength();
+    }
+
+  if (strcmp(what,"DATA") ==0)
+    {
+      if (nlen < getLength() -4 ) return -2;
+      int *from = &SubeventHdr->data;
+      for (int i=0; i<getLength() -4; i++) *iarr++ = *from++;
+
+      *nwout = getLength()-4;
     }
   return 0;
 }

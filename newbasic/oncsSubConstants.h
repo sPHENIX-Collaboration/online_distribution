@@ -81,6 +81,8 @@
 
 #define IDVMM3V1      102
 
+#define IDDREAMV0     103
+
 
 // the "level 0", meaning the raw untreated FEM data 
 
