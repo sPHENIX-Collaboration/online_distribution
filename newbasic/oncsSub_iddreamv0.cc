@@ -27,7 +27,7 @@ oncsSub_iddreamv0::oncsSub_iddreamv0(subevtdata_ptr data)
 oncsSub_iddreamv0::~oncsSub_iddreamv0()
 {
 
-
+  if (swapped_array) delete [] swapped_array; 
   
 }
 
