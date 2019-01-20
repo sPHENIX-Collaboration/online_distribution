@@ -235,6 +235,13 @@ noinst_HEADERS = \
 
 pkginclude_HEADERS = $(allheaders) $(msgheaders)
 
+if ! MAKEROOT6
+  ROOT5_MSGDICTS = \
+    msg_dict.C
+ROOT5_EVENTDICTS = \
+    event_dict.C
+endif
+
 CLEANFILES = \
   ioselect.h \
   event_dict.C \
@@ -300,7 +307,10 @@ libmessage_la_SOURCES = \
   strnstr.cc 
 
 
-libEvent_la_SOURCES =  event_dict.C 
+libEvent_la_SOURCES =  \
+  $(ROOT5_EVENTDICTS)
+#event_dict.C 
+
 libEvent_la_LIBADD = libNoRootEvent.la libRootmessage.la  @ROOTGLIBS@  -lz @LZOLIB@
 
 libNoRootEvent_la_SOURCES = $(allsources) 
@@ -332,7 +342,9 @@ endif
 if LINUX
 
 libRootmessage_la_SOURCES = \
-  msg_dict.C
+  $(ROOT5_MSGDICTS)
+
+#  msg_dict.C
 
 msg_dict.C : \
   msg_control.h \
