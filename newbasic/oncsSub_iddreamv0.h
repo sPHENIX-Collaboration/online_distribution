@@ -37,6 +37,12 @@ protected:
 
   int _is_decoded;
 
+  int _feu_id;
+  int _feu_P;  // pedestal subtraction on 
+  int _feu_C;  // common noise suppression
+  int _feu_Z;  // zero-suppressed format
+
+  
   unsigned short *swapped_array;
   
 };
