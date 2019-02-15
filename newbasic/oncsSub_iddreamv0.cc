@@ -170,7 +170,7 @@ void  oncsSub_iddreamv0::dump ( OSTREAM& os )
       if ( iValue(dream,"DREAM_ENABLED") )
 	{
 	  os << "                                      ---- Dream chip " << dream << " ---- " << endl;
-	  os << " ch->" ;
+	  os << " ch-> " ;
 	  for (int channel = 0; channel < 32; channel ++)
 	    {
 	      os << setw(5) << channel;
@@ -199,7 +199,7 @@ void  oncsSub_iddreamv0::dump ( OSTREAM& os )
 		  os << setw(5) << iValue(dream,channel, sample);
 		}
 	      os << endl;
-	      os << "     - ";
+	      os << "    - ";
 	      for (int channel = 32; channel < 64; channel ++)
 		{
 		  os << setw(5) << iValue(dream,channel, sample);
