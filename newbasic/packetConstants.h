@@ -3,7 +3,7 @@
 
 
 /* Misc. values  */
-#define MAX_OUTLENGTH 40000
+#define MAX_OUTLENGTH 100000
 
 // define some offset which takes us out well > 30,000 for our ID;s
 #define IDOFFSET    30000
