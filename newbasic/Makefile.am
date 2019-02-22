@@ -12,6 +12,40 @@ include_HEADERS = oncsdefs.h \
 else
 # all definitions
 
+installedheaders = \
+  generalDefinitions.h \
+  event_io.h \
+  ioselect.h \
+  Event.h \
+  oncsEvent.h \
+  oncsEvtConstants.h \
+  oncsEvtStructures.h \
+  oncsStructures.h \
+  oncsSubConstants.h \
+  EventTypes.h \
+  Eventiterator.h \
+  EvtConstants.h \
+  BufferConstants.h \
+  phenixTypes.h \
+  testEventiterator.h \
+  fileEventiterator.h \
+  listEventiterator.h \
+  dpipe_filter.h \
+  buffer.h \
+  gzbuffer.h \
+  lzobuffer.h \
+  prdfBuffer.h \
+  oBuffer.h \
+  oEvent.h \
+  ogzBuffer.h \
+  olzoBuffer.h \
+  oamlBuffer.h \
+  oncsBuffer.h \
+  oncsEventiterator.h \
+  rcdaqEventiterator.h \
+  packet.h \
+  packetConstants.h
+
 allheaders = \
   ioselect.h \
   event_io.h \
@@ -235,7 +269,7 @@ noinst_HEADERS = \
   eventLinkDef.h \
   all.h
 
-pkginclude_HEADERS = $(allheaders) $(msgheaders)
+pkginclude_HEADERS = $(installedheaders) $(msgheaders)
 
 if ! MAKEROOT6
   ROOT5_MSGDICTS = \
