@@ -5,9 +5,8 @@ PACKAGE = pmonitor
 include_HEADERS = \
   pmonitor.h \
   pmonstate.h \
-  pmondisplay.h \
-  pmongui.h \
   pMutex.h
+
 
 LINKFILE = pmonitorLinkDef.h
 
@@ -34,11 +33,8 @@ endif
 libpmonitor_la_SOURCES = \
   $(ROOT5_DICTS) \
   pmonitor.cc \
-  pmongui.cc \
   pmonitor.h \
   pmonstate.h \
-  pmondisplay.h \
-  pmongui.h \
   pMutex.cc
 
 
@@ -69,5 +65,5 @@ pmonitor_dict.C: pmonitor.h pmonstate.h pmondisplay.h pmongui.h $(LINKFILE)
 bin_SCRIPTS = writePmonProject.pl
 
 clean-local:
-	rm *_dict.*
+	rm -f *_dict.*
 	rm -f *.pcm
