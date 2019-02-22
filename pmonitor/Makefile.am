@@ -59,7 +59,7 @@ libpmonitor_la_LIBADD = \
 endif
 
 
-pmonitor_dict.C: pmonitor.h pmonstate.h pmondisplay.h pmongui.h $(LINKFILE)
+pmonitor_dict.C: pmonitor.h pmonstate.h  $(LINKFILE)
 	$(ROOTCINT) -f $@ @CINTDEFS@ -c $(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $^
 
 bin_SCRIPTS = writePmonProject.pl
