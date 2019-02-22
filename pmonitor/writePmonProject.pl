@@ -74,6 +74,7 @@ print HH "_H__\n";
 
 print HH <<EOF;
 
+#include <pmonitor/pmonitor.h>
 #include <Event/Event.h>
 #include <Event/EventTypes.h>
 
@@ -130,6 +131,11 @@ EOF
 
 close MF;
 
+if (! -e Makefile)
+{
+    symlink ("$projectname.Makefile", "Makefile");
+}
+	     
 $lfname = $projectname . "LinkDef.h";
 open (LF, "> $lfname");
 print LF <<EOF;
