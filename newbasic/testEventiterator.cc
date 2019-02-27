@@ -10,8 +10,11 @@
 
 #include "testEventiterator.h"
 #include "oBuffer.h"
-#include <stdlib.h>
 
+#include <stdlib.h>
+#include <iostream>
+using namespace std;
+	    
 #include "A_Event.h"
 #include "Cframe.h"
 #include "frameRoutines.h"
@@ -20,16 +23,20 @@
 #define EVTLENGTH 500
 
 class oBuffer;
+std::normal_distribution<double> R;
 
 testEventiterator::~testEventiterator()
 {
-  delete R;
-}
 
+  //  delete R;
+}
 testEventiterator::testEventiterator()
 {
-  R = new simpleRandom(876565);
+  //  R = new std::normal_distribution<double>(0,1);
+  //cout << __FILE__ << "  " << __LINE__ <<  endl;
   current_event = 0;
+  std::normal_distribution<double>::param_type t(0,10);
+  R.param(t);
 }
 
 
@@ -117,17 +124,10 @@ testEventiterator::getNextEvent()
 
   makeUnstructPacket (packetstart, EVTLENGTH, 1003, 4, ID4EVT);
 
-#ifndef WIN32
-  rdata[0] = int(R->gauss(0.,10.));
-  rdata[1] = int(R->gauss(0.,100.));
-  rdata[2] = int(R->gauss(0.,1000.));
-  rdata[3] = int(R->gauss(0.,10000.));
-#else
-  rdata[0] = 10 * rand();
-  rdata[1] = 100 * rand();
-  rdata[2] = 1000 * rand();
-  rdata[3] = 10000 * rand();
-#endif
+  rdata[0] = R(rgenerator);
+  rdata[1] = R(rgenerator) * 10;
+  rdata[2] = R(rgenerator) * 100;
+  rdata[3] = R(rgenerator) * 1000;
 
   packetlength = storePacketHits (packetstart, EVTLENGTH, 
                    0, (BYTE*) rdata, 4, 0);
