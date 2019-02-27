@@ -2,6 +2,11 @@
 #define __ONCSSUB_IDDREAMV0_H__
 
 #include "oncsSubevent.h"
+#include "vector"
+#include "map"
+
+#define MAX_FEU 8
+
 
 #ifndef __CINT__
 class WINDOWSEXPORT oncsSub_iddreamv0 : public  oncsSubevent_w4 {
@@ -23,24 +28,36 @@ public:
 
 protected:
   
-  int *decode (int *);
-  int decode_payload ( unsigned short *d, const int size);
-  int decode_dream( unsigned short *d, const int size, const unsigned int sample_nr);
+  struct FEU_decoded_data
+  {
+    int _feu_id;
+    int _feu_P;  // pedestal subtraction on 
+    int _feu_C;  // common noise suppression
+    int _feu_Z;  // zero-suppressed format
 
+    int _nr_dreams;
+    int _nr_samples;
+    int _dream_enabled[8];
+    int samples [8][64][255];
+    unsigned long long  cellids [8][255];
+    std::vector<short> feu_rawdata;
+  };
   
-  int samples [8][64][255];
-  unsigned long long  cellids [8][255];
 
-  int _nr_dreams;
-  int _nr_samples;
-  int _dream_enabled[8];
+
+
+  int *decode ( int *);
+  int decode_payload (FEU_decoded_data *fd);
+  int decode_dream( FEU_decoded_data *fd, const int offset, const int size, const unsigned int sample_nr);
+
+  std::map<int,struct FEU_decoded_data *> feu_map; 
+
+
+    
+  int _nr_feus;
 
   int _is_decoded;
 
-  int _feu_id;
-  int _feu_P;  // pedestal subtraction on 
-  int _feu_C;  // common noise suppression
-  int _feu_Z;  // zero-suppressed format
 
   
   unsigned short *swapped_array;
