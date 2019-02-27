@@ -9,7 +9,6 @@
 #pragma link C++ function pcontrol;
 #pragma link C++ function pexitstatus;
 #pragma link C++ function pfileopen;
-#pragma link C++ function pgui;
 #pragma link C++ function phelp;
 #pragma link C++ function phsave;
 #pragma link C++ function pidentify;
