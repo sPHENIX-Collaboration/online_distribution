@@ -32,6 +32,7 @@ installedheaders = \
   listEventiterator.h \
   dpipe_filter.h \
   buffer.h \
+  simpleRandom.h \
   gzbuffer.h \
   lzobuffer.h \
   prdfBuffer.h \
