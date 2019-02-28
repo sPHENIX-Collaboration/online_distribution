@@ -17,6 +17,7 @@ installedheaders = \
   event_io.h \
   ioselect.h \
   Event.h \
+  A_Event.h \
   oncsEvent.h \
   oncsEvtConstants.h \
   oncsEvtStructures.h \
@@ -28,6 +29,7 @@ installedheaders = \
   EvtStructures.h \
   BufferConstants.h \
   phenixTypes.h \
+  phenixOnline.h \
   testEventiterator.h \
   fileEventiterator.h \
   listEventiterator.h \
@@ -46,7 +48,24 @@ installedheaders = \
   oncsEventiterator.h \
   rcdaqEventiterator.h \
   packet.h \
-  packetConstants.h
+  packetConstants.h \
+  packet_hbd_fpgashort.h \
+  packet_w124.h \
+  packet_A.h \
+  packetPublic.h \
+  packetV1Public.h \
+  errorBlock.h \
+  packetRoutines.h \
+  decoding_routines.h \
+  packetHeaders.h \
+  Cpacket.h \
+  packetHdr.h \
+  packetHdrV1.h \
+  formatError.h \
+  dataBlock.h \
+  framePackets.h \
+  framePublic.h \
+  frameV1Public.h
 
 allheaders = \
   ioselect.h \
