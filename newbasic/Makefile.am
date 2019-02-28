@@ -25,6 +25,7 @@ installedheaders = \
   EventTypes.h \
   Eventiterator.h \
   EvtConstants.h \
+  EvtStructures.h \
   BufferConstants.h \
   phenixTypes.h \
   testEventiterator.h \
