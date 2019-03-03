@@ -40,14 +40,16 @@ protected:
     int _dream_enabled[8];
     int samples [8][64][255];
     unsigned long long  cellids [8][255];
-    std::vector<short> feu_rawdata;
+    //  std::vector<short> feu_rawdata;
   };
   
 
 
 
   int *decode ( int *);
-  int decode_payload (FEU_decoded_data *fd);
+  //  int decode_payload (FEU_decoded_data *fd);
+  int decode_payload ( unsigned short *d, const int size);
+  int decode_dream( FEU_decoded_data *fd, unsigned short *d, const int size, const unsigned int sample_nr);
   int decode_dream( FEU_decoded_data *fd, const int offset, const int size, const unsigned int sample_nr);
 
   std::map<int,struct FEU_decoded_data *> feu_map; 
