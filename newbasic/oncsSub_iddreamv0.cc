@@ -23,7 +23,14 @@ oncsSub_iddreamv0::~oncsSub_iddreamv0()
 {
 
   if (swapped_array) delete [] swapped_array; 
-  
+
+  std::map <int,  FEU_decoded_data *>::iterator it;
+      
+  for ( it=feu_map.begin() ; it != feu_map.end(); ++it)
+    {
+      FEU_decoded_data *fd = it->second;
+      delete fd;
+    }
 }
 
 
