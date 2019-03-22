@@ -6,4 +6,9 @@
 #define EVT_HEXADECIMAL 2
 #define EVT_OCTAL       3
 
+// EVT_RAW dumps the packet payload to stdout
+#define EVT_RAW         4
+// EVT_RAW dumps the packet payload to stdout, including header
+#define EVT_RAW_WH      5
+
 #endif
