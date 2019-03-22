@@ -119,6 +119,8 @@ void exithelp()
   COUT << " -g use generic dump" << std::endl;
   COUT << " -d numbers are std::decimal (default std::hex) for generic dump" << std::endl;
   COUT << " -o numbers are octal (default std::hex) for generic dump" << std::endl;
+  COUT << " -s for a generic dump, send packet raw payloadc to stdout for further manipulation" << std::endl;
+  COUT << " -x like -s, but also include the packet header" << std::endl;
   COUT << " -v verbose" << std::endl;
   COUT << " -h this message" << std::endl << std::endl;
   exit(0);
@@ -204,7 +206,7 @@ main(int argc, char *argv[])
 
   std::vector<int> packetSelection;
 
-  while ((c = getopt(argc, argv, "n:c:e:s:p:t:idfrghIFTOHEv")) != EOF)
+  while ((c = getopt(argc, argv, "n:c:e:p:t:idsxfrghIFTOHEv")) != EOF)
     switch (c) 
       {
       case 'e':
@@ -219,13 +221,11 @@ main(int argc, char *argv[])
 	if ( !sscanf(optarg, "%d", &repeatcount) ) exitmsg();
 	break;
 
-      case 's':
       case 'p':
 	//	if ( !sscanf(optarg, "%d", &subeventid) ) exitmsg();
 	if ( rangeParser ( optarg, packetSelection) ) exitmsg();
 	subeventid=1;  // yes, select
 	break;
-
 
       case 't':
 	if (*optarg == 'S' || *optarg == 's' )
@@ -299,6 +299,14 @@ main(int argc, char *argv[])
 
       case 'd':
 	dumpstyle = EVT_DECIMAL;
+	break;
+
+      case 's':
+	dumpstyle = EVT_RAW;
+	break;
+
+      case 'x':
+	dumpstyle = EVT_RAW_WH;
 	break;
 
       case 'v':   // verbose
