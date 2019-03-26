@@ -138,7 +138,7 @@ int Packet_iddigitizerv2::decode ()
       // so for module 0, we substract 0, module 1, 6 and module 2, 12, ...
       int tag = realtag - 6*module;
       
-      int value = k[index] & 0xffff;
+      int value = k[index] & 0x3fff;
 
       //no quite done... we now have to cut out the extra header words
       // so if we have one of those 6 words, we skip

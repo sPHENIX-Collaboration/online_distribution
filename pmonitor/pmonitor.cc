@@ -11,8 +11,8 @@
 
 #include "pmonitor.h"
 #include "pmonstate.h"
-#include "pmondisplay.h"
-#include "pmongui.h"
+//#include "pmondisplay.h"
+//#include "pmongui.h"
 
 #include <TThread.h>
 #include <TGClient.h>
@@ -24,7 +24,7 @@
 #endif
 
 static Eventiterator *theIterator = 0;
-static pmongui *theGui = 0;
+//static pmongui *theGui = 0;
 
 int stopcondition;
 int displaystopcondition;
@@ -32,7 +32,7 @@ int displaystopcondition;
 static pmonstate theState;
 
 static TThread *main_thread = 0;
-static TThread *display_thread = 0;
+//static TThread *display_thread = 0;
 
 static pMutex TM;
 static pMutex runningTM;
@@ -73,8 +73,8 @@ int ptestopen()
 
   theIterator = new testEventiterator();
   theState.setTestOpened();
-  if (theGui)
-    theGui->setStreamLabel(theIterator->getIdTag() );
+  //  if (theGui)
+  //   theGui->setStreamLabel(theIterator->getIdTag() );
   return 0;
 }
 
@@ -104,8 +104,8 @@ int pfileopen(const char * filename)
       return 2;
     }
   theState.setFileOpened(filename);
-  if (theGui)
-    theGui->setStreamLabel(theIterator->getIdTag() );
+  //  if (theGui)
+  //  theGui->setStreamLabel(theIterator->getIdTag() );
   return 0;
 }
 //-----------------------------------------
@@ -127,8 +127,8 @@ int poncsopen(const char * filename)
       return 2;
     }
   theState.setFileOpened(filename);
-  if (theGui)
-    theGui->setStreamLabel(theIterator->getIdTag() );
+  //  if (theGui)
+  //  theGui->setStreamLabel(theIterator->getIdTag() );
   return 0;
 }
 //-----------------------------------------
@@ -170,8 +170,8 @@ int rcdaqopen(const char * ip)
       return 2;
     }
   theState.setRCDAQOpened(host.c_str());
-  if (theGui)
-    theGui->setStreamLabel(theIterator->getIdTag() );
+  //if (theGui)
+  //  theGui->setStreamLabel(theIterator->getIdTag() );
   return 0;
 }
 //-----------------------------------------
@@ -193,8 +193,8 @@ int plistopen(const char * filename)
       return 2;
     }
   theState.setFileOpened(filename);
-  if (theGui)
-    theGui->setStreamLabel(theIterator->getIdTag() );
+  //if (theGui)
+  //  theGui->setStreamLabel(theIterator->getIdTag() );
   return 0;
 }
 
@@ -249,12 +249,12 @@ void pprocess (void * ptr)
   evt = theIterator->getNextEvent();
   int ncount = 0;
 
-  if (theGui)
-    theGui->setStatusLabel("Running");
+  // if (theGui)
+  //  theGui->setStatusLabel("Running");
   while (evt )
     {
-      if (theGui)
-        theGui->setEvtnrLabel(evt->getEvtSequence() );
+      // if (theGui)
+      //  theGui->setEvtnrLabel(evt->getEvtSequence() );
       if (theState.isIdentifyFlag())
         evt->identify();
       theState.incrementNoevt();
@@ -267,8 +267,8 @@ void pprocess (void * ptr)
         {
           runningTM.Release();
           theState.clearRunning();
-          if (theGui)
-            theGui->setStatusLabel("Stopped");
+          //if (theGui)
+          //  theGui->setStatusLabel("Stopped");
           return ;
         }
       if ( ( nevents > 0 && ++ncount >= nevents) )
@@ -278,10 +278,10 @@ void pprocess (void * ptr)
   theState.clearRunning();
   if (!evt)
     pclose();
-  if (theGui)
-    theGui->setEvtnrLabel(0);
-  if (theGui)
-    theGui->setStatusLabel("Stopped");
+  //if (theGui)
+  //  theGui->setEvtnrLabel(0);
+  //if (theGui)
+  //  theGui->setStatusLabel("Stopped");
   runningTM.Release();
   return ;
 }
@@ -372,8 +372,8 @@ int pstop()
     }
 
   stopcondition = 1;
-  if (theGui)
-    theGui->setStatusLabel("Stopped");
+  //if (theGui)
+  //  theGui->setStatusLabel("Stopped");
   return 0;
 }
 
@@ -396,8 +396,8 @@ int pclose()
   delete theIterator;
   theIterator = 0;
   theState.clearOpened();
-  if (theGui)
-    theGui->setStreamLabel("No stream open");
+  //if (theGui)
+  //  theGui->setStreamLabel("No stream open");
 
   return 0;
 }
@@ -406,7 +406,9 @@ int mylock = 0;
 int plock()
 {
   if (!mylock)
-    pthread_mutex_init(&pmonmutex, NULL);
+    {
+      pthread_mutex_init(&pmonmutex, NULL);
+    }
   if (mylock)
     {
       cout << "Locked already" << endl;
@@ -440,110 +442,110 @@ int pwait()
 
 
 
-int timeinterval;
-void pdisplay (void * ptr)
-{
+// int timeinterval;
+// void pdisplay (void * ptr)
+// {
 
 
-  char string[40];
-  TThread::Lock();
-  pmondisplay *pm = new pmondisplay();
-  TThread::UnLock();
+//   char string[40];
+//   TThread::Lock();
+//   pmondisplay *pm = new pmondisplay();
+//   TThread::UnLock();
 
-  int seconds = timeinterval;
-  displaystopcondition = 0;
+//   int seconds = timeinterval;
+//   displaystopcondition = 0;
 
-  while ( displaystopcondition == 0 )
-    {
-      if (theState.streamOpened() )
-        {
-          char *c = string;
-          for (int i = 0; i++ < 40; *c++ = 0)
-            ;
-          ostream *os = new ostringstream(string);
-          theIterator->identify(*os);
-          cout << "---" << string << endl;
-          delete os;
-        }
-      else
-        {
-          strcpy(string, "none");
-        }
-      TThread::Lock();
-      pm->setStream(string);
+//   while ( displaystopcondition == 0 )
+//     {
+//       if (theState.streamOpened() )
+//         {
+//           char *c = string;
+//           for (int i = 0; i++ < 40; *c++ = 0)
+//             ;
+//           ostream *os = new ostringstream(string);
+//           theIterator->identify(*os);
+//           cout << "---" << string << endl;
+//           delete os;
+//         }
+//       else
+//         {
+//           strcpy(string, "none");
+//         }
+//       TThread::Lock();
+//       pm->setStream(string);
 
-      pm->setEvtnr(theState.getNoevt());
-      pm->setStatus(theState.isRunning());
-      pm->Update();
-      TThread::UnLock();
-      sleep(seconds);
-    }
+//       pm->setEvtnr(theState.getNoevt());
+//       pm->setStatus(theState.isRunning());
+//       pm->Update();
+//       TThread::UnLock();
+//       sleep(seconds);
+//     }
 
-  TThread::Lock();
-  delete pm;
-  TThread::UnLock();
-
-
-  return ;
-}
+//   TThread::Lock();
+//   delete pm;
+//   TThread::UnLock();
 
 
-//-----------------------------------------
+//   return ;
+// }
 
-int pcontrol ()
-{
-  pcontrol(10);
-  return 0;
-}
 
-int pcontrol (const int seconds)
-{
-  if (!display_thread)
-    {
-      display_thread = new TThread("Display", pdisplay);
-    }
-  timeinterval = seconds;
-  display_thread->Run();
-  return 0;
-}
+// //-----------------------------------------
 
-const char *pname()
-{
+// int pcontrol ()
+// {
+//   pcontrol(10);
+//   return 0;
+// }
 
-  if (! theState.isRunning() )
-    {
-      return " ";
-    }
-  return theIterator->getCurrentFileName();
+// int pcontrol (const int seconds)
+// {
+//   if (!display_thread)
+//     {
+//       display_thread = new TThread("Display", pdisplay);
+//     }
+//   timeinterval = seconds;
+//   display_thread->Run();
+//   return 0;
+// }
 
-}
+// const char *pname()
+// {
 
-int pgui ()
-{
-  if (theGui)
-    {
-      return -1;
-    }
-  theGui = new pmongui(gClient->GetRoot(), 400, 120 );
-  return 0;
-}
+//   if (! theState.isRunning() )
+//     {
+//       return " ";
+//     }
+//   return theIterator->getCurrentFileName();
 
-int prmgui ()
-{
-  if (!theGui)
-    {
-      return -1;
-    }
-  delete theGui;
-  theGui = 0;
-  return 0;
-}
+// }
 
-int phsave (const char *filename)
-{
+// int pgui ()
+// {
+//   if (theGui)
+//     {
+//       return -1;
+//     }
+//   theGui = new pmongui(gClient->GetRoot(), 400, 120 );
+//   return 0;
+// }
 
-      return -1;
-}
+// int prmgui ()
+// {
+//   if (!theGui)
+//     {
+//       return -1;
+//     }
+//   delete theGui;
+//   theGui = 0;
+//   return 0;
+// }
+
+// int phsave (const char *filename)
+// {
+
+//       return -1;
+// }
 
 void phelp()
 {
@@ -568,3 +570,97 @@ void phelp()
   cout << "--" << endl;
 
 }
+
+
+unsigned int stop_display = 0;
+
+struct threadargument
+{
+  TVirtualPad *thePad;
+  unsigned int refreshinterval;
+};
+
+pMutex mondisplay_started;
+
+static TThread *mon_thread = 0;
+
+unsigned int refreshinterval = 5;
+unsigned int stop_update = 0;
+
+void update_process (void * ptr)
+{
+  int highest_subpad = 0;
+
+  // our argument
+  threadargument *ta = ( threadargument *) ptr; 
+
+  TVirtualPad *myPad = ta->thePad;
+  unsigned int my_refreshinterval = ta->refreshinterval;
+
+  // and done with it.
+  delete ta;
+
+  time_t last_time = time(0) + my_refreshinterval + 1;  //force an update on start
+
+  TVirtualPad * s = 0;
+  int i;
+
+  for ( i = 0; i < 128; i++)
+    {
+      if ( s == myPad->cd(i)) break;
+      s = myPad->cd(i);
+    }
+  highest_subpad = i-1;
+
+
+  while ( !stop_update)
+    {
+      time_t x = time(0);
+      if ( x - last_time > my_refreshinterval)
+	{
+	  last_time = x;
+	  
+	  for ( i = 0; i <= highest_subpad; i++)
+	    {
+	      s = myPad->cd(i);
+	      s->Modified();
+	      s->Update();
+	    }
+	  sleep(1);
+	}
+    }
+  
+}
+
+
+void pupdate(TVirtualPad * pad, const unsigned int refresh)
+{
+
+#ifdef HAVE_ROOT6
+  // this structure is getting deleted in the thread after
+  // we got everytthing off it. 
+  threadargument *ta = new threadargument;
+  
+  // parameters for the thread - the pad, and the waitinterval
+  ta->thePad = pad;
+  ta->refreshinterval = refresh;
+
+  stop_update = 0;
+  mon_thread = new TThread ( update_process, ta);
+  mon_thread->Run();
+#else
+  cout << "this is implemented in root v6 only" << endl; 
+#endif
+  
+}
+
+void pend_update()
+{  
+#ifdef HAVE_ROOT6
+  stop_update = 1;
+#else
+  cout << "this is implemented in root v6 only" << endl; 
+#endif
+
+}
+

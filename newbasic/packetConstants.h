@@ -3,7 +3,7 @@
 
 
 /* Misc. values  */
-#define MAX_OUTLENGTH 40000
+#define MAX_OUTLENGTH 100000
 
 // define some offset which takes us out well > 30,000 for our ID;s
 #define IDOFFSET    30000
@@ -47,6 +47,7 @@
 #define ID4EVT    IDOFFSET + 6 
 #define ID2SUP    IDOFFSET + 7 
 #define ID4SCALER IDOFFSET + 8 
+#define IDRTCLOCK IDOFFSET + 9 
 
 // ---------------------------------------------------------------------
 // the next methods are for the hammond/g-2 board.
