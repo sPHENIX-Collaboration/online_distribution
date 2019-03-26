@@ -307,6 +307,11 @@ int oncsSub_iddreamv0::decode_payload ( unsigned short *d, const int size)
 	      //	      cout << __FILE__ << " " << __LINE__ << " new feu_id= " << feu_id << " added" << endl;
 	      feu_map[feu_id] = fd = new FEU_decoded_data;
 	      fd->_feu_id = feu_id;
+	      fd->_feu_P = 0;
+	      fd->_feu_C = 0;
+	      fd->_feu_Z = 0;
+	      fd->_nr_samples = 0;
+	      fd->_nr_dreams = 0;
 	      memset (fd->samples, 0,  8*64*255*sizeof(int) );
 	      memset (fd->cellids, 0,  8*64*sizeof(unsigned long long) );
 	    }
