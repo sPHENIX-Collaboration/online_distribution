@@ -10,13 +10,18 @@ class WINDOWSEXPORT oncsSub_idmvtxv0 : public  oncsSubevent_w4 {
 class  oncsSub_idmvtxv0 : public  oncsSubevent_w4 {
 #endif
 
-#define MAXRUID       0
-#define MAXRUCHN      4
+#define MAXRUID       1
+#define RUHEADER      0xE0
+#define RUTRAILER     0xF0
+#define MAXRUCHN      28
 #define MAXCHIPID     9
 public:
   oncsSub_idmvtxv0( subevtdata_ptr);
   ~oncsSub_idmvtxv0();
 
+  //ichip, what -> event or chip info
+  //ichip, region, row -> hit mask (indicates pixels with hits in given 32-pix block)
+  //ichip, row -> row map (indicates 32-pix blocks with hits in given row)
   int    iValue(const int ich, const char *what);
   //int    iValue(const int RU, const int chip, const char *);
   int    iValue(const int chip, const int region, const int row);
@@ -35,27 +40,23 @@ protected:
   int _bad_chipids;
   int _highest_row_overall;
   int _highest_chip;
-  int _highest_region[32];
   int _excess_data_bytes;
-  int _unexpected_bytes[32];
-  int _bunchcounter[32];
-  bool _header_found[32];
-  bool _trailer_found[32];
-  int _readout_flags[32];
-
-  
-  unsigned int bunchcounter;
-  int chip_id;
-  unsigned int region_id;
-  unsigned int encoder_id;
+  int _chip_id[MAXRUCHN+1];
+  int _highest_region[MAXRUCHN+1];
+  int _unexpected_bytes[MAXRUCHN+1];
+  int _bunchcounter[MAXRUCHN+1];
+  bool _header_found[MAXRUCHN+1];
+  bool _trailer_found[MAXRUCHN+1];
+  int _readout_flags[MAXRUCHN+1];
 
   // this is one "row" of 32 pixels
-  unsigned int chip_row[MAXCHIPID][512][32];
-  unsigned int chip_rowmap[MAXCHIPID][512];
+  unsigned int chip_row[MAXRUCHN+1][512][32];
+  unsigned int chip_rowmap[MAXRUCHN+1][512];
 
 };
 
 int decode_thebit (int the_row, int encoder_id, int address); //helper function to decode the column number
+void print_stuff(OSTREAM& out, unsigned int data, int width, int shift, bool blank = false);
 
 
 #endif /* __ONCSSUB_IDMVTXV0_H__ */

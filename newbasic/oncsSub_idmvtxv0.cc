@@ -20,8 +20,9 @@ oncsSub_idmvtxv0::oncsSub_idmvtxv0(subevtdata_ptr data)
   _highest_chip = -1;
   memset ( chip_row, 0, 9*512*32*sizeof(unsigned int));
   memset ( chip_rowmap, 0, 9*512*sizeof(unsigned int));
-  for ( int i = 0; i < 32; i++)
+  for ( int i = 0; i < MAXRUCHN+1; i++)
   {
+      _chip_id[i] = -1;
       _highest_region[i] = -1;
       _unexpected_bytes[i] = 0;
       _bunchcounter[i] = -1;
@@ -145,10 +146,33 @@ int *oncsSub_idmvtxv0::decode ()
       for (int ichnk = 0; ichnk < counter_increment; ichnk++)
 	{
 	  unsigned int ruchn = (unsigned int)d32->d0[ichnk][9];
-            if (ruchn > MAXRUCHN)
+          if (ruchn == RUHEADER)
+          {
+                //cout << __FILE__ << " " << __LINE__ << " --- RU header " << hex << ruchn << ", full RU word: ";
+                //for (int ibyte=9;ibyte>=0;ibyte--)
+                //{
+                    //cout << setfill('0') << setw(2) << hex << (unsigned int) d32->d0[ichnk][ibyte] << " ";
+                //}
+                //cout << setfill(' ') << setw(0) << dec << endl;
+          }
+          else if (ruchn == RUTRAILER)
+          {
+                //cout << __FILE__ << " " << __LINE__ << " --- RU trailer " << hex << ruchn << ", full RU word: ";
+                //for (int ibyte=9;ibyte>=0;ibyte--)
+                //{
+                    //cout << setfill('0') << setw(2) << hex << (unsigned int) d32->d0[ichnk][ibyte] << " ";
+                //}
+                //cout << setfill(' ') << setw(0) << dec << endl;
+          }
+          else if (ruchn > MAXRUCHN)
             {
                 _bad_ruchns++;
-                cout << __FILE__ << " " << __LINE__ << " --- invalid ruchn " << hex << ruchn << " at pos " << pos << dec << endl;
+                cout << __FILE__ << " " << __LINE__ << " --- invalid ruchn " << hex << ruchn << ", full RU word: ";
+                for (int ibyte=9;ibyte>=0;ibyte--)
+                {
+                    cout << setfill('0') << setw(2) << hex << (unsigned int) d32->d0[ichnk][ibyte] << " ";
+                }
+                cout << setfill(' ') << setw(0) << dec << endl;
             }
             else for ( int ibyte = 0; ibyte < 9; ibyte++)
             {
@@ -162,24 +186,24 @@ int *oncsSub_idmvtxv0::decode ()
 
   //we ignore ruchn 0 (trigger information and padding words) for now
   /*
-  if (ruchn_stream[0].size()!=9) for ( int iruchn = 0; iruchn < MAXRUCHN+1; iruchn++)
+  if (ruchn_stream[0].size()!=9) for ( int ruchn = 0; ruchn < MAXRUCHN+1; ruchn++)
   {
-    cout << __FILE__ << " " << __LINE__ << " --- ruchn " << iruchn << " has " << ruchn_stream[iruchn].size() << " bytes" << endl;
+    cout << __FILE__ << " " << __LINE__ << " --- ruchn " << ruchn << " has " << ruchn_stream[ruchn].size() << " bytes" << endl;
   }
   */
 
-  for ( int iruchn = 1; iruchn < MAXRUCHN+1; iruchn++)
+  for ( int ruchn = 1; ruchn < MAXRUCHN+1; ruchn++)
     {
 
       bool header_seen=false;
       int status = 0;
       int ibyte_endofdata = -1;
-      chip_id = -1;
-      for (unsigned int ibyte = 0; ibyte < ruchn_stream[iruchn].size(); ibyte++)
+      unsigned int encoder_id;
+      for (unsigned int ibyte = 0; ibyte < ruchn_stream[ruchn].size(); ibyte++)
 	{
-	  b = ruchn_stream[iruchn].at(ibyte);
+	  b = ruchn_stream[ruchn].at(ibyte);
 
-	  //cout << __FILE__ << " " << __LINE__ << " --- ruchn " << hex << iruchn << " next value " << (unsigned int)  b << dec << " status:" << status << endl;
+	  //cout << __FILE__ << " " << __LINE__ << " --- ruchn " << hex << ruchn << " next value " << (unsigned int)  b << dec << " status:" << status << endl;
 	  
 	  if (status) // we mop up what we started in the last round -
 	              // these are all cases with more than one byte
@@ -188,54 +212,28 @@ int *oncsSub_idmvtxv0::decode ()
 		{
 		case CHIPHEADER:
 		  
-		  bunchcounter = b;
-		  //cout << __FILE__ << " " << __LINE__ << " chip header, chip id= " << chip_id << " bunchctr= " << hex << bunchcounter << dec << endl;
-		  if ( chip_id < MAXCHIPID ) 
-		    {
-		      if ( (int)chip_id > _highest_chip) 
-			{
-			  _highest_chip = chip_id; 
-			}
-		    }
-                  else
-		  {
-                    //chip_id = MAXCHIPID;
-                    _bad_chipids++;
-		    //cout << __FILE__ << " " << __LINE__ << " impossible chip ID: " << chip_id
-		    //     << " encoder " <<  encoder_id << " addr " << address << endl;
-	            // break out of the loop, we can't process this chip
-	            break;
-		  }
+                  _bunchcounter[ruchn] = b;
+		  //cout << __FILE__ << " " << __LINE__ << " chip header, chip id= " << chip_id << " bunchctr= " << hex << _bunchcounter[ruchn] << dec << endl;
+                  if ( (int)ruchn > _highest_chip) 
+                    {
+                      _highest_chip = ruchn; 
+                    }
 		  status = 0;
-                  _header_found[chip_id] = true;
-                  _bunchcounter[chip_id] = bunchcounter;
+                  _header_found[ruchn] = true;
 		  break;
 
 		case CHIPEMPTYFRAME:
 		  
-		  bunchcounter = b;
-		  // cout << __FILE__ << " " << __LINE__ << " chip empty frame " << hex << chip_id << " " << bunchcounter << dec << endl;
-                  if ( chip_id < MAXCHIPID )
-                    {
-                    if ( (int)chip_id > _highest_chip) 
+                  _bunchcounter[ruchn] = b;
+		  // cout << __FILE__ << " " << __LINE__ << " chip empty frame " << hex << chip_id << " " << _bunchcounter[ruchn] << dec << endl;
+                    if ( (int)ruchn > _highest_chip) 
                       {
-                        _highest_chip = chip_id; 
+                        _highest_chip = ruchn; 
                       }
-                    }
-                  else
-		  {
-                    //chip_id = MAXCHIPID;
-                    _bad_chipids++;
-		    //cout << __FILE__ << " " << __LINE__ << " impossible chip ID: " << chip_id
-		    //     << " encoder " <<  encoder_id << " addr " << address << endl;
-	            // break out of the loop, we can't process this chip
-	            break;
-		  }
-                  if ( chip_id >=0) _highest_region[chip_id] = 0;
+                  _highest_region[ruchn] = 0;
                   ibyte_endofdata = ibyte;
-                  _header_found[chip_id] = true;
-                  _trailer_found[chip_id] = true;
-                  _bunchcounter[chip_id] = bunchcounter;
+                  _header_found[ruchn] = true;
+                  _trailer_found[ruchn] = true;
 		  status = 0;
 		  break;
 
@@ -250,18 +248,13 @@ int *oncsSub_idmvtxv0::decode ()
 			  cout << __FILE__ << " " << __LINE__ << " impossible row: " << the_row
 			       << " encoder " <<  encoder_id << " addr " << address << endl;
 			}
-		      else if ( chip_id<0 || chip_id > MAXCHIPID ) //this should never happen, chip_id is checked in chip header
-			{
-			  cout << __FILE__ << " " << __LINE__ << " impossible chip ID: " << chip_id
-			       << " encoder " <<  encoder_id << " addr " << address << endl;
-			}
 		      else
 			{
 			  int thebit = decode_thebit(the_row, encoder_id, address);
 			  //cout << " row:" << the_row << " col:" << the_region*32 + thebit << endl;
 			  //  cout << __FILE__ << " " << __LINE__ << " the bit " << thebit << endl;
-			  chip_row[chip_id][the_row][the_region] |= ( 1<<thebit);
-			  chip_rowmap[chip_id][the_row] |= ( 1<<the_region);
+			  chip_row[ruchn][the_row][the_region] |= ( 1<<thebit);
+			  chip_rowmap[ruchn][the_row] |= ( 1<<the_region);
 			  if ( the_row > _highest_row_overall)  _highest_row_overall = the_row;
 
 			}
@@ -280,7 +273,7 @@ int *oncsSub_idmvtxv0::decode ()
                   if ( (b & 0x80) != 0) //required to be 0
                   {
                       //cout << __FILE__ << " " << __LINE__ << " unexpected word " << hex << (unsigned int) b << dec << " at ibyte " << ibyte << endl;
-                      _unexpected_bytes[chip_id]++;
+                      _unexpected_bytes[ruchn]++;
                   }
 		  //cout << __FILE__ << " " << __LINE__ << " data long report, hex:" << hex << address << dec << " enc. id " << encoder_id << " address= " << address << " the_region:" << the_region << " the_chip:" << chip_id << endl;
                   // Loop over the hits in the cluster. The pixel specified by the address always has a hit.
@@ -299,18 +292,13 @@ int *oncsSub_idmvtxv0::decode ()
                               cout << __FILE__ << " " << __LINE__ << " impossible row: " << the_row
                                    << " encoder " <<  encoder_id << " addr " << hit_address << endl;
                             }
-		          else if ( chip_id<0 || chip_id > MAXCHIPID ) //this should never happen, chip_id is checked in chip header
-			    {
-			      cout << __FILE__ << " " << __LINE__ << " impossible chip ID: " << chip_id
-			           << " encoder " <<  encoder_id << " addr " << address << endl;
-			    }
                           else
                             {
                               int thebit = decode_thebit(the_row, encoder_id, hit_address);
                               //cout << " row:" << the_row << " col:" << the_region*32 + thebit << endl;
                               //  cout << __FILE__ << " " << __LINE__ << " the bit " << thebit << endl;
-                              chip_row[chip_id][the_row][the_region] |= ( 1<<thebit);
-                              chip_rowmap[chip_id][the_row] |= ( 1<<the_region);
+                              chip_row[ruchn][the_row][the_region] |= ( 1<<thebit);
+                              chip_rowmap[ruchn][the_row] |= ( 1<<the_region);
                               if ( the_row > _highest_row_overall)  _highest_row_overall = the_row;
 
                             }
@@ -335,7 +323,7 @@ int *oncsSub_idmvtxv0::decode ()
 
 	  else if ( ( b >> 4) == 0xa) // we have a chip header
 	    {
-	      chip_id = ( b & 0xf);
+	      _chip_id[ruchn] = ( b & 0xf);
               header_seen = true;
 	      status = CHIPHEADER;
 	    }
@@ -345,25 +333,25 @@ int *oncsSub_idmvtxv0::decode ()
 	      // cout << __FILE__ << " " << __LINE__ << " chip trailer, chip id= " << hex << chip_id << dec << endl;
 	      // break out of the loop, done with this chip
               ibyte_endofdata = ibyte;
-              _trailer_found[chip_id] = true;
-              _readout_flags[chip_id] = (b & 0xf);
+              _trailer_found[ruchn] = true;
+              _readout_flags[ruchn] = (b & 0xf);
 	      break;
 	    }
 
 	  else if ( ( b >> 4) == 0xE) // we have a chip empty frame
 	    {
-	      chip_id = ( b & 0xf);
+	      _chip_id[ruchn] = ( b & 0xf);
               header_seen = true;
 	      status = CHIPEMPTYFRAME;
 	    }
 
 	  else if ( ( b >> 5) == 0x6) // we have a region header
 	    {
-	      region_id = (b & 0x1f);
+	      unsigned int region_id = (b & 0x1f);
 	      if ( region_id <32)
 		{
 		  the_region = region_id;
-		  if ( chip_id >=0) _highest_region[chip_id] = region_id;
+		  _highest_region[ruchn] = region_id;
 		}
 	      else //this is impossible since the region ID is 5 bits
 		{
@@ -398,24 +386,23 @@ int *oncsSub_idmvtxv0::decode ()
 	  else
 	    {
 	      //cout << __FILE__ << " " << __LINE__ << " unexpected word " << hex << (unsigned int) b << dec << " at ibyte " << ibyte << endl;
-              if (chip_id >= 0 && chip_id < MAXCHIPID)
-                _unexpected_bytes[chip_id]++;
+                _unexpected_bytes[ruchn]++;
 	    }
           if (ibyte==0 && !header_seen) break;//first byte of the ALPIDE stream must be a chip header or chip empty; if not, abort so we don't get confused by bad data
 
 	} // ibyte
 
-	//cout << __FILE__ << " " << __LINE__ << "  ruchn " << iruchn << "  ibyte_endofdata " << ibyte_endofdata << endl;
-        for (unsigned int ibyte = ibyte_endofdata+1; ibyte < ruchn_stream[iruchn].size(); ibyte++)
+	//cout << __FILE__ << " " << __LINE__ << "  ruchn " << ruchn << "  ibyte_endofdata " << ibyte_endofdata << endl;
+        for (unsigned int ibyte = ibyte_endofdata+1; ibyte < ruchn_stream[ruchn].size(); ibyte++)
 	  {
-	    b = ruchn_stream[iruchn].at(ibyte);
+	    b = ruchn_stream[ruchn].at(ibyte);
             if (b!=0)
             {
-                //cout << __FILE__ << " " << __LINE__ << " --- ruchn " << hex << iruchn << " unexpected nonzero value " << (unsigned int)  b << dec << " at ibyte " << ibyte << " after ibyte_endofdata " << ibyte_endofdata << endl;
+                //cout << __FILE__ << " " << __LINE__ << " --- ruchn " << hex << ruchn << " unexpected nonzero value " << (unsigned int)  b << dec << " at ibyte " << ibyte << " after ibyte_endofdata " << ibyte_endofdata << endl;
                 _excess_data_bytes++;
             }
           }
-    } // iruchn
+    } // ruchn
 
 
   return 0;
@@ -450,6 +437,12 @@ int oncsSub_idmvtxv0::iValue(const int ich,const char *what)
     return _highest_chip;
   }
 
+  else if ( strcmp(what,"CHIP_ID") == 0 )
+  {
+    if ( ich > _highest_chip) return -1; // no such chip
+    return _chip_id[ich];
+  }
+
   else if ( strcmp(what,"HIGHEST_REGION") == 0 )
   {
     if ( ich > _highest_chip) return -1; // no such chip
@@ -468,26 +461,31 @@ int oncsSub_idmvtxv0::iValue(const int ich,const char *what)
 
   else if ( strcmp(what,"UNEXPECTED_BYTES") == 0 )
   {
+    if ( ich > _highest_chip) return -1; // no such chip
     return _unexpected_bytes[ich];
   }
 
   else if ( strcmp(what,"BUNCHCOUNTER") == 0 )
   {
+    if ( ich > _highest_chip) return -1; // no such chip
     return _bunchcounter[ich];
   }
 
   else if ( strcmp(what,"HEADER_FOUND") == 0 )
   {
+    if ( ich > _highest_chip) return -1; // no such chip
     return _header_found[ich]?1:0;
   }
 
   else if ( strcmp(what,"TRAILER_FOUND") == 0 )
   {
+    if ( ich > _highest_chip) return -1; // no such chip
     return _trailer_found[ich]?1:0;
   }
 
   else if ( strcmp(what,"READOUT_FLAGS") == 0 )
   {
+    if ( ich > _highest_chip) return -1; // no such chip
     return _readout_flags[ich];
   }
 
@@ -524,7 +522,7 @@ void  oncsSub_idmvtxv0::dump ( OSTREAM& os )
 
   //int x;
   decode();
-  os << "Number of chips:      " << setw(4) << iValue(0, "HIGHEST_CHIP") +1<< endl;
+  os << "Highest chip:      " << setw(4) << iValue(0, "HIGHEST_CHIP") +1<< endl;
   os << "Regions:              ";
   for ( int ichip = 0; ichip < iValue(0, "HIGHEST_CHIP") +1; ichip++)
     {
@@ -537,7 +535,8 @@ void  oncsSub_idmvtxv0::dump ( OSTREAM& os )
   
   for ( int ichip = 0; ichip < iValue(0, "HIGHEST_CHIP")+1; ichip++) // go through the chips
     {
-      os << "  *** Chip " << ichip << "  ***" << endl;
+        if (iValue(ichip, "HIGHEST_REGION") == -1) continue; // skip chips we didn't see
+      os << "  *** Chip " << ichip << ", chip ID " << iValue(ichip,"CHIP_ID") <<  "  ***" << endl;
       for ( int irow = 0; irow < iValue(0,"HIGHEST_ROW")+1; irow++)
 	{
           bool has_hit = false;
@@ -577,6 +576,15 @@ void  oncsSub_idmvtxv0::dump ( OSTREAM& os )
 }
 
 
+void print_stuff(OSTREAM& out, unsigned int data, int width, int shift, bool blank)
+{
+    unsigned int mask = 0xffffffff;
+    if (width<8) mask = ((1 << width*4)-1);
+    if (blank)
+        for (int i=0;i<width;i++) out << " ";
+    else
+        out << std::hex << SETW(width) << std::setfill('0') << ((data>>shift) & mask);
+}
 
 //copied from oncsSubevent.cc for a generic dump 12/21/17
 void oncsSub_idmvtxv0::gdump(const int i, OSTREAM& out) const
@@ -597,37 +605,36 @@ void oncsSub_idmvtxv0::gdump(const int i, OSTREAM& out) const
       current_offset = 0;
       while (1)
 	{
-	  out << std::endl << SETW(5) << current_offset << " |  ";
+	  out << SETW(5) << current_offset << " |  ";
 	  //for (l=0;l<DWORDS_PER_WORD;l++)
 	  
           //FELIX header
-	  out << std::hex << SETW(4) << std::setfill ('0') << ((SubeventData[current_offset+7]>>16) & 0xffff) << std::setfill(' ') << " " << std::dec;
+          print_stuff(out, SubeventData[current_offset+7], 4, 16, current_offset+7>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4);
 
           //RU word 2
-	  out << std::hex << SETW(4) << std::setfill ('0') << (SubeventData[current_offset+7] & 0xffff);
-	  out << std::hex << SETW(8) << std::setfill ('0') << (SubeventData[current_offset+6]);
-	  out << std::hex << SETW(8) << std::setfill ('0') << (SubeventData[current_offset+5]) << std::setfill(' ') << " " << std::dec;
+          print_stuff(out, SubeventData[current_offset+7], 4, 0, current_offset+7>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4);
+          print_stuff(out, SubeventData[current_offset+6], 8, 0, current_offset+6>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4);
+          print_stuff(out, SubeventData[current_offset+5], 8, 0, current_offset+5>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4);
+          out << " ";
 
           //RU word 1
-	  out << std::hex << SETW(8) << std::setfill ('0') << (SubeventData[current_offset+4]);
-	  out << std::hex << SETW(8) << std::setfill ('0') << (SubeventData[current_offset+3]);
-	  out << std::hex << SETW(4) << std::setfill ('0') << ((SubeventData[current_offset+2]>>16) & 0xffff) << std::setfill(' ') << " " << std::dec;
+          print_stuff(out, SubeventData[current_offset+4], 8, 0, current_offset+4>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4);
+          print_stuff(out, SubeventData[current_offset+3], 8, 0, current_offset+3>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4);
+          print_stuff(out, SubeventData[current_offset+2], 4, 16, current_offset+2>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4);
+          out << " ";
 
           //RU word 0
-	  out << std::hex << SETW(4) << std::setfill ('0') << (SubeventData[current_offset+2] & 0xffff);
-	  out << std::hex << SETW(8) << std::setfill ('0') << (SubeventData[current_offset+1]);
-	  out << std::hex << SETW(8) << std::setfill ('0') << (SubeventData[current_offset+0]) << std::setfill(' ') << " " << std::dec;
+          print_stuff(out, SubeventData[current_offset+2], 4, 0, current_offset+2>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4);
+          print_stuff(out, SubeventData[current_offset+1], 8, 0, current_offset+1>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4);
+          print_stuff(out, SubeventData[current_offset+0], 8, 0, current_offset+0>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4);
+          out << " " << std::dec << std::endl << std::setfill(' ');
 
-          //for (l=DWORDS_PER_WORD-1; l>=0; l--)
-	    //{
-              //dword_to_print = SubeventData[current_offset + l];
-	      //if (current_offset + l >=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4) dword_to_print = 0;
-	      //out << std::hex << SETW(8) << std::setfill ('0') << dword_to_print << std::setfill(' ') << " " << std::dec;
-	      ////if (current_offset + l >=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) break;
-	    //}
-          current_offset += DWORDS_PER_WORD;
+          int dwords_remaining = SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4 - current_offset;
 	  //if (current_offset>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) break;
-	  if (current_offset>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4) break; //hack to deal with our incorrect padding in daq_device_felix.cc
+	  //if (current_offset>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4) break; //hack to deal with our incorrect padding in daq_device_felix.cc
+          if (dwords_remaining<8) break;
+
+          current_offset += DWORDS_PER_WORD;
 	}
       break;
 
