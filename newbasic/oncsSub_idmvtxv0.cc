@@ -605,31 +605,32 @@ void oncsSub_idmvtxv0::gdump(const int i, OSTREAM& out) const
       current_offset = 0;
       while (1)
 	{
+          int dwords_remaining = SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4 - current_offset;
+
 	  out << SETW(5) << current_offset << " |  ";
 	  //for (l=0;l<DWORDS_PER_WORD;l++)
 	  
           //FELIX header
-          print_stuff(out, SubeventData[current_offset+7], 4, 16, current_offset+7>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4);
+          print_stuff(out, SubeventData[current_offset+7], 4, 16, (dwords_remaining<=7));
 
           //RU word 2
-          print_stuff(out, SubeventData[current_offset+7], 4, 0, current_offset+7>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4);
-          print_stuff(out, SubeventData[current_offset+6], 8, 0, current_offset+6>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4);
-          print_stuff(out, SubeventData[current_offset+5], 8, 0, current_offset+5>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4);
+          print_stuff(out, SubeventData[current_offset+7], 4, 0, (dwords_remaining<=7));
+          print_stuff(out, SubeventData[current_offset+6], 8, 0, (dwords_remaining<=6));
+          print_stuff(out, SubeventData[current_offset+5], 8, 0, (dwords_remaining<=5));
           out << " ";
 
           //RU word 1
-          print_stuff(out, SubeventData[current_offset+4], 8, 0, current_offset+4>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4);
-          print_stuff(out, SubeventData[current_offset+3], 8, 0, current_offset+3>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4);
-          print_stuff(out, SubeventData[current_offset+2], 4, 16, current_offset+2>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4);
+          print_stuff(out, SubeventData[current_offset+4], 8, 0, (dwords_remaining<=4));
+          print_stuff(out, SubeventData[current_offset+3], 8, 0, (dwords_remaining<=3));
+          print_stuff(out, SubeventData[current_offset+2], 4, 16, (dwords_remaining<=2));
           out << " ";
 
           //RU word 0
-          print_stuff(out, SubeventData[current_offset+2], 4, 0, current_offset+2>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4);
-          print_stuff(out, SubeventData[current_offset+1], 8, 0, current_offset+1>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4);
-          print_stuff(out, SubeventData[current_offset+0], 8, 0, current_offset+0>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4);
+          print_stuff(out, SubeventData[current_offset+2], 4, 0, (dwords_remaining<=2));
+          print_stuff(out, SubeventData[current_offset+1], 8, 0, (dwords_remaining<=1));
+          print_stuff(out, SubeventData[current_offset+0], 8, 0, (dwords_remaining<=0));
           out << " " << std::dec << std::endl << std::setfill(' ');
 
-          int dwords_remaining = SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4 - current_offset;
 	  //if (current_offset>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) break;
 	  //if (current_offset>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4) break; //hack to deal with our incorrect padding in daq_device_felix.cc
           if (dwords_remaining<8) break;
