@@ -46,21 +46,13 @@ typedef struct
     unsigned char ruid;
 }  data32;
 
-typedef struct
-{
-    unsigned int row;
-    unsigned int region;
-    unsigned int bit;
-} chipdata;
-
 #define CHIPHEADER     1
 #define CHIPEMPTYFRAME 2
 #define DATASHORT      3
 #define DATALONG0      4
 #define DATALONG1      5
 
-
-int decode_thebit (int the_row, int encoder_id, int address)
+int oncsSub_idmvtxv0::decode_thebit(int the_row, int encoder_id, int address) const
 {
     // the numbering "snakes" its way through a column (fig. 4.5 in the Alpide manual)
     //  0 1  > >    row 0 
@@ -80,6 +72,16 @@ int decode_thebit (int the_row, int encoder_id, int address)
     return thebit;
 }
 
+void oncsSub_idmvtxv0::print_stuff(OSTREAM& out, unsigned int data, int width, int shift, bool blank) const
+{
+    unsigned int mask = 0xffffffff;
+    if (width<8) mask = ((1 << width*4)-1);
+    if (blank)
+        for (int i=0;i<width;i++) out << " ";
+    else
+        out << std::hex << SETW(width) << std::setfill('0') << ((data>>shift) & mask);
+}
+
 int *oncsSub_idmvtxv0::decode ()
 {
     if ( _is_decoded) return 0;
@@ -87,7 +89,7 @@ int *oncsSub_idmvtxv0::decode ()
 
     unsigned int *payload = (unsigned int *) &SubeventHdr->data;  // here begins the payload
 
-    int dlength = getLength()-4 - getPadding();
+    int dlength = getLength()-4 - getPadding(); //padding is supposed to be in units of dwords, this assumes dwords
     unsigned char *the_end = ( unsigned char *) &payload[dlength+1];
 
     unsigned char *pos = (unsigned char *) payload;
@@ -98,12 +100,9 @@ int *oncsSub_idmvtxv0::decode ()
 
     unsigned char b;
 
-    map<int, int> map_chip_ru;
-    vector<chipdata> running_chip_data;
-
     vector<unsigned char> ruchn_stream[MAXRUCHN+1];
 
-    int felix_counter = 0;
+    unsigned char felix_counter = 0;
 
     while ( pos < the_end )
     {
@@ -564,17 +563,6 @@ void  oncsSub_idmvtxv0::dump ( OSTREAM& os )
 
 }
 
-
-void print_stuff(OSTREAM& out, unsigned int data, int width, int shift, bool blank)
-{
-    unsigned int mask = 0xffffffff;
-    if (width<8) mask = ((1 << width*4)-1);
-    if (blank)
-        for (int i=0;i<width;i++) out << " ";
-    else
-        out << std::hex << SETW(width) << std::setfill('0') << ((data>>shift) & mask);
-}
-
 //copied from oncsSubevent.cc for a generic dump 12/21/17
 void oncsSub_idmvtxv0::gdump(const int i, OSTREAM& out) const
 {
@@ -593,7 +581,7 @@ void oncsSub_idmvtxv0::gdump(const int i, OSTREAM& out) const
             current_offset = 0;
             while (1)
             {
-                int dwords_remaining = SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4 - current_offset;
+                int dwords_remaining = getLength()-SEVTHEADERLENGTH - getPadding()/4 - current_offset; //padding is supposed to be in units of dwords, this assumes bytes
 
                 out << SETW(5) << current_offset << " |  ";
                 //for (l=0;l<DWORDS_PER_WORD;l++)

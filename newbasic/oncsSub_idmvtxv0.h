@@ -53,10 +53,10 @@ protected:
   unsigned int chip_row[MAXRUCHN+1][512][32];
   unsigned int chip_rowmap[MAXRUCHN+1][512];
 
+  int decode_thebit(int the_row, int encoder_id, int address) const; //helper function to decode the column number
+  void print_stuff(OSTREAM& out, unsigned int data, int width, int shift, bool blank = false) const;
 };
 
-int decode_thebit (int the_row, int encoder_id, int address); //helper function to decode the column number
-void print_stuff(OSTREAM& out, unsigned int data, int width, int shift, bool blank = false);
 
 
 #endif /* __ONCSSUB_IDMVTXV0_H__ */
