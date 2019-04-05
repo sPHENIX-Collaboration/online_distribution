@@ -642,6 +642,7 @@ void oncsSub_idmvtxv1::gdump(const int i, OSTREAM& out) const
 
                 //FELIX header
                 print_stuff(out, SubeventData[current_offset+7], 4, 16, (dwords_remaining<=7));
+                out << " ";
 
                 //RU word 2
                 print_stuff(out, SubeventData[current_offset+7], 4, 0, (dwords_remaining<=7));
