@@ -57,12 +57,9 @@ class WINDOWSEXPORT oncsSub_idmvtxv1 : public  oncsSubevent_w4 {
             int _bad_ruid;
             int _bad_ruchns;
             int _bad_chipids;
-            //int _highest_row_overall;
-            //int _highest_chip;
-            int _excess_data_bytes;
             int _chip_id[MAXRUID+1][MAXRUCHN+1];
-            //int _highest_region[MAXRUCHN+1];
-            int _unexpected_bytes[MAXRUID+1][MAXRUCHN+1];
+            int _bad_bytes[MAXRUID+1][MAXRUCHN+1];
+            int _excess_bytes[MAXRUID+1][MAXRUCHN+1];
             int _bunchcounter[MAXRUID+1][MAXRUCHN+1];
             bool _header_found[MAXRUID+1][MAXRUCHN+1];
             bool _trailer_found[MAXRUID+1][MAXRUCHN+1];

@@ -19,7 +19,8 @@ oncsSub_idmvtxv1::oncsSub_idmvtxv1(subevtdata_ptr data)
         for ( int ruchn = 0; ruchn < MAXRUCHN+1; ruchn++)
         {
             _chip_id[ruid][ruchn] = -1;
-            _unexpected_bytes[ruid][ruchn] = 0;
+            _bad_bytes[ruid][ruchn] = 0;
+            _excess_bytes[ruid][ruchn] = 0;
             _bunchcounter[ruid][ruchn] = -1;
             _header_found[ruid][ruchn] = false;
             _trailer_found[ruid][ruchn] = false;
@@ -30,14 +31,6 @@ oncsSub_idmvtxv1::oncsSub_idmvtxv1(subevtdata_ptr data)
     _bad_ruid = 0;
     _bad_ruchns = 0;
     _bad_chipids = 0;
-    //for (int ruid=0; ruid<MAXRUID+1; ruid++)
-    //{
-    //for (int ruchn=0; ruchn<MAXRUCHN+1; ruchn++)
-    //{
-    //_hit_vectors[ruid][ruchn].clear();
-    //}
-    //}
-    _excess_data_bytes = 0;
 }
 
 oncsSub_idmvtxv1::~oncsSub_idmvtxv1()
@@ -118,8 +111,6 @@ int *oncsSub_idmvtxv1::decode ()
 
     //  cout << hex << " pos = " << (unsigned long long ) pos << "  the end  " << (unsigned long long) the_end << dec << endl;
 
-    //pos = (unsigned char *) payload;
-
     unsigned char b;
 
     vector<unsigned char> ruchn_stream[MAXRUID+1][MAXRUCHN+1];
@@ -136,6 +127,10 @@ int *oncsSub_idmvtxv1::decode ()
             //cout << __FILE__ << " " << __LINE__ << " --- invalid ruid " << hex << (int) d32->ruid << " at pos " << (long) pos << dec << endl;
             _bad_ruid = d32->ruid;
             break;
+        }
+        else if (d32->ruid > _highest_ruid)
+        {
+            _highest_ruid = d32->ruid;
         }
         //FELIX counter is 8 bits, max value 256
         //check that the new counter value is consistent with the previous value (it should have increased by no more than 3, and the amount of the difference is the number of data chunks in this FELIX word)
@@ -160,8 +155,13 @@ int *oncsSub_idmvtxv1::decode ()
                 //cout << __FILE__ << " " << __LINE__ << " --- RU header " << hex << ruchn << ", full RU word: ";
                 //for (int ibyte=9;ibyte>=0;ibyte--)
                 //{
-                //cout << setfill('0') << setw(2) << hex << (unsigned int) d32->d0[ichnk][ibyte] << " ";
+                    //cout << setfill('0') << setw(2) << hex << (unsigned int) d32->d0[ichnk][ibyte] << " ";
                 //}
+                unsigned int mask = 0;
+                memcpy(&mask,&d32->d0[ichnk][2],4);
+                _ruchn_mask[d32->ruid] = mask;
+
+                //cout << setfill('0') << setw(7) << hex << mask;
                 //cout << setfill(' ') << setw(0) << dec << endl;
             }
             else if (ruchn == RUTRAILER)
@@ -199,7 +199,7 @@ int *oncsSub_idmvtxv1::decode ()
        {
        cout << __FILE__ << " " << __LINE__ << " --- ruchn " << ruchn << " has " << ruchn_stream[ruchn].size() << " bytes" << endl;
        }
-     */
+       */
 
     for ( int ruid = 1; ruid < MAXRUID+1; ruid++)
     {
@@ -275,7 +275,7 @@ int *oncsSub_idmvtxv1::decode ()
                             if ( (b & 0x80) != 0) //required to be 0
                             {
                                 //cout << __FILE__ << " " << __LINE__ << " unexpected word " << hex << (unsigned int) b << dec << " at ibyte " << ibyte << endl;
-                                _unexpected_bytes[ruid][ruchn]++;
+                                _bad_bytes[ruid][ruchn]++;
                             }
                             //cout << __FILE__ << " " << __LINE__ << " data long report, hex:" << hex << address << dec << " enc. id " << encoder_id << " address= " << address << " the_region:" << the_region << " ruchn:" << ruchn << endl;
                             // Loop over the hits in the cluster. The pixel specified by the address always has a hit.
@@ -332,7 +332,14 @@ int *oncsSub_idmvtxv1::decode ()
                     // break out of the loop, done with this chip
                     ibyte_endofdata = ibyte;
                     _trailer_found[ruid][ruchn] = true;
-                    _readout_flags[ruid][ruchn] = (b & 0xf);
+                    if (!_header_found[ruid][ruchn]) // shouldn't see a trailer without having seen a header
+                    {
+                        _bad_bytes[ruid][ruchn]++;
+                    }
+                    else
+                    {
+                        _readout_flags[ruid][ruchn] = (b & 0xf);
+                    }
                     break;
                 }
 
@@ -383,7 +390,7 @@ int *oncsSub_idmvtxv1::decode ()
                 else
                 {
                     //cout << __FILE__ << " " << __LINE__ << " unexpected word " << hex << (unsigned int) b << dec << " at ibyte " << ibyte << endl;
-                    _unexpected_bytes[ruid][ruchn]++;
+                    _bad_bytes[ruid][ruchn]++;
                 }
                 if (ibyte==0 && !header_seen) break;//first byte of the ALPIDE stream must be a chip header or chip empty; if not, abort so we don't get confused by bad data
 
@@ -396,7 +403,7 @@ int *oncsSub_idmvtxv1::decode ()
                 if (b!=0)
                 {
                     //cout << __FILE__ << " " << __LINE__ << " --- ruchn " << hex << ruchn << " unexpected nonzero value " << (unsigned int)  b << dec << " at ibyte " << ibyte << " after ibyte_endofdata " << ibyte_endofdata << endl;
-                    _excess_data_bytes++;
+                    _excess_bytes[ruid][ruchn]++;
                 }
             }
         } // ruchn
@@ -408,35 +415,81 @@ int *oncsSub_idmvtxv1::decode ()
 
 int oncsSub_idmvtxv1::iValue(const int ruid, const char *what)
 {
+    decode();
+
     return 0;
 }
 
 int oncsSub_idmvtxv1::iValue(const int ruid)
 {
+    decode();
+
     if (ruid > _highest_ruid) return -1; // no such RU
     return _ruchn_mask[ruid];
 }
 
 int oncsSub_idmvtxv1::iValue(const int ruid, const int ruchn, const char *what)
 {
+    decode();
+
     if (ruid > _highest_ruid) return -1; // no such RU
     if (_ruchn_mask[ruid]==-1) return -1; // no such RU
-    return _ruchn_mask[ruid];//???
+
+    if ( strcmp(what,"CHIP_ID") == 0 )
+    {
+        return _chip_id[ruid][ruchn];
+    }
+
+    else if ( strcmp(what,"BAD_BYTES") == 0 )
+    {
+        return _bad_bytes[ruid][ruchn];
+    }
+
+    else if ( strcmp(what,"EXCESS_BYTES") == 0 )
+    {
+        return _excess_bytes[ruid][ruchn];
+    }
+
+    else if ( strcmp(what,"BUNCHCOUNTER") == 0 )
+    {
+        return _bunchcounter[ruid][ruchn];
+    }
+
+    else if ( strcmp(what,"HEADER_FOUND") == 0 )
+    {
+        return _header_found[ruid][ruchn]?1:0;
+    }
+
+    else if ( strcmp(what,"TRAILER_FOUND") == 0 )
+    {
+        return _trailer_found[ruid][ruchn]?1:0;
+    }
+
+    else if ( strcmp(what,"READOUT_FLAGS") == 0 )
+    {
+        return _readout_flags[ruid][ruchn];
+    }
+
+    return 0;
 }
 
 int oncsSub_idmvtxv1::iValue(const int ruid, const int ruchn)
 {
+    decode();
+
     if (ruid > _highest_ruid) return -1; // no such RU
     if (_ruchn_mask[ruid]==-1) return -1; // no such RU
-    if (((_ruchn_mask[ruid] >> ruchn) & 1) == 0) return -1; // no such RU channel
+    if (((_ruchn_mask[ruid] >> (ruchn-1)) & 1) == 0) return -1; // no such RU channel
     return _hit_vectors[ruid][ruchn].size();
 }
 
 int oncsSub_idmvtxv1::iValue(const int ruid, const int ruchn, const int i)
 {
+    decode();
+
     if (ruid > _highest_ruid) return -1; // no such RU
     if (_ruchn_mask[ruid]==-1) return -1; // no such RU
-    if (((_ruchn_mask[ruid] >> ruchn) & 1) == 0) return -1; // no such RU channel
+    if (((_ruchn_mask[ruid] >> (ruchn-1)) & 1) == 0) return -1; // no such RU channel
     return _hit_vectors[ruid][ruchn].at(i);
 }
 
@@ -475,75 +528,15 @@ int oncsSub_idmvtxv1::iValue(const int ruid, const int ruchn, const int i)
    return _chip_id[ich];
    }
 
-   else if ( strcmp(what,"HIGHEST_REGION") == 0 )
-   {
-   if ( ich > _highest_chip) return -1; // no such chip
-   return _highest_region[ich];
-   }
-
-   else if ( strcmp(what,"HIGHEST_ROW") == 0 )
-   {
-   return _highest_row_overall;
-   }
-
    else if ( strcmp(what,"EXCESS_DATA_BYTES") == 0 )
    {
-   return _excess_data_bytes;
+   return _excess_bytes;
    }
 
-   else if ( strcmp(what,"UNEXPECTED_BYTES") == 0 )
-   {
-   if ( ich > _highest_chip) return -1; // no such chip
-   return _unexpected_bytes[ich];
+   return 0;
+
    }
 
-   else if ( strcmp(what,"BUNCHCOUNTER") == 0 )
-   {
-   if ( ich > _highest_chip) return -1; // no such chip
-   return _bunchcounter[ich];
-   }
-
-   else if ( strcmp(what,"HEADER_FOUND") == 0 )
-   {
-   if ( ich > _highest_chip) return -1; // no such chip
-   return _header_found[ich]?1:0;
-   }
-
-   else if ( strcmp(what,"TRAILER_FOUND") == 0 )
-   {
-if ( ich > _highest_chip) return -1; // no such chip
-return _trailer_found[ich]?1:0;
-}
-
-else if ( strcmp(what,"READOUT_FLAGS") == 0 )
-{
-    if ( ich > _highest_chip) return -1; // no such chip
-    return _readout_flags[ich];
-}
-
-return 0;
-
-}
-
-int oncsSub_idmvtxv1::iValue(const int chip, const int region, const int row)
-{
-    decode();
-
-    if ( chip < 0  || chip > _highest_chip) return 0;
-    if ( region < 0 || region > 31 ) return 0;
-    if ( row < 0    || row > 511) return 0;
-    return chip_row[chip][row][region];
-}
-
-
-int oncsSub_idmvtxv1::iValue(const int chip, const int row)
-{
-    decode();
-
-    if ( chip < 0  || chip > _highest_chip) return 0;
-    if ( row < 0    || row > 511) return 0;
-    return chip_rowmap[chip][row];
-}
 */
 
 
@@ -552,68 +545,83 @@ void  oncsSub_idmvtxv1::dump ( OSTREAM& os )
 
     identify(os);
 
-
-    //int x;
     decode();
 
     for (int ruid=0; ruid<MAXRUID+1; ruid++)
     {
-        _ruchn_mask[ruid]=-1;
-        for ( int ruchn = 0; ruchn < MAXRUCHN+1; ruchn++)
+        if (iValue(ruid)!=-1)
         {
-            //do stuff!
+            os << "RU ID: " << ruid << endl;
+            for ( int ruchn = 0; ruchn < MAXRUCHN+1; ruchn++)
+            {
+                if (iValue(ruid,ruchn)!=-1)
+                {
+                    os << "RU channel " << setw(2) << ruchn;
+                    os << " bad_bytes=" << iValue(ruid,ruchn,"BAD_BYTES") << " excess_bytes=" << iValue(ruid,ruchn,"EXCESS_BYTES") <<" header_found=" << iValue(ruid,ruchn,"HEADER_FOUND") << " trailer_found=" << iValue(ruid,ruchn,"TRAILER_FOUND");
+                    os << " bunchcounter=" << setw(3) << iValue(ruid,ruchn,"BUNCHCOUNTER") << " flags=" << iValue(ruid,ruchn,"READOUT_FLAGS");
+                    os << ", chip ID " << iValue(ruid,ruchn,"CHIP_ID") << ", " << iValue(ruid,ruchn) << " hits: ";
+                    for (int i=0;i<iValue(ruid,ruchn);i++)
+                    {
+                        int hit = iValue(ruid,ruchn,i);
+                        os << "(row " << decode_row(hit) << ", col " << decode_col(hit) << ") ";
+                    }
+                    os << endl;
+                }
+            }
         }
     }
-    os << "Highest chip:      " << setw(4) << iValue(0, "HIGHEST_CHIP") +1<< endl;
-    os << "Regions:              ";
-    for ( int ichip = 0; ichip < iValue(0, "HIGHEST_CHIP") +1; ichip++)
-    {
-        os << setw(4) << iValue(ichip, "HIGHEST_REGION");
-    }
-    os << endl;
-    os << "Highest populated row " << iValue(0,"HIGHEST_ROW") << endl;
+    /*
+       os << "Highest chip:      " << setw(4) << iValue(0, "HIGHEST_CHIP") +1<< endl;
+       os << "Regions:              ";
+       for ( int ichip = 0; ichip < iValue(0, "HIGHEST_CHIP") +1; ichip++)
+       {
+       os << setw(4) << iValue(ichip, "HIGHEST_REGION");
+       }
+       os << endl;
+       os << "Highest populated row " << iValue(0,"HIGHEST_ROW") << endl;
 
     // now dump the chip info
 
     for ( int ichip = 0; ichip < iValue(0, "HIGHEST_CHIP")+1; ichip++) // go through the chips
     {
-        if (iValue(ichip, "HIGHEST_REGION") == -1) continue; // skip chips we didn't see
-        os << "  *** Chip " << ichip << ", chip ID " << iValue(ichip,"CHIP_ID") <<  "  ***" << endl;
-        for ( int irow = 0; irow < iValue(0,"HIGHEST_ROW")+1; irow++)
-        {
-            bool has_hit = false;
-            for ( int iregion = 0; iregion < iValue(ichip, "HIGHEST_REGION")+1; iregion++) // check if there are any hits in this row
-            {
-                if (iValue(ichip,iregion, irow) != 0)
-                {
-                    has_hit = true;
-                    break;
-                }
-            }
-            if (has_hit)
-            {
-                os << "  Row  Region" << endl;
-                for ( int iregion = 0; iregion < iValue(ichip, "HIGHEST_REGION")+1; iregion++)
-                {
-                    os << setw(4) << irow << "  " << setw(4) << iregion << " | ";
-                    unsigned int bits =  iValue(ichip,iregion, irow);
-                    for ( int i = 0; i < 32; i++)
-                    {
-                        if ( (bits >> i) & 1)
-                        {
-                            os << "X";
-                        }
-                        else
-                        {
-                            os << "-";
-                        }
-                    }
-                    os << endl;
-                }
-                os << endl;
-            }
-        }
+    if (iValue(ichip, "HIGHEST_REGION") == -1) continue; // skip chips we didn't see
+    os << "  *** Chip " << ichip << ", chip ID " << iValue(ichip,"CHIP_ID") <<  "  ***" << endl;
+    for ( int irow = 0; irow < iValue(0,"HIGHEST_ROW")+1; irow++)
+    {
+    bool has_hit = false;
+    for ( int iregion = 0; iregion < iValue(ichip, "HIGHEST_REGION")+1; iregion++) // check if there are any hits in this row
+    {
+    if (iValue(ichip,iregion, irow) != 0)
+    {
+    has_hit = true;
+    break;
     }
+    }
+    if (has_hit)
+    {
+    os << "  Row  Region" << endl;
+    for ( int iregion = 0; iregion < iValue(ichip, "HIGHEST_REGION")+1; iregion++)
+    {
+    os << setw(4) << irow << "  " << setw(4) << iregion << " | ";
+    unsigned int bits =  iValue(ichip,iregion, irow);
+    for ( int i = 0; i < 32; i++)
+    {
+    if ( (bits >> i) & 1)
+    {
+    os << "X";
+    }
+    else
+    {
+    os << "-";
+    }
+    }
+    os << endl;
+    }
+    os << endl;
+    }
+    }
+    }
+    */
 
 }
 
