@@ -16,6 +16,10 @@ oncsSub_idmvtxv1::oncsSub_idmvtxv1(subevtdata_ptr data)
     for (int ruid=0; ruid<MAXRUID+1; ruid++)
     {
         _ruchn_mask[ruid]=-1;
+        _bad_ruchns[ruid] = 0;
+        _lanes_active[ruid] = 0;
+        _lane_stops[ruid] = 0;
+        _lane_timeouts[ruid] = 0;
         for ( int ruchn = 0; ruchn < MAXRUCHN+1; ruchn++)
         {
             _chip_id[ruid][ruchn] = -1;
@@ -27,10 +31,8 @@ oncsSub_idmvtxv1::oncsSub_idmvtxv1(subevtdata_ptr data)
             _readout_flags[ruid][ruchn] = -1;
         }
     }
-    _unexpected_felix_counter = 0;
-    _bad_ruid = 0;
-    _bad_ruchns = 0;
-    _bad_chipids = 0;
+    _unexpected_felix_counters = 0;
+    _bad_ruids = 0;
 }
 
 oncsSub_idmvtxv1::~oncsSub_idmvtxv1()
@@ -125,7 +127,7 @@ int *oncsSub_idmvtxv1::decode ()
         if (d32->ruid > MAXRUID)
         {
             //cout << __FILE__ << " " << __LINE__ << " --- invalid ruid " << hex << (int) d32->ruid << " at pos " << (long) pos << dec << endl;
-            _bad_ruid = d32->ruid;
+            _bad_ruids++;
             break;
         }
         else if (d32->ruid > _highest_ruid)
@@ -140,7 +142,7 @@ int *oncsSub_idmvtxv1::decode ()
             if (d32->counter != 0)
             {
                 //cout << __FILE__ << " " << __LINE__ << " --- unexpected FELIX counter " << hex << (int) d32->counter << " following previous counter value " << felix_counter << " at pos " << (long) pos << dec << endl;
-                _unexpected_felix_counter = d32->counter;
+                _unexpected_felix_counters++;
             }
             break;
         }
@@ -152,30 +154,17 @@ int *oncsSub_idmvtxv1::decode ()
             unsigned char ruchn = d32->d0[ichnk][9];
             if (ruchn == RUHEADER)
             {
-                //cout << __FILE__ << " " << __LINE__ << " --- RU header " << hex << ruchn << ", full RU word: ";
-                //for (int ibyte=9;ibyte>=0;ibyte--)
-                //{
-                    //cout << setfill('0') << setw(2) << hex << (unsigned int) d32->d0[ichnk][ibyte] << " ";
-                //}
-                unsigned int mask = 0;
-                memcpy(&mask,&d32->d0[ichnk][2],4);
-                _ruchn_mask[d32->ruid] = mask;
-
-                //cout << setfill('0') << setw(7) << hex << mask;
-                //cout << setfill(' ') << setw(0) << dec << endl;
+                memcpy(&_lanes_active[d32->ruid],&d32->d0[ichnk][2],4);
+                _ruchn_mask[d32->ruid] = _lanes_active[d32->ruid];
             }
             else if (ruchn == RUTRAILER)
             {
-                //cout << __FILE__ << " " << __LINE__ << " --- RU trailer " << hex << ruchn << ", full RU word: ";
-                //for (int ibyte=9;ibyte>=0;ibyte--)
-                //{
-                //cout << setfill('0') << setw(2) << hex << (unsigned int) d32->d0[ichnk][ibyte] << " ";
-                //}
-                //cout << setfill(' ') << setw(0) << dec << endl;
+                memcpy(&_lane_stops[d32->ruid],&d32->d0[ichnk][0],4);
+                memcpy(&_lane_timeouts[d32->ruid],&d32->d0[ichnk][4],4);
             }
             else if (ruchn > MAXRUCHN)
             {
-                _bad_ruchns++;
+                _bad_ruchns[d32->ruid]++;
                 cout << __FILE__ << " " << __LINE__ << " --- invalid ruchn " << hex << ruchn << ", full RU word: ";
                 for (int ibyte=9;ibyte>=0;ibyte--)
                 {
@@ -417,6 +406,39 @@ int oncsSub_idmvtxv1::iValue(const int ruid, const char *what)
 {
     decode();
 
+    if ( strcmp(what,"UNEXPECTED_FELIX_COUNTERS") == 0 )
+    {
+        return _unexpected_felix_counters;
+    }
+
+    else if ( strcmp(what,"BAD_RUIDS") == 0 )
+    {
+        return _bad_ruids;
+    }
+
+    if (ruid > _highest_ruid) return -1; // no such RU
+    if (_ruchn_mask[ruid]==-1) return -1; // no such RU
+
+    if ( strcmp(what,"BAD_RUCHNS") == 0 )
+    {
+        return _bad_ruchns[ruid];
+    }
+
+    else if ( strcmp(what,"LANES_ACTIVE") == 0 )
+    {
+        return _lanes_active[ruid];
+    }
+
+    else if ( strcmp(what,"LANE_STOPS") == 0 )
+    {
+        return _lane_stops[ruid];
+    }
+
+    else if ( strcmp(what,"LANE_TIMEOUTS") == 0 )
+    {
+        return _lane_timeouts[ruid];
+    }
+
     return 0;
 }
 
@@ -493,53 +515,6 @@ int oncsSub_idmvtxv1::iValue(const int ruid, const int ruchn, const int i)
     return _hit_vectors[ruid][ruchn].at(i);
 }
 
-/*
-   int oncsSub_idmvtxv1::iValue(const int ich,const char *what)
-   {
-   decode();
-   if ( strcmp(what,"UNEXPECTED_FELIX_COUNTER") == 0 )
-   {
-   return _unexpected_felix_counter;
-   }
-
-   else if ( strcmp(what,"BAD_RUID") == 0 )
-   {
-   return _bad_ruid;
-   }
-
-   else if ( strcmp(what,"BAD_RUCHNS") == 0 )
-   {
-   return _bad_ruchns;
-   }
-
-   else if ( strcmp(what,"BAD_CHIPIDS") == 0 )
-   {
-   return _bad_chipids;
-   }
-
-   else if ( strcmp(what,"HIGHEST_CHIP") == 0 )
-   {
-   return _highest_chip;
-   }
-
-   else if ( strcmp(what,"CHIP_ID") == 0 )
-   {
-   if ( ich > _highest_chip) return -1; // no such chip
-   return _chip_id[ich];
-   }
-
-   else if ( strcmp(what,"EXCESS_DATA_BYTES") == 0 )
-   {
-   return _excess_bytes;
-   }
-
-   return 0;
-
-   }
-
-*/
-
-
 void  oncsSub_idmvtxv1::dump ( OSTREAM& os )
 {
 
@@ -551,7 +526,14 @@ void  oncsSub_idmvtxv1::dump ( OSTREAM& os )
     {
         if (iValue(ruid)!=-1)
         {
-            os << "RU ID: " << ruid << endl;
+            os << "RU ID: " << ruid;
+            os << ", bad_ruchns=" << iValue(ruid,"BAD_RUCHNS");
+            os << hex << setfill('0');
+            os << ", mask 0x" << setw(7) << iValue(ruid);
+            os << ", lanes_active=0x" << setw(7) << iValue(ruid,"LANES_ACTIVE");
+            os << ", lane_stops=0x" << setw(7) << iValue(ruid,"LANE_STOPS");
+            os << ", lane_timeouts=0x" << setw(7) << iValue(ruid,"LANE_TIMEOUTS");
+            os << dec << setfill(' ') << endl;
             for ( int ruchn = 0; ruchn < MAXRUCHN+1; ruchn++)
             {
                 if (iValue(ruid,ruchn)!=-1)
@@ -570,59 +552,6 @@ void  oncsSub_idmvtxv1::dump ( OSTREAM& os )
             }
         }
     }
-    /*
-       os << "Highest chip:      " << setw(4) << iValue(0, "HIGHEST_CHIP") +1<< endl;
-       os << "Regions:              ";
-       for ( int ichip = 0; ichip < iValue(0, "HIGHEST_CHIP") +1; ichip++)
-       {
-       os << setw(4) << iValue(ichip, "HIGHEST_REGION");
-       }
-       os << endl;
-       os << "Highest populated row " << iValue(0,"HIGHEST_ROW") << endl;
-
-    // now dump the chip info
-
-    for ( int ichip = 0; ichip < iValue(0, "HIGHEST_CHIP")+1; ichip++) // go through the chips
-    {
-    if (iValue(ichip, "HIGHEST_REGION") == -1) continue; // skip chips we didn't see
-    os << "  *** Chip " << ichip << ", chip ID " << iValue(ichip,"CHIP_ID") <<  "  ***" << endl;
-    for ( int irow = 0; irow < iValue(0,"HIGHEST_ROW")+1; irow++)
-    {
-    bool has_hit = false;
-    for ( int iregion = 0; iregion < iValue(ichip, "HIGHEST_REGION")+1; iregion++) // check if there are any hits in this row
-    {
-    if (iValue(ichip,iregion, irow) != 0)
-    {
-    has_hit = true;
-    break;
-    }
-    }
-    if (has_hit)
-    {
-    os << "  Row  Region" << endl;
-    for ( int iregion = 0; iregion < iValue(ichip, "HIGHEST_REGION")+1; iregion++)
-    {
-    os << setw(4) << irow << "  " << setw(4) << iregion << " | ";
-    unsigned int bits =  iValue(ichip,iregion, irow);
-    for ( int i = 0; i < 32; i++)
-    {
-    if ( (bits >> i) & 1)
-    {
-    os << "X";
-    }
-    else
-    {
-    os << "-";
-    }
-    }
-    os << endl;
-    }
-    os << endl;
-    }
-    }
-    }
-    */
-
 }
 
 //copied from oncsSubevent.cc for a generic dump 12/21/17
