@@ -39,9 +39,10 @@ class WINDOWSEXPORT oncsSub_idmvtxv1 : public  oncsSubevent_w4 {
             void  dump ( OSTREAM& os = COUT) ;
             void  gdump ( const int how=EVT_HEXADECIMAL, OSTREAM& os = COUT) const; // add this to override the generic gdump
 
-            unsigned int encode_hit(unsigned short row, unsigned short col) const;
-            unsigned short decode_row(unsigned int hit) const;
-            unsigned short decode_col(unsigned int hit) const;
+            int encode_hit(unsigned short row, unsigned short col) const;
+            unsigned short decode_row(int hit) const;
+            unsigned short decode_col(int hit) const;
+            bool mask_contains_ruchn(int mask, int ruchn);
 
         protected:
             int *decode ();
@@ -49,7 +50,6 @@ class WINDOWSEXPORT oncsSub_idmvtxv1 : public  oncsSubevent_w4 {
             int _is_decoded;
 
             int _highest_ruid;
-            int _ruchn_mask[MAXRUID+1];
 
             vector<int> _hit_vectors[MAXRUID+1][MAXRUCHN+1];
 

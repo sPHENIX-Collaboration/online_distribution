@@ -15,11 +15,10 @@ oncsSub_idmvtxv1::oncsSub_idmvtxv1(subevtdata_ptr data)
     _highest_ruid = -1;
     for (int ruid=0; ruid<MAXRUID+1; ruid++)
     {
-        _ruchn_mask[ruid]=-1;
         _bad_ruchns[ruid] = 0;
-        _lanes_active[ruid] = 0;
-        _lane_stops[ruid] = 0;
-        _lane_timeouts[ruid] = 0;
+        _lanes_active[ruid] = -1;
+        _lane_stops[ruid] = -1;
+        _lane_timeouts[ruid] = -1;
         for ( int ruchn = 0; ruchn < MAXRUCHN+1; ruchn++)
         {
             _chip_id[ruid][ruchn] = -1;
@@ -84,19 +83,26 @@ void oncsSub_idmvtxv1::print_stuff(OSTREAM& out, unsigned int data, int width, i
         out << std::hex << SETW(width) << std::setfill('0') << ((data>>shift) & mask);
 }
 
-unsigned int oncsSub_idmvtxv1::encode_hit(unsigned short row, unsigned short col) const
+int oncsSub_idmvtxv1::encode_hit(unsigned short row, unsigned short col) const
 {
     return (row << 16) + col;
 }
 
-unsigned short oncsSub_idmvtxv1::decode_row(unsigned int hit) const
+unsigned short oncsSub_idmvtxv1::decode_row(int hit) const
 {
     return hit >> 16;
 }
 
-unsigned short oncsSub_idmvtxv1::decode_col(unsigned int hit) const
+unsigned short oncsSub_idmvtxv1::decode_col(int hit) const
 {
     return hit & 0xffff;
+}
+
+bool oncsSub_idmvtxv1::mask_contains_ruchn ( int mask, int ruchn )
+{
+    if (ruchn<=0) return false; //invalid ruchn
+    if (mask<0) return false;
+    return (((mask >> (ruchn-1)) & 1) == 1);
 }
 
 int *oncsSub_idmvtxv1::decode ()
@@ -155,7 +161,6 @@ int *oncsSub_idmvtxv1::decode ()
             if (ruchn == RUHEADER)
             {
                 memcpy(&_lanes_active[d32->ruid],&d32->d0[ichnk][2],4);
-                _ruchn_mask[d32->ruid] = _lanes_active[d32->ruid];
             }
             else if (ruchn == RUTRAILER)
             {
@@ -199,8 +204,8 @@ int *oncsSub_idmvtxv1::decode ()
             int status = 0;
             int ibyte_endofdata = -1;
             int the_region = -1;
-            unsigned int address;
-            unsigned int encoder_id;
+            unsigned int address = 0;
+            unsigned int encoder_id = 0;
             for (unsigned int ibyte = 0; ibyte < ruchn_stream[ruid][ruchn].size(); ibyte++)
             {
                 b = ruchn_stream[ruid][ruchn].at(ibyte);
@@ -417,16 +422,11 @@ int oncsSub_idmvtxv1::iValue(const int ruid, const char *what)
     }
 
     if (ruid > _highest_ruid) return -1; // no such RU
-    if (_ruchn_mask[ruid]==-1) return -1; // no such RU
+    if (_lanes_active[ruid]==-1) return -1; // no such RU
 
     if ( strcmp(what,"BAD_RUCHNS") == 0 )
     {
         return _bad_ruchns[ruid];
-    }
-
-    else if ( strcmp(what,"LANES_ACTIVE") == 0 )
-    {
-        return _lanes_active[ruid];
     }
 
     else if ( strcmp(what,"LANE_STOPS") == 0 )
@@ -447,7 +447,7 @@ int oncsSub_idmvtxv1::iValue(const int ruid)
     decode();
 
     if (ruid > _highest_ruid) return -1; // no such RU
-    return _ruchn_mask[ruid];
+    return _lanes_active[ruid];
 }
 
 int oncsSub_idmvtxv1::iValue(const int ruid, const int ruchn, const char *what)
@@ -455,7 +455,7 @@ int oncsSub_idmvtxv1::iValue(const int ruid, const int ruchn, const char *what)
     decode();
 
     if (ruid > _highest_ruid) return -1; // no such RU
-    if (_ruchn_mask[ruid]==-1) return -1; // no such RU
+    if (_lanes_active[ruid]==-1) return -1; // no such RU
 
     if ( strcmp(what,"CHIP_ID") == 0 )
     {
@@ -500,8 +500,8 @@ int oncsSub_idmvtxv1::iValue(const int ruid, const int ruchn)
     decode();
 
     if (ruid > _highest_ruid) return -1; // no such RU
-    if (_ruchn_mask[ruid]==-1) return -1; // no such RU
-    if (((_ruchn_mask[ruid] >> (ruchn-1)) & 1) == 0) return -1; // no such RU channel
+    if (_lanes_active[ruid]==-1) return -1; // no such RU
+    if (!mask_contains_ruchn(_lanes_active[ruid],ruchn)) return -1; // no such RU channel
     return _hit_vectors[ruid][ruchn].size();
 }
 
@@ -510,8 +510,8 @@ int oncsSub_idmvtxv1::iValue(const int ruid, const int ruchn, const int i)
     decode();
 
     if (ruid > _highest_ruid) return -1; // no such RU
-    if (_ruchn_mask[ruid]==-1) return -1; // no such RU
-    if (((_ruchn_mask[ruid] >> (ruchn-1)) & 1) == 0) return -1; // no such RU channel
+    if (_lanes_active[ruid]==-1) return -1; // no such RU
+    if (!mask_contains_ruchn(_lanes_active[ruid],ruchn)) return -1; // no such RU channel
     return _hit_vectors[ruid][ruchn].at(i);
 }
 
@@ -522,6 +522,7 @@ void  oncsSub_idmvtxv1::dump ( OSTREAM& os )
 
     decode();
 
+    bool first;
     for (int ruid=0; ruid<MAXRUID+1; ruid++)
     {
         if (iValue(ruid)!=-1)
@@ -529,10 +530,46 @@ void  oncsSub_idmvtxv1::dump ( OSTREAM& os )
             os << "RU ID: " << ruid;
             os << ", bad_ruchns=" << iValue(ruid,"BAD_RUCHNS");
             os << hex << setfill('0');
-            os << ", mask 0x" << setw(7) << iValue(ruid);
-            os << ", lanes_active=0x" << setw(7) << iValue(ruid,"LANES_ACTIVE");
-            os << ", lane_stops=0x" << setw(7) << iValue(ruid,"LANE_STOPS");
-            os << ", lane_timeouts=0x" << setw(7) << iValue(ruid,"LANE_TIMEOUTS");
+            os << ", lanes_active 0x" << setw(7) << iValue(ruid);
+            first=true;
+            os << " (";
+            for ( int ruchn = 0; ruchn < MAXRUCHN+1; ruchn++)
+            {
+                if (mask_contains_ruchn(iValue(ruid),ruchn))
+                {
+                    if (!first)
+                        os << ", ";
+                    os << ruchn;
+                    first = false;
+                }
+            }
+            os << "), lane_stops=0x" << setw(7) << iValue(ruid,"LANE_STOPS");
+            first=true;
+            os << " (";
+            for ( int ruchn = 0; ruchn < MAXRUCHN+1; ruchn++)
+            {
+                if (mask_contains_ruchn(iValue(ruid,"LANE_STOPS"),ruchn))
+                {
+                    if (!first)
+                        os << ", ";
+                    os << ruchn;
+                    first = false;
+                }
+            }
+            os << "), lane_timeouts=0x" << setw(7) << iValue(ruid,"LANE_TIMEOUTS");
+            first=true;
+            os << " (";
+            for ( int ruchn = 0; ruchn < MAXRUCHN+1; ruchn++)
+            {
+                if (mask_contains_ruchn(iValue(ruid,"LANE_TIMEOUTS"),ruchn))
+                {
+                    if (!first)
+                        os << ", ";
+                    os << ruchn;
+                    first = false;
+                }
+            }
+            os << ")";
             os << dec << setfill(' ') << endl;
             for ( int ruchn = 0; ruchn < MAXRUCHN+1; ruchn++)
             {
