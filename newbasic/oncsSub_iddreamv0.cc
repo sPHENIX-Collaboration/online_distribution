@@ -209,7 +209,8 @@ void  oncsSub_iddreamv0::dump ( OSTREAM& os )
 	      
 		  for (int channel = 0; channel < 32; channel ++)
 		    {
-		      os << setw(5) << iValue(id, dream*64 + channel, sample);
+		      int xx = iValue(id, dream*64 + channel, sample);
+		      os << setw(5) << xx;
 		    }
 		  os << endl;
 		  os << "    - ";
@@ -281,10 +282,11 @@ int oncsSub_iddreamv0::decode_payload ( unsigned short *d, const int size)
 
   int sample_id;
   int fine_tstp; 
-
+  int old_eventid = -1;
 
   int dream_id;
- 
+  int feu_id;
+  
   while ( nwpacket_index + 4 < size)
     {
 
@@ -297,17 +299,25 @@ int oncsSub_iddreamv0::decode_payload ( unsigned short *d, const int size)
       index = feu_index;  
       if ( (d[index] & 0x7000) == 0x6000)  // word 0 
 	{
-	  int feu_id = d[index] & 0xff;
+	  feu_id = d[index] & 0xff;
 	  
 	  // do we know this FEU?
-	  fd = feu_map[feu_id];
-	  if ( !fd)  // no we don't
+	  if ( ! feu_map.count(feu_id) )
 	    {
 	      //	      cout << __FILE__ << " " << __LINE__ << " new feu_id= " << feu_id << " added" << endl;
 	      feu_map[feu_id] = fd = new FEU_decoded_data;
 	      fd->_feu_id = feu_id;
+	      fd->_feu_P = 0;
+	      fd->_feu_C = 0;
+	      fd->_feu_Z = 0;
+	      fd->_nr_samples = 0;
+	      fd->_nr_dreams = 0;
 	      memset (fd->samples, 0,  8*64*255*sizeof(int) );
 	      memset (fd->cellids, 0,  8*64*sizeof(unsigned long long) );
+	    }
+	  else
+	    {
+	      fd = feu_map[feu_id];
 	    }
 
 	  fd->_feu_P  = ( d[index] >>  8) & 0x1;
@@ -320,6 +330,14 @@ int oncsSub_iddreamv0::decode_payload ( unsigned short *d, const int size)
       if ( (d[index] & 0x7000) == 0x6000)
 	{
 	  event_id = d[index] & 0xfff;
+	  if ( old_eventid < 0)
+	    {
+	      old_eventid  = event_id;
+	    }
+	  else
+	    {
+	      if (old_eventid  != event_id)  cerr << __FILE__ << " " << __LINE__ << " feu eventid= " << event_id << " others " << old_eventid << endl;
+	    }
 	}
       
       index = feu_index+2;                  // word 2
@@ -335,13 +353,14 @@ int oncsSub_iddreamv0::decode_payload ( unsigned short *d, const int size)
 	  if ( sample_id > fd->_nr_samples) fd->_nr_samples = sample_id;  // and update the max sample nr as needed
 	  fine_tstp = ( d[index]) & 0x7;
 	}
-      //      cout << __FILE__ << " " << __LINE__ <<  " event id " << event_id << " sample id " <<  sample_id << endl;
+      //      cout << __FILE__ << " " << __LINE__ <<  " FEU id " << feu_id << " event id " << event_id << " sample id " <<  sample_id << " maxsample " << fd->_nr_samples << endl;
 
       time_stamp = ( time_stamp<<3)  | fine_tstp;
 
       index = feu_index+4 ;
-      if (  (d[index] & 0x7000) == 0x6000 )  // do we have the optional header?
+      if (  (d[index] & 0x6000) == 0x6000 )  // do we have the optional header?
 	{
+	  //	  cout << __FILE__ << " " << __LINE__ <<  " skipping opt  header event id " << event_id << " sample id " <<  sample_id << endl;
 	  index += 4;      // skip if so
 	}
       
@@ -356,7 +375,7 @@ int oncsSub_iddreamv0::decode_payload ( unsigned short *d, const int size)
 
       if ( fd->_feu_Z )   // zero_suppressed data
 	{
-	
+	  //  cout << __FILE__ << " " << __LINE__ << "  " << hex << (d[index] & 0x7fff) << dec << endl;
 	  while( ( d[index] & 0x6000) != 0x6000 )  // test if x11x == end marker
 	    {
 	      dream_id = ( d[index] >> 6 ) & 0x7;
@@ -364,9 +383,9 @@ int oncsSub_iddreamv0::decode_payload ( unsigned short *d, const int size)
 	      int channel_value = d[index+1] & 0xfff;
 
 	      // cout << __FILE__ << " " << __LINE__ << "  " << hex << (d[index] & 0x7fff) << dec
-	      // 	   << "  " << setw(5) << dream_id
-	      // 	   << "  " << setw(5) << channel_id
-	      // 	   << "  " << setw(5) << channel_value << endl;
+	      // 	   << " dreamchip " << setw(5) << dream_id
+	      //  	   << " channel id " << setw(5) << channel_id
+	      // 	   << " channel val " << setw(5) << channel_value << endl;
 
 	      fd->samples[dream_id][channel_id][sample_id] = channel_value;
 

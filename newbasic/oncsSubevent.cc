@@ -406,6 +406,19 @@ void oncsSubevent_w4::gdump(const int i, OSTREAM& out) const
 {
 
   int *SubeventData = &SubeventHdr->data;
+
+  if ( i == EVT_RAW)
+    {
+      fwrite(SubeventData, sizeof(int), getDataLength(), stdout);
+      return;
+    }
+
+  if ( i == EVT_RAW_WH)
+    {
+      fwrite(SubeventHdr, sizeof(int), getLength(), stdout);
+      return;
+    }
+
   int j,l;
   identify(out);
   
@@ -452,6 +465,19 @@ void oncsSubevent_w4::gdump(const int i, OSTREAM& out) const
 void oncsSubevent_w2::gdump(const int i, OSTREAM& out) const
 {
   short *SubeventData = (short *) &SubeventHdr->data;
+
+  if ( i == EVT_RAW)
+    {
+      fwrite(SubeventData, sizeof(int), getDataLength(), stdout);
+      return;
+    }
+
+  if ( i == EVT_RAW_WH)
+    {
+      fwrite(SubeventHdr, sizeof(int), getLength(), stdout);
+      return;
+    }
+
   int j,l;
   identify(out);
 
@@ -495,6 +521,20 @@ void oncsSubevent_w2::gdump(const int i, OSTREAM& out) const
 void oncsSubevent_w1::gdump(const int i, OSTREAM& out) const
 {
   char *SubeventData = (char *) &SubeventHdr->data;
+
+
+  if ( i == EVT_RAW)
+    {
+      fwrite(SubeventData, sizeof(int), getDataLength(), stdout);
+      return;
+    }
+
+  if ( i == EVT_RAW_WH)
+    {
+      fwrite(SubeventHdr, sizeof(int), getLength(), stdout);
+      return;
+    }
+
   int j,l;
   char cstring[20];
   char *c;

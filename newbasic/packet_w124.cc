@@ -55,8 +55,22 @@ void Packet_w4::dump(OSTREAM& out)
 void Packet_w4::gdump(const int i, OSTREAM& out) const
 {
   int j,l;
-
+  
   int * packetData = (int *) findPacketDataStart (packet);
+
+  if ( i == EVT_RAW)
+    {
+      fwrite(packetData, sizeof(int), getDataLength()-getPadding(), stdout);
+      return;
+    }
+
+  if ( i == EVT_RAW_WH)
+    {
+      fwrite(packet, sizeof(int), getLength(), stdout);
+      return;
+    }
+      
+
   identify(out);
 
   if (packetData == 0) 
@@ -111,6 +125,18 @@ void Packet_w4::gdump(const int i, OSTREAM& out) const
 void Packet_w2::gdump(const int i, OSTREAM& out) const
 {
   short * packetData = (short *) findPacketDataStart (packet);
+
+  if ( i == EVT_RAW)
+    {
+      fwrite(packetData, sizeof(short), 2*(getDataLength() - getPadding()), stdout);
+      return;
+    }
+
+  if ( i == EVT_RAW_WH)
+    {
+      fwrite(packet, sizeof(int), getLength(), stdout);
+      return;
+    }
 
   identify(out);
   if (packetData == 0) 
@@ -172,6 +198,18 @@ void Packet_w1::gdump(const int i, OSTREAM& out) const
 {
 
   char * packetData = (char *) findPacketDataStart (packet);
+
+  if ( i == EVT_RAW)
+    {
+      fwrite(packetData, sizeof(char), 4*(getDataLength() - getPadding()), stdout);
+      return;
+    }
+
+  if ( i == EVT_RAW_WH)
+    {
+      fwrite(packet, sizeof(int), getLength(), stdout);
+      return;
+    }
 
   identify(out);
   if (packetData == 0) 
