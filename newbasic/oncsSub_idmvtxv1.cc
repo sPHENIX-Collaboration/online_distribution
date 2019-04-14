@@ -123,7 +123,13 @@ int *oncsSub_idmvtxv1::decode ()
 
     vector<unsigned char> ruchn_stream[MAXRUID+1][MAXRUCHN+1];
 
-    unsigned char felix_counter = 0;
+    //unsigned char felix_counter = 0;
+    unsigned char felix_counter [MAXRUID+1];
+
+    for( int i=0; i < MAXRUID+1; i++)
+    {
+        felix_counter[i] = 0;
+    }
 
     while ( pos < the_end )
     {
@@ -132,7 +138,7 @@ int *oncsSub_idmvtxv1::decode ()
 
         if (d32->ruid > MAXRUID)
         {
-            //cout << __FILE__ << " " << __LINE__ << " --- invalid ruid " << hex << (int) d32->ruid << " at pos " << (long) pos << dec << endl;
+            cout << __FILE__ << " " << __LINE__ << " --- invalid ruid " << hex << (int) d32->ruid << " at pos " << (long) pos << dec << endl;
             _bad_ruids++;
             break;
         }
@@ -142,7 +148,7 @@ int *oncsSub_idmvtxv1::decode ()
         }
         //FELIX counter is 8 bits, max value 256
         //check that the new counter value is consistent with the previous value (it should have increased by no more than 3, and the amount of the difference is the number of data chunks in this FELIX word)
-        int counter_increment = (d32->counter + 256 - felix_counter)%256;
+        int counter_increment = (d32->counter + 256 - felix_counter[d32->ruid])%256;
         if (counter_increment > 3)
         {
             if (d32->counter != 0)
@@ -152,12 +158,14 @@ int *oncsSub_idmvtxv1::decode ()
             }
             break;
         }
-        felix_counter = d32->counter;
+        felix_counter[d32->ruid] = d32->counter;
 
         //for (int ichnk = 0; ichnk < 3; ichnk++)
         for (int ichnk = 0; ichnk < counter_increment; ichnk++)
         {
             unsigned char ruchn = d32->d0[ichnk][9];
+            //cout << "hi2 ruchn: " << (int)ruchn << endl;
+            //cout << "hi2 ruid: " << (int)d32->ruid << endl;
             if (ruchn == RUHEADER)
             {
                 memcpy(&_lanes_active[d32->ruid],&d32->d0[ichnk][2],4);
@@ -521,7 +529,6 @@ void  oncsSub_idmvtxv1::dump ( OSTREAM& os )
     identify(os);
 
     decode();
-
     bool first;
     for (int ruid=0; ruid<MAXRUID+1; ruid++)
     {

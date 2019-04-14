@@ -12,7 +12,7 @@ class WINDOWSEXPORT oncsSub_idmvtxv1 : public  oncsSubevent_w4 {
     class  oncsSub_idmvtxv1 : public  oncsSubevent_w4 {
 #endif
 
-#define MAXRUID       1
+#define MAXRUID       4
 #define RUHEADER      0xE0
 #define RUTRAILER     0xF0
 #define MAXRUCHN      28
