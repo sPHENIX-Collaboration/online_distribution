@@ -9,17 +9,9 @@
 #include <time.h>
 
 #include "testEventiterator.h"
-#include "oBuffer.h"
 #include <stdlib.h>
 
-#include "A_Event.h"
-#include "Cframe.h"
-#include "frameRoutines.h"
-#include "packetRoutines.h"
-#include "packetConstants.h"
-#define EVTLENGTH 500
-
-class oBuffer;
+#include "oncsEvent.h"
 
 testEventiterator::~testEventiterator()
 {
@@ -30,6 +22,104 @@ testEventiterator::testEventiterator()
 {
   R = new simpleRandom(876565);
   current_event = 0;
+
+  typedef struct evt_data
+  {
+    int evt_length;
+    int evt_type;
+    int evt_sequence;
+    int run_number;
+    int date;
+    int time;
+    int reserved[2];
+    int data[];
+  } *e_ptr;
+
+typedef struct subevt_data
+ {
+   int   sub_length;
+   short sub_id;
+   short sub_type;
+   short sub_decoding;
+   short sub_padding;
+   int   reserved;
+   int   data[];
+ } *s_ptr;
+
+
+
+ current_event = 0;
+  
+  e_ptr e = (e_ptr) e_data;
+
+  e->evt_length    = 8;
+  e->evt_type      = 1;
+  e->evt_sequence  = 1;
+  e->run_number    = 1331;
+  e->date          = 0;
+  e->time          = time(0);
+  e->reserved[0]   = 0;
+  e->reserved[1]   = 0;
+
+  e_sequence = & e->evt_sequence;
+  e_time = &e->time;
+
+  
+  s_ptr s1001 = (s_ptr) e->data;
+
+  s1001->sub_length    = 4;
+  s1001->sub_id        = 1001;
+  s1001->sub_type      = 4;
+  s1001->sub_decoding  = 6;
+  s1001->sub_padding   = 0;
+  s1001->reserved      = 0;
+
+  
+  for (int i = 0; i < 20; i++)
+    {
+      s1001->data[i] = i;
+      s1001->sub_length++;
+    }
+  
+  e->evt_length += s1001->sub_length;
+  
+
+  s_ptr s1002 = (s_ptr) &s1001->data[20];
+  s1002->sub_length    = 4;
+  s1002->sub_id        = 1002;
+  s1002->sub_type      = 2;
+  s1002->sub_decoding  = 5;
+  s1002->sub_padding   = 0;
+  s1002->reserved      = 0;
+  
+  short *x = (short *) &s1002->data;
+  
+  for (int i = 0; i < 64; i++)
+    {
+      x[i] = i;
+    }
+  
+  s1002->sub_length+=32;
+  e->evt_length += s1002->sub_length;
+  
+
+  s_ptr s1003 = (s_ptr) &s1002->data[32];
+  s1003->sub_length    = 8;   // we have the length
+  s1003->sub_id        = 1003;
+  s1003->sub_type      = 4;
+  s1003->sub_decoding  = 6;
+  s1003->sub_padding   = 0;
+  s1003->reserved      = 0;
+
+  e_1003values = &(s1003->data[0]);
+  
+  s1003->data[0] = 0;
+  s1003->data[1] = 0;
+  s1003->data[2] = 0;
+  s1003->data[3] = 0;
+  
+  e->evt_length += s1003->sub_length;
+  
 }
 
 
@@ -52,91 +142,17 @@ Event *
 testEventiterator::getNextEvent()
 {
 
-  int i;
-  int packetlength;
+  *e_sequence =  ++current_event;
+  *e_time = time(0);
+  float scale = 10;
 
-  evtdata_ptr Eptr;
-  PHDWORD tdata[EVTLENGTH];
-  ALIGNBLK alignBlk;
+  for ( int i = 0; i < 4; i++)
+    {
+      e_1003values[i] = R->gauss(0 ,  scale  );
+      scale *= 10.;
+    }
 
-  for (i = 0; i<EVTLENGTH; ) tdata[i++]=0;
-  Eptr = ( evtdata_ptr ) tdata;
-
-  // construct the Event header
-  Eptr->evt_length = EVTHEADERLENGTH;
-  Eptr->evt_type=1;
-  Eptr->evt_sequence=++current_event;
-  Eptr->run_number=1331;
-  Eptr->date =time(0);
-  Eptr->time =-1;
-
-  alignBlk.dcb.timeStamp     =   0;    
-  alignBlk.dcb.granuleEvtcnt =   0;    
-  alignBlk.dcb.partitionVec  =   0;
-
-  int idata[20];
-  short sdata[20];
-  int rdata[4];
-
-  for (i = 0; i<20; i++) idata[i] = i;
-  for (i = 0; i<20; i++) sdata[i] = i;
-
-  //preset the empty event header.
-  tdata[0] = EVTHEADERLENGTH;
-
-  PHDWORD *frame = &tdata[ tdata[0] ];
-  makeFrameHdr(frame,EVTLENGTH-EVTHEADERLENGTH
-		     ,rawData,oncsFrame,101);
-
-  PHDWORD *packetstart;
-
-  // --------- packet 1001 -------------------
-
-  packetstart = findFrameDataEnd (frame) +1;
-
-  makeUnstructPacket (packetstart, EVTLENGTH, 1001, 4, ID4EVT);
-
-  packetlength = storePacketHits (packetstart, EVTLENGTH, 
-                   0, (BYTE*) idata, 20, 0);
-
-  adjustFrameLength (frame, EVTLENGTH , packetlength, 1);
-
-  // --------- packet 1002 -------------------
-  packetstart = findFrameDataEnd (frame) + 1;
-
-  makeUnstructPacket (packetstart, EVTLENGTH, 1002, 2, ID2EVT);
-
-  packetlength = storePacketHits (packetstart, EVTLENGTH, 
-                   0, (BYTE*) sdata, 20, 0);
-
-  adjustFrameLength (frame, EVTLENGTH , packetlength, 1);
-
-  // --------- packet 1003 -------------------
-
-  packetstart = findFrameDataEnd (frame) +1;
-
-  makeUnstructPacket (packetstart, EVTLENGTH, 1003, 4, ID4EVT);
-
-#ifndef WIN32
-  rdata[0] = int(R->gauss(0.,10.));
-  rdata[1] = int(R->gauss(0.,100.));
-  rdata[2] = int(R->gauss(0.,1000.));
-  rdata[3] = int(R->gauss(0.,10000.));
-#else
-  rdata[0] = 10 * rand();
-  rdata[1] = 100 * rand();
-  rdata[2] = 1000 * rand();
-  rdata[3] = 10000 * rand();
-#endif
-
-  packetlength = storePacketHits (packetstart, EVTLENGTH, 
-                   0, (BYTE*) rdata, 4, 0);
-
-  adjustFrameLength (frame, EVTLENGTH , packetlength, 1);
-
-  tdata[0] += getFrameLength (frame);
-
-  Event *e = new  A_Event(tdata);
+  Event *e = new  oncsEvent(e_data);
   e->convert();
 
   return e;
