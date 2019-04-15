@@ -420,6 +420,7 @@ void oncsSubevent_w4::gdump(const int i, OSTREAM& out) const
     }
 
   int j,l;
+  out << std::endl;
   identify(out);
   
   switch (i)
@@ -428,12 +429,13 @@ void oncsSubevent_w4::gdump(const int i, OSTREAM& out) const
       j = 0;
       while (1)
 	{
-	  out << std::endl << SETW(5) << j << " |  ";
+	  out << SETW(5) << j << " |  ";
 	  for (l=0;l<4;l++)
 	    {
 	      out << std::hex << SETW(8) << std::setfill ('0') << SubeventData[j++] << std::setfill(' ') << " " << std::dec;
 	      if (j>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) break;
 	    }
+	  out << std::endl;
 	  if (j>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) break;
 	}
       break;
@@ -442,13 +444,14 @@ void oncsSubevent_w4::gdump(const int i, OSTREAM& out) const
       j = 0;
       while (1)
 	{
-	  out << std::dec << std::endl << SETW(5) << j << " |  ";
+	  out << std::dec  << SETW(5) << j << " |  ";
 
 	  for (l=0;l<6;l++)
 	    {
 	      out << SETW(10) << SubeventData[j++] << " ";
 	      if (j>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) break;
 	    }
+	  out << std::endl;
 	  if (j>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) break;
 	}
       break;
@@ -456,7 +459,6 @@ void oncsSubevent_w4::gdump(const int i, OSTREAM& out) const
     default: 
       break;
     }
-  out << std::endl;
 
 }
 
@@ -479,6 +481,7 @@ void oncsSubevent_w2::gdump(const int i, OSTREAM& out) const
     }
 
   int j,l;
+  out << std::endl; 
   identify(out);
 
   switch (i)
@@ -487,12 +490,14 @@ void oncsSubevent_w2::gdump(const int i, OSTREAM& out) const
       j = 0;
       while (1)
 	{
-	  out << std::dec<< std::endl << SETW(5) << j << " |  ";
+	  out << std::dec << SETW(5) << j << " |  ";
 	  for (l=0;l<8;l++)
 	    {
 	      out << std::hex << SETW(4) << std::setfill ('0') << SubeventData[j++] << std::setfill(' ') << " " << std::dec;
 	      if (j>=2*(SubeventHdr->sub_length-SEVTHEADERLENGTH  - SubeventHdr->sub_padding) ) break;
 	    }
+	    out << std::endl;
+
 	  if (j>=2*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) break;
 	}
       break;
@@ -501,19 +506,19 @@ void oncsSubevent_w2::gdump(const int i, OSTREAM& out) const
       j = 0;
       while (1)
 	{
-	  out << std::dec << std::endl << SETW(5) << j << " |  ";
+	  out << std::dec << SETW(5) << j << " |  ";
 	  for (l=0;l<8;l++)
 	    {
 	      out << std::dec << SETW(6) << SubeventData[j++] << " ";
 	      if (j>=2*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) break;
 	    }
+	  out << std::endl;
 	  if (j>=2*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) break;
 	}
       break;
 
     default: break;
     }
-  out << std::endl;
 }
 
 // ---------------------------------------------------------------------
@@ -538,6 +543,7 @@ void oncsSubevent_w1::gdump(const int i, OSTREAM& out) const
   int j,l;
   char cstring[20];
   char *c;
+  out << std::endl;
   identify(out);
 
   j = 0;
@@ -547,22 +553,27 @@ void oncsSubevent_w1::gdump(const int i, OSTREAM& out) const
       while (1)
 	{
 	  c = cstring;
-	  out << std::dec << std::endl << SETW(5) << j << " |  ";
+	  out << std::dec <<  SETW(5) << j << " |  ";
 	  for (l=0;l<16;l++)
 	    {
 	      if (j < 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) 
 		{
-		  *c++ = SubeventData[j];
-		  out << std::hex << SETW(2) << SubeventData[j++] << " ";
+		  out << std::hex << SETW(2) << (int) SubeventData[j] << " ";
+		  if (SubeventData[j] >=32 && SubeventData[j] <=127) 
+		    {
+		      *c++ = SubeventData[j];
+		    }
+		  else
+		    {
+		      *c++ = 0x20;
+		    }
+		  out << " ";
 		}
-	      else
-		{
-		  *c++ = 0x20;
-		  out << "   ";
-		}
+	      j++;
 	    }
 	  *c = 0;
 	  out << "  | " << cstring;
+	  out << std::endl;
 	  if (j >= 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) break;
 	}
       break;
@@ -571,26 +582,31 @@ void oncsSubevent_w1::gdump(const int i, OSTREAM& out) const
       while (1)
 	{
 	  c = cstring;
-	  out << std::dec << std::endl << SETW(5) << j << " |  ";
-	  for (l=0;l<12;l++)
+	  out << std::dec <<  SETW(5) << j << " |  ";
+	  for (l=0;l<16;l++)
 	    {
 	      if (j < 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) 
 		{
-		  *c++ = SubeventData[j];
-		  out << std::hex << SETW(4) << SubeventData[j++] << " ";
+		  out  << SETW(3) << (int) SubeventData[j] << " ";
+		  if (SubeventData[j] >=32 && SubeventData[j] <=127) 
+		    {
+		      *c++ = SubeventData[j];
+		    }
+		  else
+		    {
+		      *c++ = 0x20;
+		    }
+		  out << " ";
 		}
-	      else
-		{
-		  *c++ = 0x20;
-		  out << "   ";
-		}
+	      j++;
 	    }
 	  *c = 0;
 	  out << "  | " << cstring;
+	  out << std::endl;
 	  if (j >= 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) break;
 	}
       break;
-
+      
     default: break;
     }
   out << std::endl;
