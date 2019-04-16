@@ -46,6 +46,6 @@ void phelp();
 
 void pupdate(TVirtualPad * pad, const unsigned int refresh = 5);
 //void start_update(TVirtualPad * pad);
-void pend_update();
+void pend_update(TVirtualPad * pad = 0);
 
 #endif /* __PMONITOR__ */

@@ -585,7 +585,11 @@ pMutex mondisplay_started;
 static TThread *mon_thread = 0;
 
 unsigned int refreshinterval = 5;
+
+// if stop update is true, we look for the thread that updates pad_to_stop
+// if that is 0, we stop all threads
 unsigned int stop_update = 0;
+TVirtualPad * pad_to_stop = 0;
 
 void update_process (void * ptr)
 {
@@ -613,8 +617,20 @@ void update_process (void * ptr)
   highest_subpad = i-1;
 
 
-  while ( !stop_update)
+  while ( 1)
     {
+      if ( stop_update)
+	{
+	  if ( pad_to_stop == 0)
+	    {
+	      break;
+	    }
+	  else
+	    {
+	      if (pad_to_stop == myPad) break;
+	    }
+	}
+      
       time_t x = time(0);
       if ( x - last_time > my_refreshinterval)
 	{
@@ -646,6 +662,7 @@ void pupdate(TVirtualPad * pad, const unsigned int refresh)
   ta->refreshinterval = refresh;
 
   stop_update = 0;
+  pad_to_stop = 0;
   mon_thread = new TThread ( update_process, ta);
   mon_thread->Run();
 #else
@@ -654,10 +671,11 @@ void pupdate(TVirtualPad * pad, const unsigned int refresh)
   
 }
 
-void pend_update()
+void pend_update(TVirtualPad * pad)
 {  
 #ifdef HAVE_ROOT6
   stop_update = 1;
+  pad_to_stop = pad;
 #else
   cout << "this is implemented in root v6 only" << endl; 
 #endif
