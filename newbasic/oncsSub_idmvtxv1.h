@@ -12,11 +12,11 @@ class WINDOWSEXPORT oncsSub_idmvtxv1 : public  oncsSubevent_w4 {
     class  oncsSub_idmvtxv1 : public  oncsSubevent_w4 {
 #endif
 
-#define MAXRUID       4
-#define RUHEADER      0xE0
-#define RUTRAILER     0xF0
-#define MAXRUCHN      28
-#define MAXCHIPID     9
+#define IDMVTXV1_MAXRUID       4
+#define IDMVTXV1_RUHEADER      0xE0
+#define IDMVTXV1_RUTRAILER     0xF0
+#define IDMVTXV1_MAXRUCHN      28
+
         public:
             oncsSub_idmvtxv1( subevtdata_ptr);
             ~oncsSub_idmvtxv1();
@@ -51,21 +51,21 @@ class WINDOWSEXPORT oncsSub_idmvtxv1 : public  oncsSubevent_w4 {
 
             int _highest_ruid;
 
-            vector<int> _hit_vectors[MAXRUID+1][MAXRUCHN+1];
+            vector<int> _hit_vectors[IDMVTXV1_MAXRUID+1][IDMVTXV1_MAXRUCHN+1];
 
             int _unexpected_felix_counters;
             int _bad_ruids;
-            int _bad_ruchns[MAXRUID+1];
-            int _lanes_active[MAXRUID+1];
-            int _lane_stops[MAXRUID+1];
-            int _lane_timeouts[MAXRUID+1];
-            int _chip_id[MAXRUID+1][MAXRUCHN+1];
-            int _bad_bytes[MAXRUID+1][MAXRUCHN+1];
-            int _excess_bytes[MAXRUID+1][MAXRUCHN+1];
-            int _bunchcounter[MAXRUID+1][MAXRUCHN+1];
-            bool _header_found[MAXRUID+1][MAXRUCHN+1];
-            bool _trailer_found[MAXRUID+1][MAXRUCHN+1];
-            int _readout_flags[MAXRUID+1][MAXRUCHN+1];
+            int _bad_ruchns[IDMVTXV1_MAXRUID+1];
+            int _lanes_active[IDMVTXV1_MAXRUID+1];
+            int _lane_stops[IDMVTXV1_MAXRUID+1];
+            int _lane_timeouts[IDMVTXV1_MAXRUID+1];
+            int _chip_id[IDMVTXV1_MAXRUID+1][IDMVTXV1_MAXRUCHN+1];
+            int _bad_bytes[IDMVTXV1_MAXRUID+1][IDMVTXV1_MAXRUCHN+1];
+            int _excess_bytes[IDMVTXV1_MAXRUID+1][IDMVTXV1_MAXRUCHN+1];
+            int _bunchcounter[IDMVTXV1_MAXRUID+1][IDMVTXV1_MAXRUCHN+1];
+            bool _header_found[IDMVTXV1_MAXRUID+1][IDMVTXV1_MAXRUCHN+1];
+            bool _trailer_found[IDMVTXV1_MAXRUID+1][IDMVTXV1_MAXRUCHN+1];
+            int _readout_flags[IDMVTXV1_MAXRUID+1][IDMVTXV1_MAXRUCHN+1];
 
             int decode_thebit(int the_row, int encoder_id, int address) const; //helper function to decode the column number
             void print_stuff(OSTREAM& out, unsigned int data, int width, int shift, bool blank = false) const;

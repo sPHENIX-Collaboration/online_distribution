@@ -13,13 +13,13 @@ oncsSub_idmvtxv1::oncsSub_idmvtxv1(subevtdata_ptr data)
 {
     _is_decoded = 0;
     _highest_ruid = -1;
-    for (int ruid=0; ruid<MAXRUID+1; ruid++)
+    for (int ruid=0; ruid<IDMVTXV1_MAXRUID+1; ruid++)
     {
         _bad_ruchns[ruid] = 0;
         _lanes_active[ruid] = -1;
         _lane_stops[ruid] = -1;
         _lane_timeouts[ruid] = -1;
-        for ( int ruchn = 0; ruchn < MAXRUCHN+1; ruchn++)
+        for ( int ruchn = 0; ruchn < IDMVTXV1_MAXRUCHN+1; ruchn++)
         {
             _chip_id[ruid][ruchn] = -1;
             _bad_bytes[ruid][ruchn] = 0;
@@ -121,12 +121,12 @@ int *oncsSub_idmvtxv1::decode ()
 
     unsigned char b;
 
-    vector<unsigned char> ruchn_stream[MAXRUID+1][MAXRUCHN+1];
+    vector<unsigned char> ruchn_stream[IDMVTXV1_MAXRUID+1][IDMVTXV1_MAXRUCHN+1];
 
     //unsigned char felix_counter = 0;
-    unsigned char felix_counter [MAXRUID+1];
+    unsigned char felix_counter [IDMVTXV1_MAXRUID+1];
 
-    for( int i=0; i < MAXRUID+1; i++)
+    for( int i=0; i < IDMVTXV1_MAXRUID+1; i++)
     {
         felix_counter[i] = 0;
     }
@@ -136,7 +136,7 @@ int *oncsSub_idmvtxv1::decode ()
 
         data32 *d32 = ( data32*) pos; 
 
-        if (d32->ruid > MAXRUID)
+        if (d32->ruid > IDMVTXV1_MAXRUID)
         {
             cout << __FILE__ << " " << __LINE__ << " --- invalid ruid " << hex << (int) d32->ruid << " at pos " << (long) pos << dec << endl;
             _bad_ruids++;
@@ -166,16 +166,16 @@ int *oncsSub_idmvtxv1::decode ()
             unsigned char ruchn = d32->d0[ichnk][9];
             //cout << "hi2 ruchn: " << (int)ruchn << endl;
             //cout << "hi2 ruid: " << (int)d32->ruid << endl;
-            if (ruchn == RUHEADER)
+            if (ruchn == IDMVTXV1_RUHEADER)
             {
                 memcpy(&_lanes_active[d32->ruid],&d32->d0[ichnk][2],4);
             }
-            else if (ruchn == RUTRAILER)
+            else if (ruchn == IDMVTXV1_RUTRAILER)
             {
                 memcpy(&_lane_stops[d32->ruid],&d32->d0[ichnk][0],4);
                 memcpy(&_lane_timeouts[d32->ruid],&d32->d0[ichnk][4],4);
             }
-            else if (ruchn > MAXRUCHN)
+            else if (ruchn > IDMVTXV1_MAXRUCHN)
             {
                 _bad_ruchns[d32->ruid]++;
                 cout << __FILE__ << " " << __LINE__ << " --- invalid ruchn " << hex << ruchn << ", full RU word: ";
@@ -197,15 +197,15 @@ int *oncsSub_idmvtxv1::decode ()
 
     //we ignore ruchn 0 (trigger information and padding words) for now
     /*
-       if (ruchn_stream[0].size()!=9) for ( int ruchn = 0; ruchn < MAXRUCHN+1; ruchn++)
+       if (ruchn_stream[0].size()!=9) for ( int ruchn = 0; ruchn < IDMVTXV1_MAXRUCHN+1; ruchn++)
        {
        cout << __FILE__ << " " << __LINE__ << " --- ruchn " << ruchn << " has " << ruchn_stream[ruchn].size() << " bytes" << endl;
        }
        */
 
-    for ( int ruid = 1; ruid < MAXRUID+1; ruid++)
+    for ( int ruid = 1; ruid < IDMVTXV1_MAXRUID+1; ruid++)
     {
-        for ( int ruchn = 1; ruchn < MAXRUCHN+1; ruchn++)
+        for ( int ruchn = 1; ruchn < IDMVTXV1_MAXRUCHN+1; ruchn++)
         {
 
             bool header_seen=false;
@@ -530,7 +530,7 @@ void  oncsSub_idmvtxv1::dump ( OSTREAM& os )
 
     decode();
     bool first;
-    for (int ruid=0; ruid<MAXRUID+1; ruid++)
+    for (int ruid=0; ruid<IDMVTXV1_MAXRUID+1; ruid++)
     {
         if (iValue(ruid)!=-1)
         {
@@ -540,7 +540,7 @@ void  oncsSub_idmvtxv1::dump ( OSTREAM& os )
             os << ", lanes_active 0x" << setw(7) << iValue(ruid);
             first=true;
             os << " (";
-            for ( int ruchn = 0; ruchn < MAXRUCHN+1; ruchn++)
+            for ( int ruchn = 0; ruchn < IDMVTXV1_MAXRUCHN+1; ruchn++)
             {
                 if (mask_contains_ruchn(iValue(ruid),ruchn))
                 {
@@ -553,7 +553,7 @@ void  oncsSub_idmvtxv1::dump ( OSTREAM& os )
             os << "), lane_stops=0x" << setw(7) << iValue(ruid,"LANE_STOPS");
             first=true;
             os << " (";
-            for ( int ruchn = 0; ruchn < MAXRUCHN+1; ruchn++)
+            for ( int ruchn = 0; ruchn < IDMVTXV1_MAXRUCHN+1; ruchn++)
             {
                 if (mask_contains_ruchn(iValue(ruid,"LANE_STOPS"),ruchn))
                 {
@@ -566,7 +566,7 @@ void  oncsSub_idmvtxv1::dump ( OSTREAM& os )
             os << "), lane_timeouts=0x" << setw(7) << iValue(ruid,"LANE_TIMEOUTS");
             first=true;
             os << " (";
-            for ( int ruchn = 0; ruchn < MAXRUCHN+1; ruchn++)
+            for ( int ruchn = 0; ruchn < IDMVTXV1_MAXRUCHN+1; ruchn++)
             {
                 if (mask_contains_ruchn(iValue(ruid,"LANE_TIMEOUTS"),ruchn))
                 {
@@ -578,7 +578,7 @@ void  oncsSub_idmvtxv1::dump ( OSTREAM& os )
             }
             os << ")";
             os << dec << setfill(' ') << endl;
-            for ( int ruchn = 0; ruchn < MAXRUCHN+1; ruchn++)
+            for ( int ruchn = 0; ruchn < IDMVTXV1_MAXRUCHN+1; ruchn++)
             {
                 if (iValue(ruid,ruchn)!=-1)
                 {
@@ -616,7 +616,8 @@ void oncsSub_idmvtxv1::gdump(const int i, OSTREAM& out) const
             current_offset = 0;
             while (1)
             {
-                int dwords_remaining = getLength()-SEVTHEADERLENGTH - getPadding()/4 - current_offset; //padding is supposed to be in units of dwords, this assumes bytes
+                //int dwords_remaining = getLength()-SEVTHEADERLENGTH - getPadding()/4 - current_offset; //padding is supposed to be in units of dwords, this assumes bytes
+                int dwords_remaining = getLength()-SEVTHEADERLENGTH - getPadding() - current_offset; //padding is supposed to be in units of dwords, this assumes bytes
 
                 out << SETW(5) << current_offset << " |  ";
                 //for (l=0;l<DWORDS_PER_WORD;l++)
