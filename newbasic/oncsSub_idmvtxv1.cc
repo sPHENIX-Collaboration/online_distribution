@@ -112,18 +112,15 @@ int *oncsSub_idmvtxv1::decode ()
 
     unsigned int *payload = (unsigned int *) &SubeventHdr->data;  // here begins the payload
 
-    int dlength = getLength()-4 - getPadding(); //padding is supposed to be in units of dwords, this assumes dwords
-    unsigned char *the_end = ( unsigned char *) &payload[dlength+1];
+    int dlength = getDataLength() - getPadding() - 1; //padding is supposed to be in units of dwords, this assumes dwords
+    unsigned char *the_end = ( unsigned char *) &payload[dlength];
 
     unsigned char *pos = (unsigned char *) payload;
-
-    //  cout << hex << " pos = " << (unsigned long long ) pos << "  the end  " << (unsigned long long) the_end << dec << endl;
 
     unsigned char b;
 
     vector<unsigned char> ruchn_stream[IDMVTXV1_MAXRUID+1][IDMVTXV1_MAXRUCHN+1];
 
-    //unsigned char felix_counter = 0;
     unsigned char felix_counter [IDMVTXV1_MAXRUID+1];
 
     for( int i=0; i < IDMVTXV1_MAXRUID+1; i++)
@@ -136,6 +133,7 @@ int *oncsSub_idmvtxv1::decode ()
 
         data32 *d32 = ( data32*) pos; 
 
+        //  cout << hex << " pos = " << (unsigned long long ) pos << "  the end  " << (unsigned long long) the_end << dec << endl;
         if (d32->ruid > IDMVTXV1_MAXRUID)
         {
             cout << __FILE__ << " " << __LINE__ << " --- invalid ruid " << hex << (int) d32->ruid << " at pos " << (long) pos << dec << endl;
@@ -164,8 +162,6 @@ int *oncsSub_idmvtxv1::decode ()
         for (int ichnk = 0; ichnk < counter_increment; ichnk++)
         {
             unsigned char ruchn = d32->d0[ichnk][9];
-            //cout << "hi2 ruchn: " << (int)ruchn << endl;
-            //cout << "hi2 ruid: " << (int)d32->ruid << endl;
             if (ruchn == IDMVTXV1_RUHEADER)
             {
                 memcpy(&_lanes_active[d32->ruid],&d32->d0[ichnk][2],4);
@@ -538,6 +534,7 @@ void  oncsSub_idmvtxv1::dump ( OSTREAM& os )
             os << ", bad_ruchns=" << iValue(ruid,"BAD_RUCHNS");
             os << hex << setfill('0');
             os << ", lanes_active 0x" << setw(7) << iValue(ruid);
+            os << dec;
             first=true;
             os << " (";
             for ( int ruchn = 0; ruchn < IDMVTXV1_MAXRUCHN+1; ruchn++)
@@ -550,7 +547,9 @@ void  oncsSub_idmvtxv1::dump ( OSTREAM& os )
                     first = false;
                 }
             }
+            os << hex << setfill('0');
             os << "), lane_stops=0x" << setw(7) << iValue(ruid,"LANE_STOPS");
+            os << dec;
             first=true;
             os << " (";
             for ( int ruchn = 0; ruchn < IDMVTXV1_MAXRUCHN+1; ruchn++)
@@ -563,7 +562,9 @@ void  oncsSub_idmvtxv1::dump ( OSTREAM& os )
                     first = false;
                 }
             }
+            os << hex << setfill('0');
             os << "), lane_timeouts=0x" << setw(7) << iValue(ruid,"LANE_TIMEOUTS");
+            os << dec;
             first=true;
             os << " (";
             for ( int ruchn = 0; ruchn < IDMVTXV1_MAXRUCHN+1; ruchn++)
@@ -617,7 +618,7 @@ void oncsSub_idmvtxv1::gdump(const int i, OSTREAM& out) const
             while (1)
             {
                 //int dwords_remaining = getLength()-SEVTHEADERLENGTH - getPadding()/4 - current_offset; //padding is supposed to be in units of dwords, this assumes bytes
-                int dwords_remaining = getLength()-SEVTHEADERLENGTH - getPadding() - current_offset; //padding is supposed to be in units of dwords, this assumes bytes
+                int dwords_remaining = getLength()-SEVTHEADERLENGTH - getPadding() - current_offset; //padding is supposed to be in units of dwords, this assumes dwords
 
                 out << SETW(5) << current_offset << " |  ";
                 //for (l=0;l<DWORDS_PER_WORD;l++)
@@ -644,8 +645,6 @@ void oncsSub_idmvtxv1::gdump(const int i, OSTREAM& out) const
                 print_stuff(out, SubeventData[current_offset+0], 8, 0, (dwords_remaining<=0));
                 out << " " << std::dec << std::endl << std::setfill(' ');
 
-                //if (current_offset>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) break;
-                //if (current_offset>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding/4) break; //hack to deal with our incorrect padding in daq_device_felix.cc
                 if (dwords_remaining<8) break;
 
                 current_offset += DWORDS_PER_WORD;
