@@ -4,8 +4,6 @@
 #include "oncsSubevent.h"
 #include <vector>
 
-using namespace std;
-
 #ifndef __CINT__
 class WINDOWSEXPORT oncsSub_idmvtxv1 : public  oncsSubevent_w4 {
 #else
@@ -51,7 +49,7 @@ class WINDOWSEXPORT oncsSub_idmvtxv1 : public  oncsSubevent_w4 {
 
             int _highest_ruid;
 
-            vector<int> _hit_vectors[IDMVTXV1_MAXRUID+1][IDMVTXV1_MAXRUCHN+1];
+            std::vector<int> _hit_vectors[IDMVTXV1_MAXRUID+1][IDMVTXV1_MAXRUCHN+1];
 
             int _unexpected_felix_counters;
             int _bad_ruids;
