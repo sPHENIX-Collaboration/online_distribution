@@ -420,7 +420,6 @@ void oncsSubevent_w4::gdump(const int i, OSTREAM& out) const
     }
 
   int j,l;
-  out << std::endl;
   identify(out);
   
   switch (i)
@@ -459,6 +458,7 @@ void oncsSubevent_w4::gdump(const int i, OSTREAM& out) const
     default: 
       break;
     }
+  out << std::endl;
 
 }
 
@@ -481,7 +481,6 @@ void oncsSubevent_w2::gdump(const int i, OSTREAM& out) const
     }
 
   int j,l;
-  out << std::endl; 
   identify(out);
 
   switch (i)
@@ -519,6 +518,7 @@ void oncsSubevent_w2::gdump(const int i, OSTREAM& out) const
 
     default: break;
     }
+  out << std::endl; 
 }
 
 // ---------------------------------------------------------------------
@@ -543,7 +543,6 @@ void oncsSubevent_w1::gdump(const int i, OSTREAM& out) const
   int j,l;
   char cstring[20];
   char *c;
-  out << std::endl;
   identify(out);
 
   j = 0;

@@ -413,37 +413,48 @@ int *oncsSub_idmvtxv1::decode ()
 
 int oncsSub_idmvtxv1::iValue(const int ruid, const char *what)
 {
-    decode();
 
-    if ( strcmp(what,"UNEXPECTED_FELIX_COUNTERS") == 0 )
+  if ( strcmp(what,"MAXRUID") == 0 )
     {
-        return _unexpected_felix_counters;
+      return IDMVTXV1_MAXRUID;
     }
-
-    else if ( strcmp(what,"BAD_RUIDS") == 0 )
+  else if ( strcmp(what,"MAXRUCHN") == 0 )
     {
-        return _bad_ruids;
+      return IDMVTXV1_MAXRUCHN;
     }
-
-    if (ruid > _highest_ruid) return -1; // no such RU
-    if (_lanes_active[ruid]==-1) return -1; // no such RU
-
-    if ( strcmp(what,"BAD_RUCHNS") == 0 )
+      
+  
+  decode();
+  
+  if ( strcmp(what,"UNEXPECTED_FELIX_COUNTERS") == 0 )
     {
-        return _bad_ruchns[ruid];
+      return _unexpected_felix_counters;
     }
-
-    else if ( strcmp(what,"LANE_STOPS") == 0 )
+  
+  else if ( strcmp(what,"BAD_RUIDS") == 0 )
     {
-        return _lane_stops[ruid];
+      return _bad_ruids;
     }
-
-    else if ( strcmp(what,"LANE_TIMEOUTS") == 0 )
+  
+  if (ruid > _highest_ruid) return -1; // no such RU
+  if (_lanes_active[ruid]==-1) return -1; // no such RU
+  
+  if ( strcmp(what,"BAD_RUCHNS") == 0 )
     {
-        return _lane_timeouts[ruid];
+      return _bad_ruchns[ruid];
     }
-
-    return 0;
+  
+  else if ( strcmp(what,"LANE_STOPS") == 0 )
+    {
+      return _lane_stops[ruid];
+    }
+  
+  else if ( strcmp(what,"LANE_TIMEOUTS") == 0 )
+    {
+      return _lane_timeouts[ruid];
+    }
+  
+  return 0;
 }
 
 int oncsSub_idmvtxv1::iValue(const int ruid)
