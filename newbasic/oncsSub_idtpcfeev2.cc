@@ -310,35 +310,38 @@ void  oncsSub_idtpcfeev2::dump ( OSTREAM& os )
     {
       for ( int chblock = 0; chblock < MAX_FEECHANNELS ; chblock+=dwidth)
 	{
-	  cout << "       +++++++++++++++ FEE " << fee << "   channels " << chblock << " through " << chblock + dwidth << " ++++++++" << endl;
-
-	  for ( int s = 0; s < iValue(fee, "MAX_SAMPLES"); s++)
+	  if ( iValue (fee,"IS_PRESENT") )
 	    {
-
-	      if ( (s % 128) == 0) // display timing values
+	      cout << "       +++++++++++++++ FEE " << fee << "   channels " << chblock << " through " << chblock + dwidth << " ++++++++" << endl;
+	      
+	      for ( int s = 0; s < iValue(fee, "MAX_SAMPLES"); s++)
 		{
-		  os << setw(6) << " time " << " | " ;
+		  
+		  if ( (s % 128) == 0) // display timing values
+		    {
+		      os << setw(6) << " time " << " | " ;
+		      for ( int ch = chblock; ch < chblock + dwidth; ch++)
+			{
+			  //	      unsigned bxi = s/128;
+			  os << setw(5) << hex << iValue(fee, s) << dec << " ";
+			}
+		      os << endl;
+		      
+		    }
+		  
+		  os << setw(6) << s << " | " ;
 		  for ( int ch = chblock; ch < chblock + dwidth; ch++)
 		    {
-		      //	      unsigned bxi = s/128;
-		      os << setw(5) << hex << iValue(fee, s) << dec << " ";
+		      //if ( s < fee_samples[fee][ch].size()) os << setw(5) << hex << fee_samples[fee][ch].at(s) << dec << " ";
+		      //else                                  os << setw(5) <<  "  X  " << " ";
+		      os << setw(5) << hex << iValue(fee,ch,s) << dec << " ";
+		      
 		    }
+		  
 		  os << endl;
-
 		}
-
-	      os << setw(6) << s << " | " ;
-	      for ( int ch = chblock; ch < chblock + dwidth; ch++)
-		{
-		  //if ( s < fee_samples[fee][ch].size()) os << setw(5) << hex << fee_samples[fee][ch].at(s) << dec << " ";
-		  //else                                  os << setw(5) <<  "  X  " << " ";
-		  os << setw(5) << hex << iValue(fee,ch,s) << dec << " ";
-
-		}
-		
 	      os << endl;
 	    }
-      os << endl;
 	}
   
     }
