@@ -557,16 +557,21 @@ void phelp()
   cout << " plistopen(\"filename\")     opens a file with a list of prdfs" << endl;
   cout << " ptestopen()               opens a test input stream" << endl;
   cout << " pclose()                  closes the open stream" << endl;
-  cout << " pstart(nevt)              starts event loop for nevt events in background" << endl;
-  cout << " prun(nevt)                run nevt events" << endl;
+  cout << " pstart(nevt)              starts event loop for nevt events in background (nevt=0 -> all events)" << endl;
+  cout << " prun(nevt)                run nevt events (nevt=0 -> all events)" << endl;
   cout << endl;
   cout << " pidentify()               identify the next event read from the data stream" << endl;
   cout << " pidentify(5)              identify the next 5 events read from the data stream" << endl;
   cout << " pidentify(0)              identify all events read from the data stream (lots of output!)" << endl;
   cout << " pclearidentify()          resets pidentify(0)" << endl;
   cout << endl;
-  cout << " phsave(\"filename\")        saves all histograms made the histogram factory to the file" << endl;
+#ifdef HAVE_ROOT6
+  cout << " pupdate(TCanvas *c1, int seconds)    starts periodic updates of Canvas c1" << endl;
+  cout << " pendupdate(TCanvas *c1)              stop updating Canvas c1" << endl;
+  cout << " pendupdate()                         stop updating all Canvases that are updating" << endl;
   cout << endl;
+#endif  
+  //  cout << " phsave(\"filename\")        saves all histograms made the histogram factory to the file" << endl;
   cout << "--" << endl;
 
 }
