@@ -584,6 +584,11 @@ Packet *A_Event::makePacket(PHDWORD *pp, const int hitFormat)
       return new Packet_hbd_fpgashort(pp);
       break;
 
+    case IDFVTX_DCM0:
+    case IDFVTX_SIM:
+      return new Packet_fvtx_dcm0(pp);
+      break;
+      
     case IDCDEVPOLARIMETER:
       return new Packet_cdevpolarimeter(pp);
       break;
