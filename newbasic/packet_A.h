@@ -93,7 +93,9 @@ public:
 
   int copyMe(int dest [],  const int maxlength) const;
 
-protected:
+  int setInternalParameter ( const int p1=0, const int p2=0, const char *what = "") {return 0;};
+
+ protected:
 
   //  PACKETHDR_ptr packetHdr;
 

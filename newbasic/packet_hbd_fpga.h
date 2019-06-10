@@ -32,11 +32,17 @@ public:
   virtual int    iValue(const int channel,const char *what);
   virtual int    iValue(const int channel,const int y);
   
-  void setNumSamples(const int ns) { HBD_NSAMPLES = ns; }
 
   virtual void   dump ( OSTREAM& );
 
+  int setInternalParameter ( const int ns, const int x, const char *what = "")
+  { return setNumSamples(ns);};
+
+
  protected:
+
+  int  setNumSamples(const int ns) { HBD_NSAMPLES = ns; return 0; }
+
   virtual int *decode (int *);
   int nr_modules;
   int HBD_NSAMPLES;
