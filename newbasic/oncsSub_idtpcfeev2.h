@@ -20,6 +20,7 @@ public:
   int    iValue(const int fee, const int ch, const int sample);
   int    iValue(const int fee, const int ch, const int sample, const char *what);
   int    iValue(const int ch, const int sample);
+  int    iValue(const int , const int, const char * what);
   int    iValue(const int ,const char * what);
 
   void  dump ( OSTREAM& os = COUT) ;
@@ -49,7 +50,6 @@ protected:
   unsigned int _max_samples[MAX_FEECOUNT];
   unsigned int _lowest_bx[MAX_FEECOUNT];
   unsigned int _highest_bx[MAX_FEECOUNT];
-
 
   std::vector<unsigned short> *fee_data[MAX_FEECOUNT];
 

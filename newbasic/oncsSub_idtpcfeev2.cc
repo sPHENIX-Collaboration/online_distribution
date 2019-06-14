@@ -262,9 +262,11 @@ int oncsSub_idtpcfeev2::iValue(const int fee, const int ch, const int sample)
 int oncsSub_idtpcfeev2::iValue(const int fee, const int ch, const int sample, const char *what)
 {
   decode();
+
   if ( fee > MAX_FEECOUNT ||
        ch < 0 || ch >= MAX_FEECHANNELS ||
        sample < 0 || sample >= fee_samples[fee][ch].size() ) return 0;
+
 
   if ( strcmp(what,"BX") == 0 )
   {
@@ -273,6 +275,21 @@ int oncsSub_idtpcfeev2::iValue(const int fee, const int ch, const int sample, co
 
 }
 
+int oncsSub_idtpcfeev2::iValue(const int fee, const int ch, const char *what)
+{
+
+  decode();
+
+  if ( strcmp(what,"NR_SAMPLES") == 0 )  // say if a FEE has been seen at all
+  {
+    if ( fee > MAX_FEECOUNT || ch < 0 || ch >= MAX_FEECHANNELS )  return 0;
+    return  fee_samples[fee][ch].size();
+
+  }
+
+  return 0;
+}
+  
 
 int oncsSub_idtpcfeev2::iValue(const int n, const char *what)
 {
@@ -360,6 +377,16 @@ void  oncsSub_idtpcfeev2::dump ( OSTREAM& os )
 	    {
 	      cout << "       +++++++++++++++ FEE " << fee << "   channels " << chblock << " through " << chblock + dwidth << " ++++++++" << endl;
 	      
+	      // print ithe smaple numbers
+	      os << setw(3) << "nrs" << " | " ;
+	      for ( int ch = chblock; ch < chblock + dwidth; ch++)
+		{
+		  os << setw(10) <<  iValue(fee,ch,  "NR_SAMPLES") << "  " ;
+		}
+		  
+	      os << endl;
+
+		  
 	      for ( int s = 0; s < iValue(fee, "MAX_SAMPLES"); s++)
 		{
 		  
