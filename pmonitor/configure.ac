@@ -27,12 +27,12 @@ AC_SUBST(ROOTLIBS)
 AC_SUBST(ROOTINC)
 
 dnl test for root 6
-if test `root-config --version | gawk '{print $1>=6.?"1":"0"}'` = 1; then
+if test `root-config --version | awk '{print $1>=6.?"1":"0"}'` = 1; then
    CINTDEFS=" -noIncludePaths  -inlineInputHeader "
    AC_SUBST(CINTDEFS)
    AC_DEFINE(HAVE_ROOT6)
 fi
-AM_CONDITIONAL([MAKEROOT6],[test `root-config --version | gawk '{print $1>=6.?"1":"0"}'` = 1])
+AM_CONDITIONAL([MAKEROOT6],[test `root-config --version | awk '{print $1>=6.?"1":"0"}'` = 1])
 
 AC_CHECK_FILE( $OFFLINE_MAIN/include/FROG.h,have_frog=yes, have_frog=no)
 AC_MSG_RESULT([$have_frog])

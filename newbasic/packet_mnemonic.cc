@@ -175,6 +175,9 @@ const char *get_mnemonic (const int structure, const int format)
     case(IDHBD_FPGASHORT): return "IDHBD_FPGASHORT";
     case(IDHBD_FPGASHORT0SUP): return "IDHBD_FPGASHORT0SUP";
 
+    case(IDFVTX_DCM0): return "IDFVTX_DCM0";
+    case(IDFVTX_SIM): return "IDFVTX_SIM";
+
     case(IDRXNP_FPGASHORT): return "IDRXNP_FPGASHORT";
     case(IDRXNP_FPGASHORT0SUP): return "IDRXNP_FPGASHORT0SUP";
 

@@ -29,3 +29,5 @@
 
 #include "packet_hbd_fpga.h"
 #include "packet_hbd_fpgashort.h"
+
+#include "packet_fvtx_dcm0.h"

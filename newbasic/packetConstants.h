@@ -125,6 +125,9 @@
 #define IDPBSC_DCM3   IDDCM3OFFSET + 8
 #define IDPBGL_DCM3   IDDCM3OFFSET + 9
 
+#define IDFVTX_DCM0   IDDCM0OFFSET + 25
+#define IDFVTX_SIM    IDDCM0OFFSET + 48
+
 
 // the emc short formats
 

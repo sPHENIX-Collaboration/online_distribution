@@ -50,6 +50,7 @@ installedheaders = \
   packet.h \
   packetConstants.h \
   packet_hbd_fpgashort.h \
+  packet_fvtx_dcm0.h \
   packet_w124.h \
   packet_A.h \
   packetPublic.h \
@@ -180,6 +181,7 @@ allheaders = \
   packet_starscaler.h \
   packet_hbd_fpga.h \
   packet_hbd_fpgashort.h \
+  packet_fvtx_dcm0.h \
   packet_cdevring.h \
   packet_cdevringnopol.h \
   packet_cdevbuckets.h \
@@ -268,6 +270,7 @@ allsources = \
   packet_starscaler.cc \
   packet_hbd_fpga.cc \
   packet_hbd_fpgashort.cc \
+  packet_fvtx_dcm0.cc \
   packet_cdevring.cc \
   packet_cdevringnopol.cc \
   packet_cdevbuckets.cc \
