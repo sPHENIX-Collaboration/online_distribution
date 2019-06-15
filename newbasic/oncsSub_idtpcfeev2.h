@@ -51,7 +51,7 @@ protected:
   unsigned int _lowest_bx[MAX_FEECOUNT];
   unsigned int _highest_bx[MAX_FEECOUNT];
 
-  std::vector<unsigned short> *fee_data[MAX_FEECOUNT];
+  std::vector<unsigned short> fee_data[MAX_FEECOUNT];
 
   //  std::vector<bx> fee_bx[MAX_FEECOUNT][MAX_FEECHANNELS]; 
   std::vector<tpc_sample> fee_samples[MAX_FEECOUNT][MAX_FEECHANNELS];  

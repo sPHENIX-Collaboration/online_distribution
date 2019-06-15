@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #define coutfl cout << __FILE__<< "  " << __LINE__ << " "
+#define cerrfl cerr << __FILE__<< "  " << __LINE__ << " "
 
 using namespace std;
 
@@ -24,10 +25,10 @@ oncsSub_idtpcfeev2::oncsSub_idtpcfeev2(subevtdata_ptr data)
 
 oncsSub_idtpcfeev2::~oncsSub_idtpcfeev2()
 {
-  for (int fee = 0; fee < MAX_FEECOUNT; fee++)
-    {
-      delete fee_data[fee];
-    }
+  // for (int fee = 0; fee < MAX_FEECOUNT; fee++)
+  //   {
+  //     delete fee_data[fee];
+  //   }
 
 }
 
@@ -48,10 +49,10 @@ int oncsSub_idtpcfeev2::decode ()
   unsigned short *buffer = ( unsigned short *)  &SubeventHdr->data;
 
 
-  for (int fee = 0; fee < MAX_FEECOUNT; fee++)
-    {
-      fee_data[fee] = new std::vector<unsigned short>();
-    }
+//   for (int fee = 0; fee < MAX_FEECOUNT; fee++)
+//     {
+//       fee_data[fee] = new std::vector<unsigned short>();
+//     }
   
   while (buffer[index] != 0xfeee && buffer[index+1] != 0xba5e)
     {
@@ -108,17 +109,17 @@ int oncsSub_idtpcfeev2::decode ()
 	      if (locked[link])
 		{
 		  //coutfl << "pushing idx " << idx << " value " << hex << buffer[index] << dec << " into " << link << endl;
-		  fee_data[link]->push_back(buffer[index]);
+		  fee_data[link].push_back(buffer[index]);
 		}
 	      else if (buffer[index] == 0xfeed)
 		{
 		  locked[link] = 1;
 		  //coutfl << "pushing idx " << idx << " value " << hex << buffer[index] << dec << " into " << link << " ** locking" << endl;
-		  fee_data[link]->push_back(buffer[index]);
+		  fee_data[link].push_back(buffer[index]);
 		}
 	    }
 	    
-	    // cout << __FILE__<< "  " << __LINE__ << " index " << index << " vector sizes " << fee_data[0]->size()  << "  " << fee_data[1]->size() << endl;
+	    // cout << __FILE__<< "  " << __LINE__ << " index " << index << " vector sizes " << fee_data[0].size()  << "  " << fee_data[1].size() << endl;
 
 	}
 
@@ -142,24 +143,27 @@ int oncsSub_idtpcfeev2::decode ()
       unsigned int first_bx = 0xffffff;
       unsigned int rollover_offset = 0;
       
-      for ( index = 0; index < fee_data[fee]->size(); index += record_len + 2 )
+      for ( index = 0; index < fee_data[fee].size(); index += record_len + 2 )
 	{
-	  if ( fee_data[fee]->at(index) != 0xfeed)
+	  if (index >=  fee_data[fee].size() - HEADER_LENGTH) continue;
+	  
+	  if ( fee_data[fee].at(index) != 0xfeed)
 	      {
-		//		cout << __FILE__<< "  " << __LINE__ << " FEE " << fee << " not starting with feed at " << index << endl;
-		while (fee_data[fee]->at(index) != 0xfeed && index < fee_data[fee]->size() )  index++;
+		//	cerr << __FILE__<< "  " << __LINE__ << " FEE " << fee << " not starting with feed at " << index << " size " <<  fee_data[fee].size() << endl;
+		while (index < fee_data[fee].size() - HEADER_LENGTH &&  fee_data[fee].at(index) != 0xfeed   )  index++;
 	      }
 	  
-	    if (index >=  fee_data[fee]->size() ) continue;
+	    if (index >=  fee_data[fee].size() - HEADER_LENGTH) continue;
 		
-	    record_len  = fee_data[fee]->at(index+1);
-	    if ( index + record_len + 2  >= fee_data[fee]->size()) break;
+	    record_len  = fee_data[fee].at(index+1);
+	    if ( index + record_len + 2  >= fee_data[fee].size()) break;
 	    
-	    //packet_type = fee_data[fee]->at(index+2);
-	    channel     = fee_data[fee]->at(index+3)  & 0x1f;
-	    sampa_addr  = (fee_data[fee]->at(index+3) >> 5) & 0xf;
-	    bx_count    = (fee_data[fee]->at(index+4)  << 4) | (fee_data[fee]->at(index+5) & 0xf);
+	    //packet_type = fee_data[fee].at(index+2);
+	    channel     = fee_data[fee].at(index+3)  & 0x1f;
+	    sampa_addr  = (fee_data[fee].at(index+3) >> 5) & 0xf;
+	    bx_count    = (fee_data[fee].at(index+4)  << 4) | (fee_data[fee].at(index+5) & 0xf);
 
+	    
 	    //	    coutfl << " bx " << bx_count << " delta to previous bx " << bx_count - old_bxcount << endl;
 	    if ( bx_count < old_bxcount )
 	      {
@@ -175,18 +179,25 @@ int oncsSub_idtpcfeev2::decode ()
 	    
 	    // if ( record_len != 0x88)
 	    //   {
-	    // 	coutfl << "wrong record length " << record_len << " fee " << fee << " channel " << channel << endl;
+	    // 	cerrfl << "wrong record length " << record_len << " fee " << fee << " channel " << channel << endl;
 	    // 	//continue;
 	    //   }
 	   
 	    unsigned short crc_value = crc16( fee, index, record_len+1);
-	    if ( crc_value != fee_data[fee]->at(index + record_len +1) )
+	    if ( index + record_len +1  >= fee_data[fee].size() )
 	      {
+		cerrfl << "index out of range " << index + record_len + 1 << "  " << fee_data[fee].size() << " record_len " << record_len  << endl;
+	      }
+	    else
+	      {
+		if ( crc_value != fee_data[fee].at(index + record_len +1) )
+		  {
 		// cout << __FILE__<< "  " << __LINE__ << " FEE " << fee
 		//      << " crc mismatch, index = " << index
 		//      << " sampa address " << sampa_addr << " channel " << channel
-		//      << " crc = " << hex << crc_value << " value " << fee_data[fee]->at(index + record_len +1) << dec <<  endl;
-		continue;
+		//      << " crc = " << hex << crc_value << " value " << fee_data[fee].at(index + record_len +1) << dec <<  endl;
+		    continue;
+		  }
 	      }
 	    
 	    if ( channel >= 32 || sampa_addr > 7 )
@@ -198,10 +209,17 @@ int oncsSub_idtpcfeev2::decode ()
 	    
 	    unsigned int fee_channel = sampa_addr * 32 + channel;
 	
-		for  ( unsigned int s = HEADER_LENGTH; s < record_len+1 ; s++) 
+		for  ( unsigned int s = HEADER_LENGTH; s < record_len +1; s++) 
 		  {
-		    tpc_sample x = { bx_count + s - HEADER_LENGTH + rollover_offset - first_bx, fee_data[fee]->at(s + index) };
-		    fee_samples[fee][fee_channel].push_back(x);
+		    if ( index +s >= fee_data[fee].size() )
+		      {
+			cerrfl << "index out of range " << index +s << "  " << fee_data[fee].size() << " record_len " << record_len  << endl;
+		      }
+		    else
+		      {
+			tpc_sample x = { bx_count + s - HEADER_LENGTH + rollover_offset - first_bx, fee_data[fee].at(index + s ) };
+			fee_samples[fee][fee_channel].push_back(x);
+		      }
 		  }
 
 	}
@@ -238,12 +256,6 @@ int oncsSub_idtpcfeev2::iValue(const int fee, const int sample)
 {
   decode();
   
-  // if ( fee > MAX_FEECOUNT ||
-  //      sample < 0 || sample >= fee_data[fee][0].size() ) return 0;
-  // unsigned int x = sample/128;
-  
-  // if ( x >= fee_bx[fee][0].size()) return 0;
-  // return fee_bx[fee][0].at(x).bx_count;
   return 0;
 }
 
@@ -427,7 +439,7 @@ unsigned short oncsSub_idtpcfeev2::crc16(const unsigned int fee, const unsigned 
     
   while (len--)
     {
-      unsigned short x = fee_data[fee]->at(i++);
+      unsigned short x = fee_data[fee].at(i++);
       //      cout << "in crc " << hex << x << dec << endl;
       crc ^= reverseBits( x);
       for (unsigned short k = 0; k < 16; k++)
