@@ -122,6 +122,11 @@ int oncsSub_idtpcfeev2::decode ()
 	    // cout << __FILE__<< "  " << __LINE__ << " index " << index << " vector sizes " << fee_data[0].size()  << "  " << fee_data[1].size() << endl;
 
 	}
+      else
+      {
+        cout << __FILE__<< "  " << __LINE__ << " corrupted FEE data missing 0xfeee 0xba5e marker. Stop further decoding "<< endl;
+        break;
+      }
 
     }
 
