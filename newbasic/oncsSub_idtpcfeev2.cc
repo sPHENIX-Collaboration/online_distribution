@@ -217,7 +217,9 @@ int oncsSub_idtpcfeev2::decode ()
 		      }
 		    else
 		      {
-			tpc_sample x = { bx_count + s - HEADER_LENGTH + rollover_offset - first_bx, fee_data[fee].at(index + s ) };
+			tpc_sample x = { bx_count + s -HEADER_LENGTH + rollover_offset - first_bx,
+					 bx_count,
+					 fee_data[fee].at(index + s ) };
 			fee_samples[fee][fee_channel].push_back(x);
 		      }
 		  }
@@ -280,11 +282,15 @@ int oncsSub_idtpcfeev2::iValue(const int fee, const int ch, const int sample, co
        sample < 0 || sample >= fee_samples[fee][ch].size() ) return 0;
 
 
-  if ( strcmp(what,"BX") == 0 )
-  {
-    return fee_samples[fee][ch].at(sample).bx_time;
-  }
-
+  if ( strcmp(what,"BXRAW") == 0 )
+    {
+      return fee_samples[fee][ch].at(sample).bx_time_raw;
+    }
+  else if ( strcmp(what,"BX") == 0 )
+    {
+      return fee_samples[fee][ch].at(sample).bx_time;
+    }
+  return 0;
 }
 
 int oncsSub_idtpcfeev2::iValue(const int fee, const int ch, const char *what)
