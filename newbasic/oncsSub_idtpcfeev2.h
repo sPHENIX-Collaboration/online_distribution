@@ -43,6 +43,7 @@ protected:
   typedef struct
   {
     unsigned int bx_time;
+    unsigned int bx_time_raw;
     unsigned short adc;
   } tpc_sample;
   
