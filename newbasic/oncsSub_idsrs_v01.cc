@@ -78,7 +78,6 @@ int *oncsSub_idsrs_v01::decode ( int *nwout)
       //cout << " words: " << words << endl;
 
       int j = 0;  // here begin the samples;
-      int k = 0;  // here begin the samples;
 
       while ( d[j + i +3] != 0xf000f000 && j <  words )
 	{
@@ -197,9 +196,10 @@ int oncsSub_idsrs_v01::add_report ( hybriddata * hd, const int start, const int 
 
 
   
-int oncsSub_idsrs_v01::iValue(const int ich,const char *what)
+int oncsSub_idsrs_v01::iValue(const int hybrid,const char *what)
 {
 
+  std::vector<hybriddata*>::iterator it;
   if ( nhybrids == 0 ) decoded_data1 = decode(&data1_length);
 
   if ( strcmp(what,"NHYBRIDS") == 0 )
@@ -209,10 +209,16 @@ int oncsSub_idsrs_v01::iValue(const int ich,const char *what)
 
   else if ( strcmp(what,"NSAMPLES") == 0 )
   {
-    if ( ich >= 0 && ich < hybridlist.size() )
+
+    for ( it = hybridlist.begin(); it != hybridlist.end(); ++it)
       {
-	return hybridlist[ich]->rowdata.size();
+	if ( (*it)->hdmi == hybrid )
+	  {
+	    return (*it)->rowdata.size();;
+	  }
       }
+
+
   }
 
   return 0;
