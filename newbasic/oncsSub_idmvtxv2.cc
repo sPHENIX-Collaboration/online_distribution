@@ -187,7 +187,7 @@ int *oncsSub_idmvtxv2::decode ()
             }
             else for ( int ibyte = 0; ibyte < 9; ibyte++)
             {
-                cout << __FILE__ << " " << __LINE__ << hex << " --- ruchn " << (unsigned int) ruchn << " byte " << (unsigned int) d32->d0[ichnk][ibyte] << dec << endl;
+                //cout << __FILE__ << " " << __LINE__ << hex << " --- ruchn " << (unsigned int) ruchn << " byte " << (unsigned int) d32->d0[ichnk][ibyte] << dec << endl;
                 ruchn_stream[d32->ruid][ruchn].push_back(d32->d0[ichnk][ibyte]);
             }
         } // ichnk
