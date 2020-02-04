@@ -7,7 +7,7 @@ include_HEADERS = oncsdefs.h \
   EvtStructures.h \
   oBuffer.h \
   EventTypes.h \
-  BufferConstants.h 
+  BufferConstants.h
 
 else
 # all definitions
@@ -157,6 +157,7 @@ allheaders = \
   oncsSub_idtpcfeev2.h \
   oncsSub_iddreamv0.h \
   oncsSub_idmvtxv1.h \
+  oncsSub_idmvtxv2.h \
   oncsSubevent.h \
   packet.h \
   packetConstants.h \
@@ -247,6 +248,7 @@ allsources = \
   oncsSub_idtpcfeev2.cc \
   oncsSub_iddreamv0.cc \
   oncsSub_idmvtxv1.cc \
+  oncsSub_idmvtxv2.cc \
   oncsSubevent.cc \
   oncs_mnemonic.cc \
   packet_A.cc \
@@ -275,11 +277,11 @@ allsources = \
   packet_cdevringnopol.cc \
   packet_cdevbuckets.cc \
   packet_cdevdvm.cc \
-  packet_idcdevdescr.cc 
+  packet_idcdevdescr.cc
 
 AM_LDFLAGS = -L$(libdir) -L$(ONLINE_MAIN)/lib -L$(OPT_SPHENIX)/lib
 
-BUILT_SOURCES = ioselect.h 
+BUILT_SOURCES = ioselect.h
 
 
 msgheaders = \
@@ -289,7 +291,7 @@ msgheaders = \
   date_filter_msg_buffer.h \
   filter_msg_buffer.h \
   remote_msg_buffer.h \
-  strnstr.h 
+  strnstr.h
 
 AM_CPPFLAGS = -I$(includedir)  -I@ROOTINC@ -I$(OPT_SPHENIX)/include
 
@@ -330,13 +332,13 @@ bin_PROGRAMS = \
   eventcombiner \
   prdf2prdf \
   prdfcheck \
-  prdfsplit 
+  prdfsplit
 
 
 dpipe_SOURCES = dpipe.cc
 dlist_SOURCES = dlist.cc
 ddump_SOURCES = ddump.cc
-eventcombiner_SOURCES = eventcombiner.cc 
+eventcombiner_SOURCES = eventcombiner.cc
 
 if LINUX
 dpipe_LDFLAGS = -Wl,-export-dynamic
@@ -368,16 +370,16 @@ libmessage_la_SOURCES = \
   remote_msg_buffer.cc \
   msg_buffer.cc \
   msg_control.cc \
-  strnstr.cc 
+  strnstr.cc
 
 
 libEvent_la_SOURCES =  \
   $(ROOT5_EVENTDICTS)
-#event_dict.C 
+#event_dict.C
 
 libEvent_la_LIBADD = libNoRootEvent.la libRootmessage.la  @ROOTGLIBS@  -lz @LZOLIB@
 
-libNoRootEvent_la_SOURCES = $(allsources) 
+libNoRootEvent_la_SOURCES = $(allsources)
 libNoRootEvent_la_LIBADD = libmessage.la  -lz @LZOLIB@
 
 

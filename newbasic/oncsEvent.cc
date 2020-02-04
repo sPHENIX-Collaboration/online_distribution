@@ -5,7 +5,7 @@
 
 // the constructor first ----------------
 oncsEvent::oncsEvent (int *data)
-{ 
+{
   is_data_type = 0;
   hasMap = 0;
   errorcode = 0;
@@ -13,24 +13,24 @@ oncsEvent::oncsEvent (int *data)
 }
 
 oncsEvent::~oncsEvent ()
-{ 
+{
   if (is_data_type) delete [] (int *) EventData;
 }
 
 // the info-type calls
-unsigned int 
+unsigned int
 oncsEvent::getEvtLength()
 {
   return EventData->evt_length;
 }
 
-int 
+int
 oncsEvent::getEvtType()
 {
   return EventData->evt_type;
 }
 
-int 
+int
 oncsEvent::getEvtSequence()
 {
   return EventData->evt_sequence;
@@ -42,7 +42,7 @@ oncsEvent::getTime () const
   return EventData->time;
 }
 
-int 
+int
 oncsEvent::getRunNumber()
 {
   return EventData->run_number;
@@ -56,14 +56,14 @@ oncsEvent::getRunNumber()
 
 
 void oncsEvent::identify (OSTREAM &os) const
-{ 
+{
   os << std::dec << " -- Event " << SETW(5)  << EventData->evt_sequence;
 
   os << " Run: "  << SETW(5)  << EventData->run_number;
 
   os << " length: "     << SETW(5)  <<EventData->evt_length;
 
-  os << " type: "      << SETW(2)  << EventData->evt_type 
+  os << " type: "      << SETW(2)  << EventData->evt_type
      << " (" << get_evt_mnemonic(EventData->evt_type) << ")"
      << "  " << getTime()
      <<  std::endl;
@@ -80,8 +80,8 @@ int oncsEvent::convert()
   tmp = new int[getEvtLength()];
   int *from= (int *)  EventData;
   int *to=tmp;
-  for (unsigned int k=0; k< getEvtLength(); k++) 
-    { 
+  for (unsigned int k=0; k< getEvtLength(); k++)
+    {
       *to++ = *from++;
     }
 
@@ -99,7 +99,7 @@ int oncsEvent::is_pointer_type() const
 }
 
 
-Packet* 
+Packet*
 oncsEvent::getPacket (const int id, const int hitFormat)
 {
   PHDWORD *pp;
@@ -115,7 +115,7 @@ oncsEvent::getPacket (const int id, const int hitFormat)
 
 }
 
-Packet* 
+Packet*
 oncsEvent::getPacket (const int id)
 {
   return getPacket (id, 0);
@@ -131,7 +131,7 @@ int oncsEvent::createMap()
   // loop through the subevents and see if we locate the id
 
   for (i=0; i<datalength; i+=  EventData->data[i])
-    { 
+    {
       // each data[i] is the start of a subevent;
       // we map it on a subevent_ptr
 
@@ -148,7 +148,7 @@ int oncsEvent::createMap()
   return 0;
 }
 
-Packet *oncsEvent::makePacket(PHDWORD *pp, const int hitFormat)	
+Packet *oncsEvent::makePacket(PHDWORD *pp, const int hitFormat)
 {
   int wanted_hitformat;
 
@@ -161,113 +161,118 @@ Packet *oncsEvent::makePacket(PHDWORD *pp, const int hitFormat)
     {
 
     case (ID4EVT):
-      return new 
+      return new
 	oncsSub_id4evt( sevt_ptr);
       break;
-	
+
     case (ID2EVT):
-      return new 
+      return new
 	oncsSub_id2evt( sevt_ptr );
       break;
-	
+
     case (IDCSTR):
-      return new 
+      return new
 	oncsSub_idcstr( sevt_ptr );
       break;
-	
+
     case (IDSIS3300):
-      return new 
+      return new
 	oncsSub_idsis3300( sevt_ptr );
       break;
-	
+
     case (IDSIS3300R):
-      return new 
+      return new
 	oncsSub_idsis3300r( sevt_ptr );
       break;
-	
+
     case (IDCAENV792):
-      return new 
+      return new
 	oncsSub_idcaenv792( sevt_ptr );
       break;
-	
+
     case (IDCAENV1742):
-      return new 
+      return new
 	oncsSub_idcaenv1742( sevt_ptr );
       break;
-	
-	
+
+
     case (IDRCPETDATA):
-      return new 
+      return new
 	oncsSub_idrcpetdata( sevt_ptr );
       break;
-	
-	
+
+
     case (IDBSPETDATA):
-      return new 
+      return new
 	oncsSub_idbspetdata( sevt_ptr );
       break;
-	
+
     case (IDUPPETDATA):
-      return new 
+      return new
 	oncsSub_iduppetdata( sevt_ptr );
       break;
-	
+
     case (IDUPPETDATA_V104):
-      return new 
+      return new
 	oncsSub_iduppetdata_v104( sevt_ptr );
       break;
-	
+
     case (IDUPPETPARAMS):
-      return new 
+      return new
 	oncsSub_iduppetparams( sevt_ptr );
       break;
-	
+
     case (IDSRSV01):
-      return new 
+      return new
 	oncsSub_idsrs_v01( sevt_ptr );
       break;
-	
+
     case (IDFNALMWPC):
-      return 
+      return
 	new oncsSub_idfnalmwpc( sevt_ptr );
       break;
-	
+
     case (IDFNALMWPCV2):
-      return 
+      return
 	new oncsSub_idfnalmwpcv2( sevt_ptr );
       break;
-	
+
     case (IDDRS4V1):
-      return new 
+      return new
 	oncsSub_iddrs4v1( sevt_ptr );
       break;
-	
+
     case (IDMVTXV0):
-      return new 
+      return new
 	oncsSub_idmvtxv0( sevt_ptr );
       break;
-	
+
     case (IDTPCFEEV1):
-      return new 
+      return new
 	oncsSub_idtpcfeev1( sevt_ptr );
       break;
-	
+
     case (IDTPCFEEV2):
-      return new 
+      return new
 	oncsSub_idtpcfeev2( sevt_ptr );
       break;
-	
+
     case (IDDREAMV0):
-      return new 
+      return new
 	oncsSub_iddreamv0( sevt_ptr );
       break;
-	
+
     case (IDMVTXV1):
-      return new 
+      return new
 	oncsSub_idmvtxv1( sevt_ptr );
       break;
-	
-	
+
+    case (IDMVTXV2):
+      return new
+	oncsSub_idmvtxv2( sevt_ptr );
+      break;
+
+
     default:
       switch (sevt_ptr->sub_type)
 	{
@@ -281,12 +286,12 @@ Packet *oncsEvent::makePacket(PHDWORD *pp, const int hitFormat)
 	  return new oncsSubevent_w4(sevt_ptr);
 	  break;
 	default:
-	  return new oncsSubevent_w4(sevt_ptr); 
+	  return new oncsSubevent_w4(sevt_ptr);
 	}
-	
+
       return 0;
     }
-  
+
   return 0;
 }
 
@@ -320,7 +325,7 @@ int oncsEvent::getPacketList( Packet* sl[], const int ne)
 
 // existSubevent (const int)
 
-int  
+int
 oncsEvent::existPacket (const int id)
 {
   int i;
@@ -331,7 +336,7 @@ oncsEvent::existPacket (const int id)
   // loop through the subevents and see if we locate the id
 
   for (i=0; i<datalength; i+=  EventData->data[i])
-    { 
+    {
 
       // each data[i] is the start of a subevent;
       // we map it on a subevent_ptr
@@ -349,7 +354,7 @@ oncsEvent::existPacket (const int id)
 
 
 // the Copy routine
-int  
+int
 oncsEvent::Copy (int * array, const unsigned int length, int *nw, const char *what)
 {
   if (length<EventData->evt_length)
