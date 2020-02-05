@@ -44,6 +44,7 @@ class WINDOWSEXPORT oncsSub_idmvtxv2 : public  oncsSubevent_w4 {
 
         protected:
             int *decode ();
+            bool checkBC(const int ruid);
 
             int _is_decoded;
 
@@ -57,6 +58,7 @@ class WINDOWSEXPORT oncsSub_idmvtxv2 : public  oncsSubevent_w4 {
             int _lanes_active[IDMVTXV2_MAXRUID+1];
             int _lane_stops[IDMVTXV2_MAXRUID+1];
             int _lane_timeouts[IDMVTXV2_MAXRUID+1];
+            int _inconsistent_bc[IDMVTXV2_MAXRUID+1];
             int _chip_id[IDMVTXV2_MAXRUID+1][IDMVTXV2_MAXRUCHN+1];
             int _bad_bytes[IDMVTXV2_MAXRUID+1][IDMVTXV2_MAXRUCHN+1];
             int _excess_bytes[IDMVTXV2_MAXRUID+1][IDMVTXV2_MAXRUCHN+1];

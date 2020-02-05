@@ -3,6 +3,7 @@
 #include <bitset>
 #include <map>
 #include <vector>
+#include <functional>
 
 #include <arpa/inet.h>
 
@@ -19,6 +20,7 @@ oncsSub_idmvtxv2::oncsSub_idmvtxv2(subevtdata_ptr data)
         _lanes_active[ruid] = -1;
         _lane_stops[ruid] = -1;
         _lane_timeouts[ruid] = -1;
+        _inconsistent_bc[ruid] = -1;
         for ( int ruchn = 0; ruchn < IDMVTXV2_MAXRUCHN+1; ruchn++)
         {
             _chip_id[ruid][ruchn] = -1;
@@ -409,6 +411,10 @@ int *oncsSub_idmvtxv2::decode ()
                 }
             }
         } // ruchn
+        if (_lanes_active[ruid] != -1)
+        {
+          _inconsistent_bc[ruid]  = this->checkBC(ruid);
+        }
     } // ruid
 
 
@@ -445,6 +451,11 @@ int oncsSub_idmvtxv2::iValue(const int ruid, const char *what)
     else if ( strcmp(what,"LANE_TIMEOUTS") == 0 )
     {
         return _lane_timeouts[ruid];
+    }
+
+    else if ( strcmp(what,"CHECK_BC") == 0 )
+    {
+      return _inconsistent_bc[ruid];
     }
 
     return 0;
@@ -551,8 +562,9 @@ void  oncsSub_idmvtxv2::dump ( OSTREAM& os )
                     first = false;
                 }
             }
+            os << "), inconsistent_bc=" << setw(1) << iValue(ruid,"CHECK_BC");
             os << hex << setfill('0');
-            os << "), lane_stops=0x" << setw(7) << iValue(ruid,"LANE_STOPS");
+            os << ", lane_stops=0x" << setw(7) << iValue(ruid,"LANE_STOPS");
             os << dec;
             first=true;
             os << " (";
@@ -677,3 +689,29 @@ void oncsSub_idmvtxv2::gdump(const int i, OSTREAM& out) const
 
 }
 
+bool oncsSub_idmvtxv2::checkBC(const int ruid)
+{
+  bool first_active = true;
+  for (int iruchn = 0; iruchn < IDMVTXV2_MAXRUCHN+1; ++iruchn)
+  {
+    int first_active_lane = -1;
+    if (this->mask_contains_ruchn(_lanes_active[ruid], iruchn))
+    {
+      if (first_active)
+      {
+        first_active_lane = iruchn;
+        first_active = false;
+        continue;
+      }
+
+      if (_bunchcounter[ruid][iruchn] != _bunchcounter[ruid][first_active_lane])
+        return true;
+    }
+    else
+    {
+      continue;
+    }
+  }
+
+  return false;
+}
