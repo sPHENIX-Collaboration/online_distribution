@@ -15,6 +15,15 @@ class WINDOWSEXPORT oncsSub_idmvtxv2 : public  oncsSubevent_w4 {
 #define IDMVTXV2_RUTRAILER     0xF0
 #define IDMVTXV2_MAXRUCHN      9
 
+#define NROW  512
+#define NCOL 1024
+
+#define CHIPHEADER     1
+#define CHIPEMPTYFRAME 2
+#define DATASHORT      3
+#define DATALONG0      4
+#define DATALONG1      5
+
         public:
             oncsSub_idmvtxv2( subevtdata_ptr);
             ~oncsSub_idmvtxv2();
@@ -67,7 +76,6 @@ class WINDOWSEXPORT oncsSub_idmvtxv2 : public  oncsSubevent_w4 {
             bool _trailer_found[IDMVTXV2_MAXRUID+1][IDMVTXV2_MAXRUCHN+1];
             int _readout_flags[IDMVTXV2_MAXRUID+1][IDMVTXV2_MAXRUCHN+1];
 
-            int decode_thebit(int the_row, int encoder_id, int address) const; //helper function to decode the column number
             void print_stuff(OSTREAM& out, unsigned int data, int width, int shift, bool blank = false) const;
     };
 

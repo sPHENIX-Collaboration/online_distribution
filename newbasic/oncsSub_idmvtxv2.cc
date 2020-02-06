@@ -49,31 +49,6 @@ typedef struct
     unsigned char ruid;
 }  data32;
 
-#define CHIPHEADER     1
-#define CHIPEMPTYFRAME 2
-#define DATASHORT      3
-#define DATALONG0      4
-#define DATALONG1      5
-
-int oncsSub_idmvtxv2::decode_thebit(int the_row, int encoder_id, int address) const
-{
-    // the numbering "snakes" its way through a column (fig. 4.5 in the Alpide manual)
-    //  0 1  > >    row 0
-    //  3 2  < <    row 1
-    //  4 5  > >    row 2
-    //  7 6  < <   so we need to know if we are in an even or odd row
-    int is_an_odd_row = the_row & 1;
-    int thebit;
-    if ( is_an_odd_row)
-    {
-        thebit = (encoder_id*2) + (  ( address &1) ^ 1 );
-    }
-    else
-    {
-        thebit = (encoder_id*2) + ( address&1);
-    }
-    return thebit;
-}
 
 void oncsSub_idmvtxv2::print_stuff(OSTREAM& out, unsigned int data, int width, int shift, bool blank) const
 {
@@ -248,22 +223,24 @@ int *oncsSub_idmvtxv2::decode ()
                         case DATASHORT:
                             address += b;
                             //cout << __FILE__ << " " << __LINE__ << " data short report, hex:" << hex << address << dec << " enc. id " << encoder_id << " address= " << address << " the_region:" << the_region << " ruchn:" << ruchn;
+                            // the numbering "snakes" its way through a column (fig. 4.5 in the Alpide manual)
+                            //  0 1  > >    row 0
+                            //  3 2  < <    row 1
+                            //  4 5  > >    row 2
+                            //  7 6  < <   so we need to know if we are in an even or odd row
                             if ( the_region >= 0 && encoder_id >=0 )
                             {
-                                int the_row = (address >> 1);
-                                if ( the_row > 511)
+                                unsigned int row = (address >> 1);
+                                unsigned int col = (the_region * 32);
+                                col += (encoder_id * 2) + ( (row & 1) ? ( (address & 1) ^ 1 ) : (address & 1) );
+                                if ( row < 0 || row >= NROW || col < 0 || col >= NCOL )
                                 {
-                                    cout << __FILE__ << " " << __LINE__ << " impossible row: " << the_row
-                                        << " encoder " <<  encoder_id << " addr " << address << endl;
+                                    cout << __FILE__ << " " << __LINE__ << " impossible pixel coord: " << row
+                                         << ", " << col << "." << endl;
+                                    cout << "Check region " << the_region << ", encoder " <<  encoder_id
+                                         << ", addr " << address << endl;
                                 }
-                                else
-                                {
-                                    int thebit = decode_thebit(the_row, encoder_id, address);
-                                    //cout << " row:" << the_row << " col:" << the_region*32 + thebit << endl;
-                                    //  cout << __FILE__ << " " << __LINE__ << " the bit " << thebit << endl;
-                                    unsigned short col = the_region*32 + thebit;
-                                    _hit_vectors[ruid][ruchn].push_back(encode_hit(the_row,col));
-                                }
+                                _hit_vectors[ruid][ruchn].push_back(encode_hit(row,col));
                             }
 
                             //cout << endl;
@@ -292,20 +269,17 @@ int *oncsSub_idmvtxv2::decode ()
                                     int hit_address = address + ihit;
                                     if ( the_region >= 0 && encoder_id >=0 )
                                     {
-                                        int the_row = (hit_address >> 1);
-                                        if ( the_row > 511)
+                                        unsigned int row = (hit_address >> 1);
+                                        unsigned int col = the_region*32;
+                                        col += (encoder_id * 2) + ( (row & 1) ? ( (hit_address & 1) ^ 1 ) : (hit_address & 1) );
+                                        if ( row < 0 || row >= NROW || col < 0 || col >= NCOL )
                                         {
-                                            cout << __FILE__ << " " << __LINE__ << " impossible row: " << the_row
-                                                << " encoder " <<  encoder_id << " addr " << hit_address << endl;
+                                            cout << __FILE__ << " " << __LINE__ << " impossible pixel coord: " << row
+                                                  << ", " << col << "." << endl;
+                                            cout << "Check region " << the_region << ", encoder " <<  encoder_id
+                                                  << ", addr " << hit_address << endl;
                                         }
-                                        else
-                                        {
-                                            int thebit = decode_thebit(the_row, encoder_id, hit_address);
-                                            //cout << " row:" << the_row << " col:" << the_region*32 + thebit << endl;
-                                            //  cout << __FILE__ << " " << __LINE__ << " the bit " << thebit << endl;
-                                            unsigned short col = the_region*32 + thebit;
-                                            _hit_vectors[ruid][ruchn].push_back(encode_hit(the_row,col));
-                                        }
+                                        _hit_vectors[ruid][ruchn].push_back(encode_hit(row,col));
                                     }
                                 }
                             }
@@ -396,7 +370,13 @@ int *oncsSub_idmvtxv2::decode ()
                     //cout << __FILE__ << " " << __LINE__ << " unexpected word " << hex << (unsigned int) b << dec << " at ibyte " << ibyte << endl;
                     _bad_bytes[ruid][ruchn]++;
                 }
-                if (ibyte==0 && !header_seen) break;//first byte of the ALPIDE stream must be a chip header or chip empty; if not, abort so we don't get confused by bad data
+
+                if (ibyte==0 && !header_seen)
+                {
+                  cout << __FILE__ << " " << __LINE__ << "first byte of the ALPIDE stream must be a chip header or chip empty;" <<endl;
+                  cout << "Aborting so we don't get confused by bad data." << endl;
+                   break;
+                }
 
             } // ibyte
 
@@ -694,9 +674,9 @@ bool oncsSub_idmvtxv2::checkBC(const int ruid)
   bool first_active = true;
   for (int iruchn = 0; iruchn < IDMVTXV2_MAXRUCHN+1; ++iruchn)
   {
-    int first_active_lane = -1;
     if (this->mask_contains_ruchn(_lanes_active[ruid], iruchn))
     {
+      unsigned int first_active_lane;
       if (first_active)
       {
         first_active_lane = iruchn;
