@@ -373,7 +373,7 @@ int *oncsSub_idmvtxv2::decode ()
 
                 if (ibyte==0 && !header_seen)
                 {
-                  cout << __FILE__ << " " << __LINE__ << "first byte of the ALPIDE stream must be a chip header or chip empty;" <<endl;
+                  cout << __FILE__ << " " << __LINE__ << " " << "first byte of the ALPIDE stream must be a chip header or chip empty;" <<endl;
                   cout << "Aborting so we don't get confused by bad data." << endl;
                    break;
                 }
