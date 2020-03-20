@@ -672,24 +672,18 @@ void oncsSub_idmvtxv2::gdump(const int i, OSTREAM& out) const
 bool oncsSub_idmvtxv2::checkBC(const int ruid)
 {
   bool first_active = true;
+  unsigned int first_active_lane;
   for (int iruchn = 0; iruchn < IDMVTXV2_MAXRUCHN+1; ++iruchn)
   {
     if (this->mask_contains_ruchn(_lanes_active[ruid], iruchn))
     {
-      unsigned int first_active_lane;
       if (first_active)
       {
         first_active_lane = iruchn;
         first_active = false;
-        continue;
       }
-
-      if (_bunchcounter[ruid][iruchn] != _bunchcounter[ruid][first_active_lane])
+      else if (_bunchcounter[ruid][iruchn] != _bunchcounter[ruid][first_active_lane])
         return true;
-    }
-    else
-    {
-      continue;
     }
   }
 
