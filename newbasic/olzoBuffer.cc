@@ -82,7 +82,13 @@ int olzoBuffer::writeout()
 
   while (ip<outputarray[0])
     {
-      write ( fd, cp, BUFFERBLOCKSIZE);
+	  int n = write ( fd, cp, BUFFERBLOCKSIZE);
+	  if ( n != BUFFERBLOCKSIZE)
+	    {
+	      std::cout << " could not write output, bytes written: " << n << std::endl;
+	      return 0;
+	    }
+
       cp += BUFFERBLOCKSIZE;
       ip += BUFFERBLOCKSIZE;
     }
