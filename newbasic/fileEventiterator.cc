@@ -172,7 +172,7 @@ int fileEventiterator::read_next_buffer()
   // set the pointer to char to the destination buffer
   char *cp = (char *) initialbuffer;
 
-  int xc;
+  unsigned int xc;
 
 
   // this while loop implements the skipping of 8k records until

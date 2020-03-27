@@ -269,7 +269,7 @@ int oncsSub_idsrs_v01::iValue(const int ich, const int tsample, const int hybrid
 
 	  //cout << __LINE__ << "  " << __FILE__ << " tsample " << tsample << "  " << (*it)->rowdata.size() << endl;
 
-	  if ( (*it)->rowdata.size()  < tsample +1) return 0;
+	  if ( (*it)->rowdata.size()  < (unsigned int)(tsample +1)) return 0;
 
 	  report *r  = (*it)->rowdata[tsample];
 	  return r->adc[ich];

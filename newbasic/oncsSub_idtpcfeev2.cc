@@ -271,7 +271,7 @@ int oncsSub_idtpcfeev2::iValue(const int fee, const int ch, const int sample)
   decode();
   if ( fee > MAX_FEECOUNT ||
        ch < 0 || ch >= MAX_FEECHANNELS ||
-       sample < 0 || sample >= fee_samples[fee][ch].size() ) return 0;
+       sample < 0 || (unsigned int) sample >= fee_samples[fee][ch].size() ) return 0;
   
   //  if ( sample >= fee_samples[fee][ch].size() ) return 0;
   return fee_samples[fee][ch].at(sample).adc;
@@ -284,7 +284,7 @@ int oncsSub_idtpcfeev2::iValue(const int fee, const int ch, const int sample, co
 
   if ( fee > MAX_FEECOUNT ||
        ch < 0 || ch >= MAX_FEECHANNELS ||
-       sample < 0 || sample >= fee_samples[fee][ch].size() ) return 0;
+       sample < 0 || (unsigned int) sample >= fee_samples[fee][ch].size() ) return 0;
 
 
   if ( strcmp(what,"BXRAW") == 0 )

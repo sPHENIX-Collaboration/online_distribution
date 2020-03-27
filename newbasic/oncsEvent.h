@@ -3,7 +3,7 @@
 
 #include "Event.h"
 #include "phenixTypes.h"
-#include "oncsEvtConstants.h"
+#include "EvtConstants.h"
 #include "oncsEvtStructures.h"
 #include <map>
 

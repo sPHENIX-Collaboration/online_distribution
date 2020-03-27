@@ -64,7 +64,7 @@ int decode_id2evt( int iarr[]
 
   short *sptr = SubeventData;
  
-  int nrl;
+  int nrl=0;
   for (i=0; i < dlength ; i++)
     {
       /*

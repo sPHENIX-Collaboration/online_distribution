@@ -615,7 +615,9 @@ void oncsSub_idmvtxv1::gdump(const int i, OSTREAM& out) const
 {
 
     int *SubeventData = &SubeventHdr->data;
-    int j,l;
+    unsigned int j;
+    int l;
+
     identify(out);
 
     int current_offset;

@@ -2,7 +2,7 @@
 #define __EVT_CONSTANTS_H
 
 /* the header length values */ 
-#define EVTHEADERLENGTH 8
+#define EVTHEADERLENGTH 8U
 
 
 #endif

@@ -24,7 +24,6 @@ int *oncsSub_idcaenv1742::decode ( int *nwout)
   int *p;
 
 
-  int i,channel;
   int *SubeventData = &SubeventHdr->data;
 
 
@@ -76,7 +75,7 @@ int *oncsSub_idcaenv1742::decode ( int *nwout)
 
   for ( group_nr=0; group_nr < 4; group_nr++)
     {
-      int pos;
+      int pos = 0;
 
       if  ( (group_mask >> group_nr) &1) // we have that group present
 	{

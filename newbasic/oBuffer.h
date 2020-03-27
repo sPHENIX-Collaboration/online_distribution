@@ -47,12 +47,12 @@ public:
   virtual  ~oBuffer();
 
   //  this creates a new event on the next address
-  virtual int nextEvent( const int evtsize, const int etype =0, const int evtseq =0);
+  virtual int nextEvent( const unsigned int evtsize, const int etype =0, const int evtseq =0);
 
 
   // frame and packet adding
 
-  virtual int addRawEvent(int *);
+  virtual int addRawEvent(unsigned int *);
 
   virtual int addEvent(Event *);
 
@@ -92,7 +92,7 @@ protected:
 #endif
   typedef struct 
   { 
-    int Length;
+    unsigned int Length;
     int ID;
     int Bufseq;
     int Runnr;
