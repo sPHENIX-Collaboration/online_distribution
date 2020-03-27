@@ -44,7 +44,7 @@ simpleRandom::xMD5Init(struct xMD5Context *ctx)
  * of bytes.
  */
 void
-simpleRandom::xMD5Update(struct xMD5Context *ctx, byte const *buf, int len)
+simpleRandom::xMD5Update(struct xMD5Context *ctx, byte const *buf, unsigned int len)
 {
         word32 t;
 
@@ -55,7 +55,7 @@ simpleRandom::xMD5Update(struct xMD5Context *ctx, byte const *buf, int len)
                 ctx->bytes[1]++;        /* Carry from low to high */
 
         t = 64 - (t & 0x3f);    /* Space available in ctx->in (at least 1) */
-        if ((unsigned)t > len) {
+        if ( t > len) {
                 bcopy(buf, (byte *)ctx->in + 64 - (unsigned)t, len);
                 return;
         }
@@ -218,7 +218,7 @@ simpleRandom::xMD5Transform(word32 buf[4], word32 const in[16])
 }
 
 
-void simpleRandom::MD5(byte *dest, const byte *orig, int len)
+void simpleRandom::MD5(byte *dest, const byte *orig, unsigned int len)
 {
         struct xMD5Context context;
 

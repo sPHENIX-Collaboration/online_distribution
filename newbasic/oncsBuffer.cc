@@ -31,7 +31,7 @@ oncsBuffer::oncsBuffer (PHDWORD *array , const PHDWORD length )
 int oncsBuffer::buffer_swap()
 {
 
-  int i;
+  unsigned int i;
   unsigned int evtindex, sevtindex;
   oncsevtdata_ptr evtptr;
   subevtdata_ptr sevtptr;

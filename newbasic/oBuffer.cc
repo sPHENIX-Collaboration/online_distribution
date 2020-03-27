@@ -134,7 +134,7 @@ int oBuffer::prepare_next()
 
 
 // ---------------------------------------------------------
-int oBuffer::nextEvent( const int evtsize, const int etype, const int evtseq)
+int oBuffer::nextEvent( const unsigned int evtsize, const int etype, const int evtseq)
 {
 
   if (current_event) delete current_event;
@@ -167,13 +167,13 @@ int oBuffer::nextEvent( const int evtsize, const int etype, const int evtseq)
   return 0;
 }
 // ---------------------------------------------------------
-int oBuffer::addRawEvent( int *data)
+int oBuffer::addRawEvent( unsigned int *data)
 {
   
   if ( ! good_object) return -1;
   int wstatus;
 
-  int nw = data[0];
+  unsigned int nw = data[0];
 
   if ( nw > left-EOBLENGTH)
     {
@@ -329,7 +329,7 @@ int oBuffer::writeout()
       unsigned int ip =0;
       char *cp = (char *) bptr;
 
-      while (ip<bptr->Length)
+      while (ip < bptr->Length)
 	{
 	  write ( fd, cp, BUFFERBLOCKSIZE);
 	  cp += BUFFERBLOCKSIZE;

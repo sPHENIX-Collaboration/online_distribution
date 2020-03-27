@@ -268,7 +268,7 @@ int *oncsSub_iddreamv0::decode ( int *nwout)
 int oncsSub_iddreamv0::decode_payload ( unsigned short *d, const int size) 
 {
 
-  FEU_decoded_data *fd;
+  FEU_decoded_data *fd = 0;
 
   int nwpacket_index = 0;  // this is supposed to point to the network packet start
   int index = 0;
@@ -280,7 +280,7 @@ int oncsSub_iddreamv0::decode_payload ( unsigned short *d, const int size)
   int event_id;
   int time_stamp;
 
-  int sample_id;
+  int sample_id =-1;
   int fine_tstp; 
   int old_eventid = -1;
 
@@ -450,8 +450,6 @@ int oncsSub_iddreamv0::decode_dream( FEU_decoded_data *fd, unsigned short *d, co
   unsigned long long cell_id;
   unsigned long long trigger_id;
 
-  unsigned int cmnl;
-  unsigned int cmnh;
   unsigned int dream_id;
 
   
@@ -464,9 +462,6 @@ int oncsSub_iddreamv0::decode_dream( FEU_decoded_data *fd, unsigned short *d, co
   trigger_id |= (d[1] & 0xfff) << 12;
   trigger_id |= (d[2] & 0xfff);
 
-  cmnl = d[68] & 0xfff;
-  cmnh = d[69] & 0xfff;
-  
   cell_id =  (d[70] & 0xfff) << 24;
   cell_id |= (d[71] & 0xfff) << 12;
   cell_id |= (d[72] & 0xfff);

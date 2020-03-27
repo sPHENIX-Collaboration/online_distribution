@@ -31,7 +31,6 @@ int *oncsSub_idbspetdata::decode ( int *nwout)
 
   unsigned long long timebits, coarse_timestamp, fine_timestamp;
   unsigned int word1, word2;
-  unsigned int clockID;
 
   int i;
   unsigned int *SubeventData = (unsigned int *) &SubeventHdr->data;
@@ -64,7 +63,6 @@ int *oncsSub_idbspetdata::decode ( int *nwout)
 	{
 
 	  word1 = SubeventData[2*i+1];
-	  clockID = (word1 >> 30) & 0x3; 
 
 	  p[k] = (( word1 >> 24) & 0x3f); // block id
 	  if (  p[k] ==3)  p[k]=2;

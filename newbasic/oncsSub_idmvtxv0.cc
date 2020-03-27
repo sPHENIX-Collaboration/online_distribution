@@ -186,8 +186,8 @@ int *oncsSub_idmvtxv0::decode ()
         int status = 0;
         int ibyte_endofdata = -1;
         int the_region = -1;
-        unsigned int address;
-        unsigned int encoder_id;
+        unsigned int address=0;
+        unsigned int encoder_id = 0;
         for (unsigned int ibyte = 0; ibyte < ruchn_stream[ruchn].size(); ibyte++)
         {
             b = ruchn_stream[ruchn].at(ibyte);
@@ -568,7 +568,7 @@ void oncsSub_idmvtxv0::gdump(const int i, OSTREAM& out) const
 {
 
     int *SubeventData = &SubeventHdr->data;
-    int j,l;
+    unsigned int j,l;
     identify(out);
 
     int current_offset;

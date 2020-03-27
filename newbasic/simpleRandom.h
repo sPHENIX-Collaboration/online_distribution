@@ -75,10 +75,10 @@ private:
   
   void byteSwap(word32 *buf, unsigned words);
   void xMD5Init(struct xMD5Context *ctx);
-  void xMD5Update(struct xMD5Context *ctx, byte const *buf, int len);
+  void xMD5Update(struct xMD5Context *ctx, byte const *buf, unsigned int len);
   void xMD5Final(byte digest[16], struct xMD5Context *ctx);
   void xMD5Transform(word32 buf[4], word32 const in[16]);
-  void MD5(byte *dest, const byte *orig, int len);
+  void MD5(byte *dest, const byte *orig, unsigned int len);
   void load_seed();
 
   unsigned int digest[4];

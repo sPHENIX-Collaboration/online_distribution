@@ -31,7 +31,7 @@ protected:
 
   virtual int  *decode (int *);
   long long *s_vector;
-  unsigned int s_vectorlength;
+  int s_vectorlength;
 
 #if !defined(SunOS) && !defined(OSF1)
   std::map <int, int> smap;

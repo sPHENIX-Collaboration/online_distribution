@@ -25,19 +25,19 @@ void exitmsg()
 // valid buffer marker, or 1 for a buffer that 
 // doesn't need swapping, -1 for one that does need swapping
  
-int check_buffermarker ( const int bm)
+int check_buffermarker ( const unsigned int bm)
 {
   
   if ( bm == BUFFERMARKER || 
-       bm == (int) GZBUFFERMARKER || 
-       bm == (int) LZO1XBUFFERMARKER )
+       bm == GZBUFFERMARKER || 
+       bm == LZO1XBUFFERMARKER )
     {
       return 1;
     }
   
-  else if ( buffer::i4swap(bm) == BUFFERMARKER || 
-	    buffer::i4swap(bm) == (int) GZBUFFERMARKER ||
-	    buffer::i4swap(bm) == (int) LZO1XBUFFERMARKER )
+  else if ( buffer::u4swap(bm) == BUFFERMARKER || 
+	    buffer::u4swap(bm) == GZBUFFERMARKER ||
+	    buffer::u4swap(bm) == LZO1XBUFFERMARKER )
     {
       return -1;
     }
@@ -76,9 +76,7 @@ int  main(int argc, char *argv[])
     }
 
 
-  int needs_swap = 0;
   int length;
-  int bufseq;
   int ip;
 
   int total_read = 0;
@@ -86,8 +84,6 @@ int  main(int argc, char *argv[])
   int xc;
 
   int current_fdnr = 0;
-  int nwritten;
-
 
   xc = read ( fd, (char *)buffer, 8192);
   //  total_read++;
@@ -101,22 +97,23 @@ int  main(int argc, char *argv[])
 	{
 
 	  //	  std::cout << " new buffer " << buffer[0] << std::endl;
-	  needs_swap = 0;
 	  
 	  if ( markerstatus == -1)
 	    {
-	      needs_swap = 1;
 	      length = buffer::i4swap(buffer[0]);
-	      bufseq = buffer::i4swap(buffer[2]);
 	    }
 	  else
 	    {
 	      length = buffer[0];
-	      bufseq = buffer[2];
 	    }
 
 
-	  nwritten = write (fdout[current_fdnr], buffer, 8192);
+	  int nwritten = write (fdout[current_fdnr], buffer, 8192);
+	  if ( nwritten < 8192)
+	    {
+		  std::cout << " could not write output " << total_read << std::endl;
+		  exit(1);
+	    }
 
 	  while ( ip < length)
 	    {

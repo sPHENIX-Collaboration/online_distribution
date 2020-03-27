@@ -29,7 +29,7 @@ int  *Packet_starscaler::decode ( int *nwout)
   s_vector[0] = 0;
   int *m = (int *) findPacketDataStart(packet);
 
-  unsigned int i;
+  int i;
   for ( i = 0; i < s_vectorlength; i++)
     {
       int l = i*2;
