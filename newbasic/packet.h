@@ -14,40 +14,40 @@
 
 
 /** 
-This is the abstract packet class.
+    This is the abstract packet class.
 */
 #ifndef __CINT__
 class WINDOWSEXPORT Packet
 #else
 class  Packet
 #endif
-{
+  {
 
-  /* @name Description of the interface routines
-     these are the interface routines to get at decoded values.
-	iValue and rValue return int's and float's, respectively. 
-	the optional "what" parameter is needed for some devices
-	which have more than one type of information, such as the
-	MIZAR board, which gets ADC and TDC values. 
-	iValue(0), iValue(0,""), and iValue("ADC") all  
-	return what we call "natural data", which means ADC information
-	(I decided that), while iValue(0,"TDC") gives you the TDC
-	value of channel 0. All Packet classes accept "RAW" as a type,
-	directing them to return unprocessed/undecoded packet raw data.
+   /* @name Description of the interface routines
+      these are the interface routines to get at decoded values.
+      iValue and rValue return int's and float's, respectively. 
+      the optional "what" parameter is needed for some devices
+      which have more than one type of information, such as the
+      MIZAR board, which gets ADC and TDC values. 
+      iValue(0), iValue(0,""), and iValue("ADC") all  
+      return what we call "natural data", which means ADC information
+      (I decided that), while iValue(0,"TDC") gives you the TDC
+      value of channel 0. All Packet classes accept "RAW" as a type,
+      directing them to return unprocessed/undecoded packet raw data.
   
-	The array-type interface iValue(const int channel,const int iy)
-	is just a convenient call for devices which inherently have
-	two-dimensional arrays of data, such as the Hammond flash ADC
-	board, where you get 8 channels with 512 time samples each.
-	Another example is a group of several, say, LC2249W ADC's read out
-	in one packet, so that iValue(0,2) refers to channel 0 of the
-	second ADC in the group. 
-  */
+      The array-type interface iValue(const int channel,const int iy)
+      is just a convenient call for devices which inherently have
+      two-dimensional arrays of data, such as the Hammond flash ADC
+      board, where you get 8 channels with 512 time samples each.
+      Another example is a group of several, say, LC2249W ADC's read out
+      in one packet, so that iValue(0,2) refers to channel 0 of the
+      second ADC in the group. 
+   */
 
 
 
 
-public:
+  public:
   /// the virtual destructor
   inline virtual ~Packet() {};
 
@@ -88,23 +88,23 @@ public:
 
   /** dValue returns the value of a given channel as a double */
   virtual double  dValue(const int channel) 
-    {return rValue(channel);};
+  {return rValue(channel);};
 
   virtual double  dValue(const int channel, const char *what) 
-    {return iValue(channel, what);};
+  {return iValue(channel, what);};
 
   virtual double  dValue(const int channel, const int iy) 
-    {return iValue(channel, iy);};
+  {return iValue(channel, iy);};
 
   /** lValue returns the value of a given channel as a long long */
   virtual long long  lValue(const int channel) 
-    {return iValue(channel);};
+  {return iValue(channel);};
 
   virtual long long  lValue(const int channel, const char *what) 
-    {return iValue(channel,what);};
+  {return iValue(channel,what);};
 
   virtual long long  lValue(const int channel, const int iy) 
-    {return iValue(channel, iy);};
+  {return iValue(channel, iy);};
 
 
   /** with the "what" parameter you can decide which aspect 
@@ -119,19 +119,19 @@ public:
   virtual float  rValue(const int channel, const int iy) =0;
 
   virtual void * pValue(const int chan)
-    {
-      return 0;
-    }
+  {
+    return 0;
+  }
 
   virtual void * pValue(const int chan, const char *what)
-    {
-      return 0;
-    }
+  {
+    return 0;
+  }
 
   virtual void * pValue(const int chan, const int iy)
-    {
-      return 0;
-    }
+  {
+    return 0;
+  }
 
 
 
@@ -141,7 +141,7 @@ public:
   // of float's or int's. The what parameter has the usual meaning.
 
   /** getArraylength returns the length of the array needed to store the 
-   decoded values.
+      decoded values.
   */
   virtual int    getArraylength(const char * what ="") =0;
 
@@ -155,9 +155,9 @@ public:
 
   ///  fillFloatArray fills an array of floats
   virtual int    fillFloatArray (float destination[],    // the data go here 
-			       const int length,      // space we have in destination
-			       int * nw,              // words actually used
-			       const char * what="") = 0; // type of data (see above)
+				 const int length,      // space we have in destination
+				 int * nw,              // words actually used
+				 const char * what="") = 0; // type of data (see above)
 
   /** getIntArray and getFloatArray create a new array of the approriate size
       fill it with the decoded values, and return a pointer to the array. 
@@ -240,7 +240,7 @@ public:
 
   /// write an indepth identification message to the supplied OSTREAM.
   virtual void fullIdentify(std::ostream& os = std::cout) const 
-    { identify(os);};
+  { identify(os);};
 
   /**dump (either to standard output or the specified OSTREAM)
      the packet's data in some packet-specific way. 
@@ -250,11 +250,11 @@ public:
 
 
   /** Since dump()
-     requires the packet data to be consistent, gdump ("generic" dump)
-     dumps the data without making assumptions about the integrity of
-     the packet data. For many Packet classes dump just calls gdump
-     because it is good enough. The "how" parameter for gdump specifies
-     decimal, octal, or hexadecimal (0,1,2) dump.
+      requires the packet data to be consistent, gdump ("generic" dump)
+      dumps the data without making assumptions about the integrity of
+      the packet data. For many Packet classes dump just calls gdump
+      because it is good enough. The "how" parameter for gdump specifies
+      decimal, octal, or hexadecimal (0,1,2) dump.
   */
 
   virtual void gdump(const int how = EVT_HEXADECIMAL, std::ostream& os = std::cout) const  = 0;
@@ -262,14 +262,16 @@ public:
   /** This functiion returns the status of the DCM transfer checksum.
       0  = cannot be calculated for this packet
       1  = ok
-     -1  = fail
+      -1  = fail
 
   */
   virtual int getCheckSumStatus() const { return 0;};
   virtual int   copyMe(int [],  const int maxlength) const { return 0;};
 
+  virtual int setInternalParameter ( const int p1=0, const int p2=0, const char *what = "") = 0;
 
-};
+
+  };
 
 // some structures for the LVL triggers
 

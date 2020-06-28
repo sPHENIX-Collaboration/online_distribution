@@ -163,7 +163,6 @@ int *oncsSub_idfnalmwpcv2::decode ( int *nwout)
 	       << " wrong TDC index " << tdcindex << " pos= " << pos-1 << endl;
 	}
 
-      int EventStatus = s[pos+2];
 
       //cout << __FILE__ << " " <<  __LINE__ << " pos, value " << setw(4) << pos << " " << hex << s[pos] << dec << endl;
       int SpillTriggerCount = s[pos+3]<<16;  // we get a 32bit value
@@ -383,7 +382,7 @@ void  oncsSub_idfnalmwpcv2::dump ( OSTREAM& os )
   decode (0);
   identify(os);
 
-  int i, j, k, l;
+  int j, k, l;
 
 
   os << " Date         " << iValue(0, "MONTH") 

@@ -83,7 +83,7 @@ void  oncsSubevent::identify( OSTREAM& out ) const
   out << std::dec
       << "Packet " << SETW(5) <<  getIdentifier() 
       << " " << SETW(5) << getLength() 
-      << " -1"  << " (ONCS Packet)";
+      << " -1"  << " (sPHENIX Packet) ";
 
   out << SETW(3) << getHitFormat() 
       << " (" << oncs_get_mnemonic( getStructure(), getHitFormat()) << ")" << std::endl;
@@ -280,6 +280,15 @@ oncsSubevent::fillIntArray (int iarr[],
 
       *nwout = getLength();
     }
+
+  if (strcmp(what,"DATA") ==0)
+    {
+      if (nlen < getLength() -4 ) return -2;
+      int *from = &SubeventHdr->data;
+      for (int i=0; i<getLength() -4; i++) *iarr++ = *from++;
+
+      *nwout = getLength()-4;
+    }
   return 0;
 }
 
@@ -397,7 +406,21 @@ void oncsSubevent_w4::gdump(const int i, OSTREAM& out) const
 {
 
   int *SubeventData = &SubeventHdr->data;
-  int j,l;
+
+  if ( i == EVT_RAW)
+    {
+      fwrite(SubeventData, sizeof(int), getDataLength(), stdout);
+      return;
+    }
+
+  if ( i == EVT_RAW_WH)
+    {
+      fwrite(SubeventHdr, sizeof(int), getLength(), stdout);
+      return;
+    }
+
+  unsigned int j;
+  int l;
   identify(out);
   
   switch (i)
@@ -406,12 +429,13 @@ void oncsSubevent_w4::gdump(const int i, OSTREAM& out) const
       j = 0;
       while (1)
 	{
-	  out << std::endl << SETW(5) << j << " |  ";
+	  out << SETW(5) << j << " |  ";
 	  for (l=0;l<4;l++)
 	    {
 	      out << std::hex << SETW(8) << std::setfill ('0') << SubeventData[j++] << std::setfill(' ') << " " << std::dec;
 	      if (j>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) break;
 	    }
+	  out << std::endl;
 	  if (j>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) break;
 	}
       break;
@@ -420,13 +444,14 @@ void oncsSubevent_w4::gdump(const int i, OSTREAM& out) const
       j = 0;
       while (1)
 	{
-	  out << std::dec << std::endl << SETW(5) << j << " |  ";
+	  out << std::dec  << SETW(5) << j << " |  ";
 
 	  for (l=0;l<6;l++)
 	    {
 	      out << SETW(10) << SubeventData[j++] << " ";
 	      if (j>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) break;
 	    }
+	  out << std::endl;
 	  if (j>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) break;
 	}
       break;
@@ -443,7 +468,22 @@ void oncsSubevent_w4::gdump(const int i, OSTREAM& out) const
 void oncsSubevent_w2::gdump(const int i, OSTREAM& out) const
 {
   short *SubeventData = (short *) &SubeventHdr->data;
-  int j,l;
+
+  if ( i == EVT_RAW)
+    {
+      fwrite(SubeventData, sizeof(int), getDataLength(), stdout);
+      return;
+    }
+
+  if ( i == EVT_RAW_WH)
+    {
+      fwrite(SubeventHdr, sizeof(int), getLength(), stdout);
+      return;
+    }
+
+  unsigned int j;
+  int l;
+
   identify(out);
 
   switch (i)
@@ -452,12 +492,14 @@ void oncsSubevent_w2::gdump(const int i, OSTREAM& out) const
       j = 0;
       while (1)
 	{
-	  out << std::dec<< std::endl << SETW(5) << j << " |  ";
+	  out << std::dec << SETW(5) << j << " |  ";
 	  for (l=0;l<8;l++)
 	    {
 	      out << std::hex << SETW(4) << std::setfill ('0') << SubeventData[j++] << std::setfill(' ') << " " << std::dec;
 	      if (j>=2*(SubeventHdr->sub_length-SEVTHEADERLENGTH  - SubeventHdr->sub_padding) ) break;
 	    }
+	    out << std::endl;
+
 	  if (j>=2*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) break;
 	}
       break;
@@ -466,19 +508,20 @@ void oncsSubevent_w2::gdump(const int i, OSTREAM& out) const
       j = 0;
       while (1)
 	{
-	  out << std::dec << std::endl << SETW(5) << j << " |  ";
+	  out << std::dec << SETW(5) << j << " |  ";
 	  for (l=0;l<8;l++)
 	    {
 	      out << std::dec << SETW(6) << SubeventData[j++] << " ";
 	      if (j>=2*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) break;
 	    }
+	  out << std::endl;
 	  if (j>=2*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) break;
 	}
       break;
 
     default: break;
     }
-  out << std::endl;
+  out << std::endl; 
 }
 
 // ---------------------------------------------------------------------
@@ -486,7 +529,24 @@ void oncsSubevent_w2::gdump(const int i, OSTREAM& out) const
 void oncsSubevent_w1::gdump(const int i, OSTREAM& out) const
 {
   char *SubeventData = (char *) &SubeventHdr->data;
-  int j,l;
+
+
+  if ( i == EVT_RAW)
+    {
+      fwrite(SubeventData, sizeof(int), getDataLength(), stdout);
+      return;
+    }
+
+  if ( i == EVT_RAW_WH)
+    {
+      fwrite(SubeventHdr, sizeof(int), getLength(), stdout);
+      return;
+    }
+
+  unsigned int j;
+  int l;
+
+
   char cstring[20];
   char *c;
   identify(out);
@@ -498,22 +558,27 @@ void oncsSubevent_w1::gdump(const int i, OSTREAM& out) const
       while (1)
 	{
 	  c = cstring;
-	  out << std::dec << std::endl << SETW(5) << j << " |  ";
+	  out << std::dec <<  SETW(5) << j << " |  ";
 	  for (l=0;l<16;l++)
 	    {
 	      if (j < 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) 
 		{
-		  *c++ = SubeventData[j];
-		  out << std::hex << SETW(2) << SubeventData[j++] << " ";
+		  out << std::hex << SETW(2) << (int) SubeventData[j] << " ";
+		  if (SubeventData[j] >=32 && SubeventData[j] <=127) 
+		    {
+		      *c++ = SubeventData[j];
+		    }
+		  else
+		    {
+		      *c++ = 0x20;
+		    }
+		  out << " ";
 		}
-	      else
-		{
-		  *c++ = 0x20;
-		  out << "   ";
-		}
+	      j++;
 	    }
 	  *c = 0;
 	  out << "  | " << cstring;
+	  out << std::endl;
 	  if (j >= 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) break;
 	}
       break;
@@ -522,26 +587,31 @@ void oncsSubevent_w1::gdump(const int i, OSTREAM& out) const
       while (1)
 	{
 	  c = cstring;
-	  out << std::dec << std::endl << SETW(5) << j << " |  ";
-	  for (l=0;l<12;l++)
+	  out << std::dec <<  SETW(5) << j << " |  ";
+	  for (l=0;l<16;l++)
 	    {
 	      if (j < 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) 
 		{
-		  *c++ = SubeventData[j];
-		  out << std::hex << SETW(4) << SubeventData[j++] << " ";
+		  out  << SETW(3) << (int) SubeventData[j] << " ";
+		  if (SubeventData[j] >=32 && SubeventData[j] <=127) 
+		    {
+		      *c++ = SubeventData[j];
+		    }
+		  else
+		    {
+		      *c++ = 0x20;
+		    }
+		  out << " ";
 		}
-	      else
-		{
-		  *c++ = 0x20;
-		  out << "   ";
-		}
+	      j++;
 	    }
 	  *c = 0;
 	  out << "  | " << cstring;
+	  out << std::endl;
 	  if (j >= 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) break;
 	}
       break;
-
+      
     default: break;
     }
   out << std::endl;

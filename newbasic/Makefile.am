@@ -12,6 +12,62 @@ include_HEADERS = oncsdefs.h \
 else
 # all definitions
 
+installedheaders = \
+  generalDefinitions.h \
+  event_io.h \
+  ioselect.h \
+  Event.h \
+  A_Event.h \
+  oncsEvent.h \
+  oncsEvtConstants.h \
+  oncsEvtStructures.h \
+  oncsStructures.h \
+  oncsSubConstants.h \
+  EventTypes.h \
+  Eventiterator.h \
+  EvtConstants.h \
+  EvtStructures.h \
+  BufferConstants.h \
+  phenixTypes.h \
+  phenixOnline.h \
+  testEventiterator.h \
+  fileEventiterator.h \
+  listEventiterator.h \
+  dpipe_filter.h \
+  buffer.h \
+  simpleRandom.h \
+  gzbuffer.h \
+  lzobuffer.h \
+  prdfBuffer.h \
+  oBuffer.h \
+  oEvent.h \
+  ogzBuffer.h \
+  olzoBuffer.h \
+  oamlBuffer.h \
+  oncsBuffer.h \
+  oncsEventiterator.h \
+  rcdaqEventiterator.h \
+  packet.h \
+  packetConstants.h \
+  packet_hbd_fpgashort.h \
+  packet_fvtx_dcm0.h \
+  packet_w124.h \
+  packet_A.h \
+  packetPublic.h \
+  packetV1Public.h \
+  errorBlock.h \
+  packetRoutines.h \
+  decoding_routines.h \
+  packetHeaders.h \
+  Cpacket.h \
+  packetHdr.h \
+  packetHdrV1.h \
+  formatError.h \
+  dataBlock.h \
+  framePackets.h \
+  framePublic.h \
+  frameV1Public.h
+
 allheaders = \
   ioselect.h \
   event_io.h \
@@ -98,6 +154,9 @@ allheaders = \
   oncsSub_iddigitizerv1.h \
   oncsSub_idmvtxv0.h \
   oncsSub_idtpcfeev1.h \
+  oncsSub_idtpcfeev2.h \
+  oncsSub_iddreamv0.h \
+  oncsSub_idmvtxv1.h \
   oncsSubevent.h \
   packet.h \
   packetConstants.h \
@@ -122,6 +181,7 @@ allheaders = \
   packet_starscaler.h \
   packet_hbd_fpga.h \
   packet_hbd_fpgashort.h \
+  packet_fvtx_dcm0.h \
   packet_cdevring.h \
   packet_cdevringnopol.h \
   packet_cdevbuckets.h \
@@ -184,6 +244,9 @@ allsources = \
   oncsSub_iddigitizerv1.cc \
   oncsSub_idmvtxv0.cc \
   oncsSub_idtpcfeev1.cc \
+  oncsSub_idtpcfeev2.cc \
+  oncsSub_iddreamv0.cc \
+  oncsSub_idmvtxv1.cc \
   oncsSubevent.cc \
   oncs_mnemonic.cc \
   packet_A.cc \
@@ -207,6 +270,7 @@ allsources = \
   packet_starscaler.cc \
   packet_hbd_fpga.cc \
   packet_hbd_fpgashort.cc \
+  packet_fvtx_dcm0.cc \
   packet_cdevring.cc \
   packet_cdevringnopol.cc \
   packet_cdevbuckets.cc \
@@ -233,7 +297,14 @@ noinst_HEADERS = \
   eventLinkDef.h \
   all.h
 
-pkginclude_HEADERS = $(allheaders) $(msgheaders)
+pkginclude_HEADERS = $(installedheaders) $(msgheaders)
+
+if ! MAKEROOT6
+  ROOT5_MSGDICTS = \
+    msg_dict.C
+ROOT5_EVENTDICTS = \
+    event_dict.C
+endif
 
 CLEANFILES = \
   ioselect.h \
@@ -300,7 +371,10 @@ libmessage_la_SOURCES = \
   strnstr.cc 
 
 
-libEvent_la_SOURCES =  event_dict.C 
+libEvent_la_SOURCES =  \
+  $(ROOT5_EVENTDICTS)
+#event_dict.C 
+
 libEvent_la_LIBADD = libNoRootEvent.la libRootmessage.la  @ROOTGLIBS@  -lz @LZOLIB@
 
 libNoRootEvent_la_SOURCES = $(allsources) 
@@ -332,7 +406,9 @@ endif
 if LINUX
 
 libRootmessage_la_SOURCES = \
-  msg_dict.C
+  $(ROOT5_MSGDICTS)
+
+#  msg_dict.C
 
 msg_dict.C : \
   msg_control.h \

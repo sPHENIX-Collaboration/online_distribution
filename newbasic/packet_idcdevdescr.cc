@@ -33,7 +33,7 @@ double Packet_idcdevdescr::dValue(const int ich, const char *what)
     {
       namedVector *x = *it;
       //      std::cout << what  << " x " << x->values.size() << std::endl;
-      if ( ich < 0 || ich >= x->values.size()) return 0;
+      if ( ich < 0 || (unsigned int) ich >= x->values.size()) return 0;
       return  (x->values)[ich];
 
     }

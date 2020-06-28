@@ -35,8 +35,6 @@ void oncsSub_idcstr::dump ( OSTREAM &os)
   int n;
   if ( ! sarray ) decode ( &n);
 
-  int i = 1;
-  int c;
 
   os.write( (const char *) sarray, allocated_length);
 

@@ -134,7 +134,7 @@ int oncsEventiterator::read_next_buffer()
   // set the pointer to char to the destination buffer
   char *cp = (char *) initialbuffer;
 
-  int xc;
+  unsigned int xc;
 
   // read the first record
   xc = read ( fd, cp, 8192);

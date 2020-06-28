@@ -1,7 +1,7 @@
 #ifndef __ONCSEVT_STRUCTURES_H
 #define __ONCSEVT_STRUCTURES_H
 
-#include "oncsEvtConstants.h"
+#include "EvtConstants.h"
 
 typedef struct oncsevt_data
  {

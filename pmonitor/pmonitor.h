@@ -1,14 +1,18 @@
 #ifndef __PMONITOR__
 #define __PMONITOR__
 
+#include <TVirtualPad.h>
+#include <TThread.h>
+
 #include <Event/Event.h>
+#include <Event/EventTypes.h>
 
 int pstatus ();                         
 
 int ptestopen ();                       
 
-int petopen (const char * etname);                       
-int poncsetopen (const char * etname);                       
+//int petopen (const char * etname);                       
+//int poncsetopen (const char * etname);                       
 
 int poncsopen (const char * filename);  
 int rcdaqopen (const char * ip=0);  
@@ -31,13 +35,17 @@ int plock();
 int prelease();                         
 const char *pname();
 int pexitstatus();                      
-int pgui ();                            
-int prmgui ();
+//int pgui ();                            
+//int prmgui ();
 
 int pinit ();
 int process_event (Event * e);
 
 int phsave (const char *filename ="histos.root"); 
 void phelp();                          
+
+void pupdate(TVirtualPad * pad, const unsigned int refresh = 5);
+//void start_update(TVirtualPad * pad);
+void pend_update(TVirtualPad * pad = 0);
 
 #endif /* __PMONITOR__ */

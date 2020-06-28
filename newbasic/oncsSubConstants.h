@@ -10,7 +10,7 @@
 #define MAX_OUTLENGTH 80000
 
 // the header length value
-#define SEVTHEADERLENGTH 4
+#define SEVTHEADERLENGTH 4U
 
 
 
@@ -77,6 +77,13 @@
 #define IDTPCFEEV1     97
 #define IDMVTXV0       98
 
+#define IDTPCFEEV2     99
+
+#define IDVMM3V1      102
+
+#define IDDREAMV0     103
+
+#define IDMVTXV1      104
 
 // the "level 0", meaning the raw untreated FEM data 
 

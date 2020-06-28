@@ -41,7 +41,15 @@ private:
   simpleRandom *R;
 #endif
   int current_event;
-
+  
+  // these are the spots where we change anything per event later
+  int *e_sequence;
+  int *e_time;
+  int *e_1003values;
+  
+  // we get somememory to generate the event
+  int e_data[256]; 
+  
 };
 
 #endif /* __TESTEVENTITERATOR_H__ */

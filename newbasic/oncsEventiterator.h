@@ -27,7 +27,7 @@ private:
   
   char * thefilename;
   int fd;
-  int initialbuffer[BUFFERSIZE];
+  unsigned int initialbuffer[BUFFERSIZE];
   int *bp;
   int allocatedsize;
 
