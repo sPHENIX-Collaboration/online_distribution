@@ -58,6 +58,7 @@ class WINDOWSEXPORT oncsSub_idmvtxv2 : public  oncsSubevent_w4 {
             int _is_decoded;
 
             int _highest_ruid;
+            int _decoder_error;
 
             std::vector<int> _hit_vectors[IDMVTXV2_MAXRUID+1][IDMVTXV2_MAXRUCHN+1];
 

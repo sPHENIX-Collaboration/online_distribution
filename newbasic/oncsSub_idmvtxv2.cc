@@ -14,6 +14,7 @@ oncsSub_idmvtxv2::oncsSub_idmvtxv2(subevtdata_ptr data)
 {
     _is_decoded = 0;
     _highest_ruid = -1;
+    _decoder_error = 0;
     for (int ruid=0; ruid<IDMVTXV2_MAXRUID+1; ruid++)
     {
         _bad_ruchns[ruid] = 0;
@@ -86,6 +87,7 @@ int *oncsSub_idmvtxv2::decode ()
 {
     if ( _is_decoded) return 0;
     _is_decoded = 1;
+    _decoder_error = 0;
 
     unsigned int *payload = (unsigned int *) &SubeventHdr->data;  // here begins the payload
 
@@ -115,6 +117,7 @@ int *oncsSub_idmvtxv2::decode ()
         {
             cout << __FILE__ << " " << __LINE__ << " --- invalid ruid " << hex << (int) d32->ruid << " at pos " << (long) pos << dec << endl;
             _bad_ruids++;
+            _decoder_error |= ( 1 << 0 );
             break;
         }
         else if (d32->ruid > _highest_ruid)
@@ -156,6 +159,7 @@ int *oncsSub_idmvtxv2::decode ()
             {
                 _bad_ruchns[d32->ruid]++;
                 cout << __FILE__ << " " << __LINE__ << " --- invalid ruchn " << hex << ruchn << ", full RU word: ";
+                _decoder_error |= ( 1 << 1 );
                 for (int ibyte=9;ibyte>=0;ibyte--)
                 {
                     cout << setfill('0') << setw(2) << hex << (unsigned int) d32->d0[ichnk][ibyte] << " ";
@@ -239,6 +243,7 @@ int *oncsSub_idmvtxv2::decode ()
                                          << ", " << col << "." << endl;
                                     cout << "Check region " << the_region << ", encoder " <<  encoder_id
                                          << ", addr " << address << endl;
+                                    _decoder_error |= ( 1 << 2);
                                 }
                                 _hit_vectors[ruid][ruchn].push_back(encode_hit(row,col));
                             }
@@ -278,6 +283,7 @@ int *oncsSub_idmvtxv2::decode ()
                                                   << ", " << col << "." << endl;
                                             cout << "Check region " << the_region << ", encoder " <<  encoder_id
                                                   << ", addr " << hit_address << endl;
+                                            _decoder_error |= ( 1 << 2);
                                         }
                                         _hit_vectors[ruid][ruchn].push_back(encode_hit(row,col));
                                     }
@@ -338,6 +344,7 @@ int *oncsSub_idmvtxv2::decode ()
                     else //this is impossible since the region ID is 5 bits
                     {
                         cout << __FILE__ << " " << __LINE__ << " wrong region header, id=  " << hex << region_id << dec << endl;
+                        _decoder_error |= ( 1 << 3);
                     }
                 }
 
@@ -367,14 +374,16 @@ int *oncsSub_idmvtxv2::decode ()
 
                 else
                 {
-                    //cout << __FILE__ << " " << __LINE__ << " unexpected word " << hex << (unsigned int) b << dec << " at ibyte " << ibyte << endl;
+                    cout << __FILE__ << " " << __LINE__ << " unexpected word " << hex << (unsigned int) b << dec << " at ibyte " << ibyte << endl;
                     _bad_bytes[ruid][ruchn]++;
+                    _decoder_error |= ( 1 << 4 );
                 }
 
                 if (ibyte==0 && !header_seen)
                 {
                   cout << __FILE__ << " " << __LINE__ << " " << "first byte of the ALPIDE stream must be a chip header or chip empty;" <<endl;
                   cout << "Aborting so we don't get confused by bad data." << endl;
+                  _decoder_error |= ( 1 << 5 );
                    break;
                 }
 
@@ -404,7 +413,10 @@ int *oncsSub_idmvtxv2::decode ()
 int oncsSub_idmvtxv2::iValue(const int ruid, const char *what)
 {
     decode();
-
+    if ( strcmp(what, "DECODER_ERROR") == 0 )
+    {
+        return _decoder_error;
+    }
     if ( strcmp(what,"UNEXPECTED_FELIX_COUNTERS") == 0 )
     {
         return _unexpected_felix_counters;
