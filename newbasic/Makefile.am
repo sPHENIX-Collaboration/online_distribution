@@ -301,18 +301,18 @@ pkginclude_HEADERS = $(installedheaders) $(msgheaders)
 
 if ! MAKEROOT6
   ROOT5_MSGDICTS = \
-    msg_dict.C
+    msg_Dict.C
 ROOT5_EVENTDICTS = \
-    event_dict.C
+    event_Dict.C
 endif
 
 CLEANFILES = \
   ioselect.h \
-  event_dict.C \
-  event_dict.h \
+  event_Dict.C \
+  event_Dict.h \
   setup.com \
-  msg_dict.C \
-  msg_dict.h
+  msg_Dict.C \
+  msg_Dict.h
 
 lib_LTLIBRARIES = \
   libmessage.la \
@@ -322,8 +322,8 @@ lib_LTLIBRARIES = \
 
 pcmdir = $(libdir)
 nobase_dist_pcm_DATA = \
-  event_dict_rdict.pcm \
-  msg_dict_rdict.pcm
+  event_Dict_rdict.pcm \
+  msg_Dict_rdict.pcm
 
 bin_PROGRAMS = \
   dpipe \
@@ -414,7 +414,7 @@ libRootmessage_la_SOURCES = \
 
 #  msg_dict.C
 
-msg_dict.C : \
+msg_Dict.C : \
   msg_control.h \
   date_filter_msg_buffer.h \
   filter_msg_buffer.h \
@@ -438,7 +438,7 @@ endif
 
 
 
-event_dict.C : \
+event_Dict.C : \
   Event.h  \
   Eventiterator.h \
   fileEventiterator.h \
@@ -450,14 +450,18 @@ event_dict.C : \
   eventLinkDef.h
 	rootcint -f $@ @CINTDEFS@ -c $(DEFS) $(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $^
 
+
+%_Dict.C: %.h %LinkDef.h
+	rootcint -f $@ @CINTDEFS@ $(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $^
+
 # get the dependency for the pcm files
-%_Dict_rdict.pcm: %_Dict.cc ;
+%_Dict_rdict.pcm: %_Dict.C ;
 
 
 # clean cache dir on Solaris 5.8
 clean-local:
 	rm -rf SunWS_cache
-	rm -f *.pcm
+	rm -f *Dict* $(BUILT_SOURCES) *.pcm
 
 #if VXWORKS
 endif
