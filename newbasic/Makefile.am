@@ -320,6 +320,10 @@ lib_LTLIBRARIES = \
   libNoRootEvent.la \
   libEvent.la
 
+pcmdir = $(libdir)
+nobase_dist_pcm_DATA = \
+  event_dict_rdict.pcm \
+  msg_dict_rdict.pcm
 
 bin_PROGRAMS = \
   dpipe \
@@ -445,6 +449,9 @@ event_dict.C : \
   testEventiterator.h \
   eventLinkDef.h
 	rootcint -f $@ @CINTDEFS@ -c $(DEFS) $(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $^
+
+# get the dependency for the pcm files
+%_Dict_rdict.pcm: %_Dict.cc ;
 
 
 # clean cache dir on Solaris 5.8
