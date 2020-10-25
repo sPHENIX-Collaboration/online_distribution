@@ -377,7 +377,6 @@ libmessage_la_SOURCES = \
 
 libEvent_la_SOURCES =  \
   $(ROOT5_EVENTDICTS)
-#event_dict.C 
 
 libEvent_la_LIBADD = libNoRootEvent.la libRootmessage.la  @ROOTGLIBS@  -lz @LZOLIB@
 
