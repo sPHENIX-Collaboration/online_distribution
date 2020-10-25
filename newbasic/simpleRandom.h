@@ -55,7 +55,6 @@
 
 
 typedef unsigned int word32;
-typedef unsigned char byte;
 
 struct xMD5Context {
         word32 buf[4];
@@ -72,7 +71,8 @@ public:
   float rnd(int low, int high);
 
 private:
-  
+  typedef unsigned char byte;
+
   void byteSwap(word32 *buf, unsigned words);
   void xMD5Init(struct xMD5Context *ctx);
   void xMD5Update(struct xMD5Context *ctx, byte const *buf, unsigned int len);
