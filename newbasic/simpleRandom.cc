@@ -14,7 +14,7 @@
 void
 simpleRandom::byteSwap(word32 *buf, unsigned words)
 {
-        byte *p = (byte *)buf;
+        xbyte *p = (xbyte *)buf;
 
         do {
                 *buf++ = (word32)((unsigned)p[3] << 8 | p[2]) << 16 |
@@ -44,7 +44,7 @@ simpleRandom::xMD5Init(struct xMD5Context *ctx)
  * of bytes.
  */
 void
-simpleRandom::xMD5Update(struct xMD5Context *ctx, byte const *buf, unsigned int len)
+simpleRandom::xMD5Update(struct xMD5Context *ctx, xbyte const *buf, unsigned int len)
 {
         word32 t;
 
@@ -56,11 +56,11 @@ simpleRandom::xMD5Update(struct xMD5Context *ctx, byte const *buf, unsigned int 
 
         t = 64 - (t & 0x3f);    /* Space available in ctx->in (at least 1) */
         if ( t > len) {
-                bcopy(buf, (byte *)ctx->in + 64 - (unsigned)t, len);
+                bcopy(buf, (xbyte *)ctx->in + 64 - (unsigned)t, len);
                 return;
         }
         /* First chunk is an odd size */
-        bcopy(buf,(byte *)ctx->in + 64 - (unsigned)t, (unsigned)t);
+        bcopy(buf,(xbyte *)ctx->in + 64 - (unsigned)t, (unsigned)t);
         byteSwap(ctx->in, 16);
         xMD5Transform(ctx->buf, ctx->in);
         buf += (unsigned)t;
@@ -84,10 +84,10 @@ simpleRandom::xMD5Update(struct xMD5Context *ctx, byte const *buf, unsigned int 
  * 1 0* (64-bit count of bits processed, MSB-first)
  */
 void
-simpleRandom::xMD5Final(byte bdigest[16], struct xMD5Context *ctx)
+simpleRandom::xMD5Final(xbyte bdigest[16], struct xMD5Context *ctx)
 {
         int count = (int)(ctx->bytes[0] & 0x3f); /* Bytes in ctx->in */
-        byte *p = (byte *)ctx->in + count;      /* First unused byte */
+        xbyte *p = (xbyte *)ctx->in + count;      /* First unused byte */
 
         /* Set the first char of padding to 0x80.  There is always room. */
         *p++ = 0x80;
@@ -99,7 +99,7 @@ simpleRandom::xMD5Final(byte bdigest[16], struct xMD5Context *ctx)
                 bzero(p, count+8);
                 byteSwap(ctx->in, 16);
                 xMD5Transform(ctx->buf, ctx->in);
-                p = (byte *)ctx->in;
+                p = (xbyte *)ctx->in;
                 count = 56;
         }
         bzero(p, count+8);
@@ -218,7 +218,7 @@ simpleRandom::xMD5Transform(word32 buf[4], word32 const in[16])
 }
 
 
-void simpleRandom::MD5(byte *dest, const byte *orig, unsigned int len)
+void simpleRandom::MD5(xbyte *dest, const xbyte *orig, unsigned int len)
 {
         struct xMD5Context context;
 
@@ -284,7 +284,7 @@ float simpleRandom::rnd(int low, int high)
                 mask |= r;
 
         do {
-                MD5((byte*)digest,(const byte *) digest, sizeof(digest));
+                MD5((xbyte*)digest,(const xbyte *) digest, sizeof(digest));
                 num = digest[0] & mask;
         } while (num > range);
 
