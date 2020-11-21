@@ -30,8 +30,6 @@ oncsSub_iddigitizerv1::~oncsSub_iddigitizerv1()
 
 
 const int offset=3;
-const int samples=12;
-const int channels=64;
 
   
 int oncsSub_iddigitizerv1::decode ()
