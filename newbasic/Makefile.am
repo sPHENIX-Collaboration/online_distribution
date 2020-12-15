@@ -66,7 +66,8 @@ installedheaders = \
   dataBlock.h \
   framePackets.h \
   framePublic.h \
-  frameV1Public.h
+  frameV1Public.h \
+  md5.h
 
 allheaders = \
   ioselect.h \
