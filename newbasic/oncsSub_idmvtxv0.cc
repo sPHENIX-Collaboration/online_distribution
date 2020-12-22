@@ -82,7 +82,7 @@ void oncsSub_idmvtxv0::print_stuff(OSTREAM& out, unsigned int data, int width, i
         out << std::hex << SETW(width) << std::setfill('0') << ((data>>shift) & mask);
 }
 
-int *oncsSub_idmvtxv0::decode ()
+int *oncsSub_idmvtxv0::mvtx_decode ()
 {
     if ( _is_decoded) return 0;
     _is_decoded = 1;
@@ -399,7 +399,7 @@ int *oncsSub_idmvtxv0::decode ()
 
 int oncsSub_idmvtxv0::iValue(const int ich,const char *what)
 {
-    decode();
+    mvtx_decode();
     if ( strcmp(what,"UNEXPECTED_FELIX_COUNTER") == 0 )
     {
         return _unexpected_felix_counter;
@@ -483,7 +483,7 @@ int oncsSub_idmvtxv0::iValue(const int ich,const char *what)
 
 int oncsSub_idmvtxv0::iValue(const int chip, const int region, const int row)
 {
-    decode();
+    mvtx_decode();
 
     if ( chip < 0  || chip > _highest_chip) return 0;
     if ( region < 0 || region > 31 ) return 0;
@@ -494,7 +494,7 @@ int oncsSub_idmvtxv0::iValue(const int chip, const int region, const int row)
 
 int oncsSub_idmvtxv0::iValue(const int chip, const int row)
 {
-    decode();
+    mvtx_decode();
 
     if ( chip < 0  || chip > _highest_chip) return 0;
     if ( row < 0    || row > 511) return 0;
@@ -509,7 +509,7 @@ void  oncsSub_idmvtxv0::dump ( OSTREAM& os )
 
 
     //int x;
-    decode();
+    mvtx_decode();
     os << "Highest chip:      " << setw(4) << iValue(0, "HIGHEST_CHIP") +1<< endl;
     os << "Regions:              ";
     for ( int ichip = 0; ichip < iValue(0, "HIGHEST_CHIP") +1; ichip++)

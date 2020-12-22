@@ -27,7 +27,7 @@ public:
 
 
 protected:
-  int decode ();
+  int tpc_decode ();
 
 #define MAX_FEECOUNT 8
 #define MAX_FEECHANNELS 256

@@ -32,7 +32,7 @@ oncsSub_iddigitizerv1::~oncsSub_iddigitizerv1()
 const int offset=3;
 
   
-int oncsSub_iddigitizerv1::decode ()
+int oncsSub_iddigitizerv1::digitizer_decode ()
 {
 
   if (_is_decoded ) return 0;
@@ -84,7 +84,7 @@ int oncsSub_iddigitizerv1::decode ()
 
 int oncsSub_iddigitizerv1::iValue(const int sample, const int ch)
 {
-     decode();
+     digitizer_decode();
 
   if ( sample >= _nsamples || sample < 0 
        || ch >= _nchannels || ch < 0 ) return 0;
@@ -96,7 +96,7 @@ int oncsSub_iddigitizerv1::iValue(const int sample, const int ch)
 int oncsSub_iddigitizerv1::iValue(const int n, const char *what)
 {
 
-  decode();
+  digitizer_decode();
 
   if ( strcmp(what,"SAMPLES") == 0 )
   {
