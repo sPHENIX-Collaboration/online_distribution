@@ -223,7 +223,7 @@ main(int argc, char *argv[])
 
   // see if we can open the file
   it = 0;
-
+  status=0;
   switch (ittype)
     {
 
