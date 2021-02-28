@@ -2,14 +2,14 @@
 #define __OGZBUFFER_H
 
 #include <zlib.h>
-#include "oBuffer.h"
+#include "ophBuffer.h"
 
 
 
 #ifndef __CINT__
-class WINDOWSEXPORT ogzBuffer : public oBuffer{
+class WINDOWSEXPORT ogzBuffer : public ophBuffer{
 #else
-class  ogzBuffer : public oBuffer{
+class  ogzBuffer : public ophBuffer{
 #endif
 
 public:

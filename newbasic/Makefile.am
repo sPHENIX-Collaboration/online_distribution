@@ -40,7 +40,10 @@ installedheaders = \
   lzobuffer.h \
   prdfBuffer.h \
   oBuffer.h \
+  ophBuffer.h \
+  ospBuffer.h \
   oEvent.h \
+  ospEvent.h \
   ogzBuffer.h \
   olzoBuffer.h \
   oamlBuffer.h \
@@ -124,7 +127,10 @@ allheaders = \
   gzbuffer.h \
   lzobuffer.h \
   oBuffer.h \
+  ophBuffer.h \
+  ospBuffer.h \
   oEvent.h \
+  ospEvent.h \
   ogzBuffer.h \
   olzoBuffer.h \
   oamlBuffer.h \
@@ -217,10 +223,13 @@ allsources = \
   PHmd5Value.cc \
   gzbuffer.cc \
   lzobuffer.cc \
-  oBuffer.cc \
   oEvent.cc \
+  ospEvent.cc \
+  oBuffer.cc \
+  ophBuffer.cc \
   ogzBuffer.cc \
   olzoBuffer.cc \
+  ospBuffer.cc \
   oamlBuffer.cc \
   oncsBuffer.cc \
   oncsEvent.cc \

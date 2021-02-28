@@ -3,14 +3,14 @@
 
 #include <lzo/lzo1x.h>
 
-#include "oBuffer.h"
+#include "ophBuffer.h"
 
 
 
 #ifndef __CINT__
-class WINDOWSEXPORT olzoBuffer : public oBuffer{
+class WINDOWSEXPORT olzoBuffer : public ophBuffer{
 #else
-class  olzoBuffer : public oBuffer{
+class  olzoBuffer : public ophBuffer{
 #endif
 
 public:
