@@ -110,7 +110,7 @@ main(int argc, char *argv[])
   ob = 0;
 
   //  COUT << "parsing input" << std::endl;
-  int buffer_size = 256*1024*32;  // makes 32MB (specifies how many dwords, so *4)
+  int buffer_size = 256*1024*64;  // makes 32MB (specifies how many dwords, so *4)
 
 
 
@@ -166,7 +166,7 @@ main(int argc, char *argv[])
 
   if ( eventnumber && countnumber) evtcountexitmsg();
 
-  Eventiterator *it[50];
+  Eventiterator *it[500];
   int no_it = 0;
 
   int index;
@@ -203,7 +203,7 @@ main(int argc, char *argv[])
 
     buffer = new PHDWORD [buffer_size];
 
-    Event *evt[100];
+    Event *evt[1000];
 
     int go_on = 1;
 
