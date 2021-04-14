@@ -3,6 +3,8 @@
 #include "phenixTypes.h"
 #include "A_Event.h"
 #include "ogzBuffer.h"
+#include "ophBuffer.h"
+#include "ospBuffer.h"
 #include "EventTypes.h"
 #include "oEvent.h"
 
@@ -53,7 +55,7 @@ void exithelp()
   COUT <<  std::endl;
   COUT << " Syntax:"<< std::endl;
   COUT <<  std::endl;
-  COUT << "      eventcombiner [-v] [-i] [-n number] [-u] [-h]  inputfile1 inputfile2 ..."<< std::endl;
+  COUT << "      eventcombiner [-v] [-i] [-n number] [-u] [-p] [-h]  inputfile1 inputfile2 ..."<< std::endl;
   COUT << " e.g  eventcombiner -v /export/rcfdata/dcm_data/built_evt/rc_3612.prdfz /export/rcfdata/dcm_data/rc/*3612*" << std::endl;
   COUT << " will combine all the *3612* (from one run number) together in the file. "<< std::endl;
   COUT << " Options:" << std::endl;
@@ -62,7 +64,8 @@ void exithelp()
   COUT << "  -e <event number> start with event number (number in evt. header)" << std::endl;
   COUT << "  -c <event number> start with nth event" << std::endl;
   COUT << "  -n <number>   stop after so many events" << std::endl;
-  COUT << "  -u  write uncompressed data, default is compressed "<< std::endl;
+  COUT << "  -p  read and write legacy PHENIX format data, default is sPHENIX "<< std::endl;
+  //  COUT << "  -u  write uncompressed data, default is compressed "<< std::endl;
   COUT << "  -f  force output file overwrite, normally you cannot overwrite an existing file (safety belt)"<< std::endl;
   COUT << "  -x  ignore event numbers (allow non-matching evt nrs to be combined, DANGEROUS)"<< std::endl;
   COUT << "  -h  this message" << std::endl;
@@ -93,8 +96,10 @@ main(int argc, char *argv[])
   int identify = 0;
   int maxevents = 0;
   int eventnr = 0;
-  int gzipcompress = 1;
   int ignoreeventnr = 0;
+  //  int gzipcompress = 0;
+  int legacyphenix = 0;
+  
   extern char *optarg;
   extern int optind;
 
@@ -105,11 +110,11 @@ main(int argc, char *argv[])
   ob = 0;
 
   //  COUT << "parsing input" << std::endl;
-  int buffer_size = 256*1024*16;  // makes 16MB (specifies how many dwords, so *4)
+  int buffer_size = 256*1024*64;  // makes 32MB (specifies how many dwords, so *4)
 
 
 
-  while ((c = getopt(argc, argv, "n:c:e:viufhx")) != EOF)
+  while ((c = getopt(argc, argv, "n:c:e:vipfhx")) != EOF)
     {
 
       switch (c) 
@@ -123,12 +128,12 @@ main(int argc, char *argv[])
 	  identify = 1;
 	  break;
 
-	case 'u':   // do not gzip-compress
-	  gzipcompress = 0;
-	  break;
+	// case 'g':   // do not gzip-compress
+	//   gzipcompress = 1;
+	//   break;
 
-	case 'f':   // do not gzip-compress
-	  forceflag = 1;
+	case 'p':   // do not gzip-compress
+	  legacyphenix = 1;
 	  break;
 
 	case 'x':   // do not gzip-compress
@@ -161,7 +166,7 @@ main(int argc, char *argv[])
 
   if ( eventnumber && countnumber) evtcountexitmsg();
 
-  Eventiterator *it[50];
+  Eventiterator *it[500];
   int no_it = 0;
 
   int index;
@@ -198,7 +203,7 @@ main(int argc, char *argv[])
 
     buffer = new PHDWORD [buffer_size];
 
-    Event *evt[50];
+    Event *evt[1000];
 
     int go_on = 1;
 
@@ -214,13 +219,13 @@ main(int argc, char *argv[])
       }
     if (verbose) COUT << "Opened file: " <<  filename << std::endl;
     
-    if (gzipcompress) 
+    if (legacyphenix) 
       {
-	ob = new ogzBuffer (fd, buffer, buffer_size);
+	ob = new ophBuffer (fd, buffer, buffer_size);
       }
     else
       {
-	ob = new oBuffer (fd, buffer, buffer_size);
+	ob = new ospBuffer (fd, buffer, buffer_size);
       }
     
     int i;
@@ -282,7 +287,7 @@ main(int argc, char *argv[])
     
 	if (take_this) 
 	  {
-	    Event *E = new A_Event(out);
+	    Event *E = new oncsEvent(out);
 	    if (identify) E->identify();
 	    
 	    ob->addEvent(E);

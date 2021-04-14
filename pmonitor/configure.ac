@@ -18,7 +18,7 @@ AC_PROG_INSTALL
 dnl   no point in suppressing warnings people should 
 dnl   at least see them, so here we go for g++: -Wall
 if test $ac_cv_prog_gxx = yes; then
-  CXXFLAGS="$CXXFLAGS -Wall"
+  CXXFLAGS="$CXXFLAGS -Wall -std=c++11"
 fi
 
 ROOTLIBS=`root-config --libs`

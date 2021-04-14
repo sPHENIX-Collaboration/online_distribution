@@ -14,7 +14,7 @@
 #include "ogzBuffer.h"
 #include "olzoBuffer.h"
 #include "oamlBuffer.h"
-#include "oBuffer.h"
+#include "ophBuffer.h"
 #include "dpipe_filter.h"
 
 #include "phenixTypes.h"
@@ -411,7 +411,7 @@ main(int argc, char *argv[])
 	}
       else
 	{
-	  ob = new oBuffer (fd, buffer, buffer_size);
+	  ob = new ophBuffer (fd, buffer, buffer_size);
 	}
 
     }
