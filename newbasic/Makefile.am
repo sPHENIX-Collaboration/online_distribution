@@ -23,6 +23,7 @@ installedheaders = \
   oncsEvtStructures.h \
   oncsStructures.h \
   oncsSubConstants.h \
+  oncsSubevent.h \
   EventTypes.h \
   Eventiterator.h \
   EvtConstants.h \
