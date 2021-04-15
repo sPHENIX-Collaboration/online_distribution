@@ -6,9 +6,10 @@
 #include "packet.h"
 #include "decoding_routines.h"
 #include "oncsStructures.h"
+#include "oncsSubConstants.h"
+
 #include <stddef.h>
 
-#include <oncsSubConstants.h>
 
 #ifndef __CINT__
 class WINDOWSEXPORT oncsSubevent : public Packet {
