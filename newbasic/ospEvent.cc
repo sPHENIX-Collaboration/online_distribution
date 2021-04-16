@@ -89,7 +89,7 @@ int  ospEvent::addUnstructPacketData(PHDWORD * data,
 		    const int hitformat)
 {
 
-  int* packetstart;
+//  int* packetstart;
   
   subevtdata_ptr sevt =  (subevtdata_ptr) &(evthdr->data[current]);
   sevt->sub_length =  SEVTHEADERLENGTH;
