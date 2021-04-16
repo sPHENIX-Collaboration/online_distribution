@@ -90,7 +90,6 @@ int  ospEvent::addUnstructPacketData(PHDWORD * data,
 {
 
   int* packetstart;
-  int packetlength;
   
   subevtdata_ptr sevt =  (subevtdata_ptr) &(evthdr->data[current]);
   sevt->sub_length =  SEVTHEADERLENGTH;
@@ -103,10 +102,10 @@ int  ospEvent::addUnstructPacketData(PHDWORD * data,
   memcpy(&sevt->data , data, length * sizeof (int) );
   sevt->sub_length += length;
   
-  evthdr->evt_length += packetlength;
-  current +=  packetlength;
-  left -= packetlength;
-  return packetlength;
+  evthdr->evt_length +=  sevt->sub_length;
+  current +=  sevt->sub_length;
+  left -=  sevt->sub_length;
+  return  sevt->sub_length;
 
 }
 
