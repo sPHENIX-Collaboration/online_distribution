@@ -165,25 +165,25 @@ int   Packet_cdevpolarimeter::iValue(const int ich, const char *what)
 
   if ( strcmp(what,"daqVersionS") == 0)
     {
-      if ( ich >= 0 || ich < 80)
+      if ( ich >= 0 && ich < 80)
 	return  ps->daqVersionS[ich];
     }
 
   if ( strcmp(what,"cutIdS") == 0)
     {
-      if ( ich >= 0 || ich < 80)
+      if ( ich >= 0 && ich < 80)
 	return  ps->cutIdS[ich];
     }
 
   if ( strcmp(what,"targetIdS") == 0)
     {
-      if ( ich >= 0 || ich < 80)
+      if ( ich >= 0 && ich < 80)
 	return  ps->targetIdS[ich];
     }
 
   if ( strcmp(what, "encoderPositionS") == 0 ) 
     {
-      if ( ich >= 0 || ich < 2 ) 
+      if ( ich >= 0 && ich < 2 ) 
 	return ps->encoderPositionS[ich];
     }
 
@@ -191,7 +191,7 @@ int   Packet_cdevpolarimeter::iValue(const int ich, const char *what)
 
   if ( strcmp(what, "statusStringS") == 0 ) 
     {
-      if ( ich >= 0 || ich < 2 ) 
+      if ( ich >= 0 && ich < 2 ) 
 	return ps->statusStringS[ich];
     }
 
@@ -201,38 +201,38 @@ int   Packet_cdevpolarimeter::iValue(const int ich, const char *what)
   if ( strcmp(what, "unpolCountsS") == 0 ) return   ps->unpolCountsS ;
   if ( strcmp(what,"countsUpLeftS") == 0)
     {
-      if ( ich >= 0 || ich < 360)
+      if ( ich >= 0 && ich < 360)
 	return  ps->countsUpLeftS[ich];
     }
 
 
   if ( strcmp(what,"countsLeftS") == 0)
     {
-      if ( ich >= 0 || ich < 360)
+      if ( ich >= 0 && ich < 360)
 	return ps->countsLeftS[ich];
     }
   
   if ( strcmp(what,"countsDownLeftS") == 0)
     {
-      if ( ich >= 0 || ich < 360)
+      if ( ich >= 0 && ich < 360)
 	return  ps->countsDownLeftS[ich];
     }
   
   if ( strcmp(what,"countsDownRightS") == 0)
     {
-      if ( ich >= 0 || ich < 360)
+      if ( ich >= 0 && ich < 360)
 	return  ps->countsDownRightS[ich];
     }
   
   if ( strcmp(what,"countsRightS") == 0)
     {
-      if ( ich >= 0 || ich < 360)
+      if ( ich >= 0 && ich < 360)
 	return  ps->countsRightS[ich];
     }
   
   if ( strcmp(what,"countsUpRightS") == 0)
     {
-      if ( ich >= 0 || ich < 360)
+      if ( ich >= 0 && ich < 360)
 	return  ps->countsUpRightS[ich];
     }
 
@@ -264,25 +264,25 @@ float   Packet_cdevpolarimeter::rValue(const int ich, const char *what)
 
   if ( strcmp(what,"bunchAsymXS") == 0)
     {
-      if ( ich >= 0 || ich < 360)
+      if ( ich >= 0 && ich < 360)
 	return ps->bunchAsymXS[ich];
     }
   
   if ( strcmp(what,"bunchAsymYS") == 0)
     {
-      if ( ich >= 0 || ich < 360)
+      if ( ich >= 0 && ich < 360)
 	return  ps->bunchAsymYS[ich];
     }
   
   if ( strcmp(what,"bunchAsymErrorXS") == 0)
     {
-      if ( ich >= 0 || ich < 360)
+      if ( ich >= 0 && ich < 360)
 	return  ps->bunchAsymErrorXS[ich];
     }
   
   if ( strcmp(what,"bunchAsymErrorYS") == 0)
     {
-      if ( ich >= 0 || ich < 360)
+      if ( ich >= 0 && ich < 360)
 	return  ps->bunchAsymErrorYS[ich];
     }
   
