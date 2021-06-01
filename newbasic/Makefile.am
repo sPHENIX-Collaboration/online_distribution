@@ -71,6 +71,7 @@ installedheaders = \
   framePackets.h \
   framePublic.h \
   frameV1Public.h \
+  caen_correction.h \
   md5.h
 
 allheaders = \
@@ -194,7 +195,8 @@ allheaders = \
   packet_cdevringnopol.h \
   packet_cdevbuckets.h \
   packet_cdevdvm.h \
-  packet_idcdevdescr.h
+  packet_idcdevdescr.h\
+  caen_correction.h
 
 
 allsources = \
@@ -286,7 +288,9 @@ allsources = \
   packet_cdevringnopol.cc \
   packet_cdevbuckets.cc \
   packet_cdevdvm.cc \
-  packet_idcdevdescr.cc 
+  packet_idcdevdescr.cc \
+  caen_correction.cc
+
 
 AM_LDFLAGS = -L$(libdir) -L$(ONLINE_MAIN)/lib -L$(OPT_SPHENIX)/lib
 
