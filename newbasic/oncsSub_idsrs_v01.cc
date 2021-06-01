@@ -232,7 +232,6 @@ int oncsSub_idsrs_v01::iValue(const int ich,const int hybrid, const char *what)
   if ( nhybrids == 0 ) decoded_data1 = decode(&data1_length);
 
   std::vector<hybriddata*>::iterator it;
-  std::vector<report *>::iterator reportit;
 
   if ( ich < 0) return 0;
 
@@ -269,7 +268,7 @@ int oncsSub_idsrs_v01::iValue(const int ich, const int tsample, const int hybrid
 
 	  //cout << __LINE__ << "  " << __FILE__ << " tsample " << tsample << "  " << (*it)->rowdata.size() << endl;
 
-	  if ( (*it)->rowdata.size()  < tsample +1) return 0;
+	  if ( (*it)->rowdata.size()  < (unsigned int)(tsample +1)) return 0;
 
 	  report *r  = (*it)->rowdata[tsample];
 	  return r->adc[ich];

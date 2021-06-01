@@ -27,7 +27,7 @@ oncsSub_idtpcfeev1::~oncsSub_idtpcfeev1()
 }
 
 
-#define HEADER_LENGTH 7
+#define HEADER_LENGTH 7U
 
 int oncsSub_idtpcfeev1::decode ()
 {
@@ -36,13 +36,11 @@ int oncsSub_idtpcfeev1::decode ()
   _is_decoded = 1;
 
   int recv_length = getLength() - SEVTHEADERLENGTH - getPadding();
-  int *k;
 
   _nsamples    = 0;
   _nchannels   = 32;
 
   uint32_t *buffer = ( uint32_t *)  &SubeventHdr->data;
-  unsigned int marker_key = buffer[0];
   unsigned int payload_len = buffer[1] & 0xffff;
 
   _bx_count = ((buffer[4] & 0xffff) << 4) | (buffer[5] & 0xf);  
@@ -50,10 +48,8 @@ int oncsSub_idtpcfeev1::decode ()
   for (int i = 0; i < recv_length; i += (payload_len+1))
     {
       payload_len = (buffer[i+1] & 0xffff);
-      unsigned int  packet_type = buffer[i+2] & 0xffff;
       unsigned int channel     = buffer[i+3] & 0x1f;
       unsigned int  sampa_addr  = (buffer[i+3] >> 5) & 0xf;
-      int bx_count    = ((buffer[i+4] & 0xffff) << 4) | (buffer[i+5] & 0xf);
       
       if ( sampa_addr > 1)
 	{
@@ -70,7 +66,7 @@ int oncsSub_idtpcfeev1::decode ()
 	{
 	  _nchips = sampa_addr;
 	}
-      for  ( int s = 0; s < payload_len - HEADER_LENGTH; s++)
+      for  ( unsigned int s = 0; s < payload_len - HEADER_LENGTH; s++)
 	{
 	  array[sampa_addr*32 + channel][s] =  buffer[i+s+HEADER_LENGTH] & 0xffff;
 	}
@@ -87,17 +83,17 @@ int oncsSub_idtpcfeev1::iValue(const int ch, const int sample)
 {
      decode();
 
-     if ( sample >= _nsamples || sample < 0 
-	  || ch >= _nchips * _nchannels || ch < 0 ) return 0;
+     if ( sample >= (int) _nsamples || sample < 0 
+	   || ch >= (int) (_nchips * _nchannels) || ch < 0 ) return 0;
      
   return array[ch][sample];
 
 }
 int oncsSub_idtpcfeev1::iValue(const int chip, const int ch, const int sample)
 {
-     if ( sample >= _nsamples || sample < 0 
-	  || chip >= _nchips || chip < 0  
-	  || ch >= _nchannels || ch < 0 ) return 0;
+  if ( sample >= (int)_nsamples || sample < 0 
+       || chip >= (int) _nchips || chip < 0  
+       || ch >= (int) _nchannels || ch < 0 ) return 0;
      
      return iValue(chip*32 + ch, sample);
 

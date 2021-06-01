@@ -110,13 +110,12 @@ int *Packet_hbd_fpga::decode ( int *nwout)
       while ( (k[pos] & 0xF0002000) ==  0x40002000 )  // we have a first adc
 	{
 	  int adc          =  ( k[pos] & 0xfff);
-	  int clockphase   = (( k[pos] >>12 ) & 0x1);
 	  int f_channr     = (( k[pos] >>16 ) & 0x3f);
 	  int f_modnr      = (( k[pos] >>22 ) & 0x3);
 	  int slot = 48*HBD_NSAMPLES*f_modnr + HBD_NSAMPLES*f_channr ; 
 	  //std::cout <<  pos << "  " << std::hex << k[pos] << std::dec 
 	  //	    << "   " << f_modnr << "  " << f_channr  << "  "
-	  //	    << firstadc  << "  "<< clockphase  << "  "<< adc <<  "  " << slot << std::endl;
+	  //	    << firstadc    << "  "<< adc <<  "  " << slot << std::endl;
 	  iarr[slot++] = adc;
 	  pos++;
 	  while ( (k[pos] & 0xF0002000) ==  0x40000000 )  // the remaining ones
@@ -130,10 +129,9 @@ int *Packet_hbd_fpga::decode ( int *nwout)
 		  break;
 		}
 	      adc        =  ( k[pos] & 0xfff);  
-	      clockphase = (( k[pos] >>12 ) & 0x1);
 	      // std::cout <<  pos << "  " << std::hex << k[pos] << std::dec 
 	      //		<< "   " << f_modnr << "  " << f_channr  << "  "
-	      //		<< firstadc  << "  "<< clockphase  << "  "<< adc <<  "  " << slot << std::endl;
+	      //		<< firstadc  << "  "<< adc <<  "  " << slot << std::endl;
 	      iarr[slot++] = adc;
 	      pos++;
 	    }

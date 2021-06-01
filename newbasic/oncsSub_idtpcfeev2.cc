@@ -35,7 +35,7 @@ oncsSub_idtpcfeev2::~oncsSub_idtpcfeev2()
 
 #define HEADER_LENGTH 9
 
-int oncsSub_idtpcfeev2::decode ()
+int oncsSub_idtpcfeev2::tpc_decode ()
 {
 
   if (_is_decoded ) return 0;
@@ -261,17 +261,17 @@ int oncsSub_idtpcfeev2::decode ()
 
 int oncsSub_idtpcfeev2::iValue(const int fee, const int sample)
 {
-  decode();
+  tpc_decode();
   
   return 0;
 }
 
 int oncsSub_idtpcfeev2::iValue(const int fee, const int ch, const int sample)
 {
-  decode();
+  tpc_decode();
   if ( fee > MAX_FEECOUNT ||
        ch < 0 || ch >= MAX_FEECHANNELS ||
-       sample < 0 || sample >= fee_samples[fee][ch].size() ) return 0;
+       sample < 0 || (unsigned int) sample >= fee_samples[fee][ch].size() ) return 0;
   
   //  if ( sample >= fee_samples[fee][ch].size() ) return 0;
   return fee_samples[fee][ch].at(sample).adc;
@@ -280,11 +280,11 @@ int oncsSub_idtpcfeev2::iValue(const int fee, const int ch, const int sample)
 
 int oncsSub_idtpcfeev2::iValue(const int fee, const int ch, const int sample, const char *what)
 {
-  decode();
+  tpc_decode();
 
   if ( fee > MAX_FEECOUNT ||
        ch < 0 || ch >= MAX_FEECHANNELS ||
-       sample < 0 || sample >= fee_samples[fee][ch].size() ) return 0;
+       sample < 0 || (unsigned int) sample >= fee_samples[fee][ch].size() ) return 0;
 
 
   if ( strcmp(what,"BXRAW") == 0 )
@@ -301,7 +301,7 @@ int oncsSub_idtpcfeev2::iValue(const int fee, const int ch, const int sample, co
 int oncsSub_idtpcfeev2::iValue(const int fee, const int ch, const char *what)
 {
 
-  decode();
+  tpc_decode();
 
   if ( strcmp(what,"NR_SAMPLES") == 0 )  // say if a FEE has been seen at all
   {
@@ -317,7 +317,7 @@ int oncsSub_idtpcfeev2::iValue(const int fee, const int ch, const char *what)
 int oncsSub_idtpcfeev2::iValue(const int n, const char *what)
 {
 
-  decode();
+  tpc_decode();
 
   if ( strcmp(what,"MAX_SAMPLES") == 0 )
   {

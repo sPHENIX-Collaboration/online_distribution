@@ -160,7 +160,6 @@ Event * rcdaqEventiterator::getNextEvent()
 
 int rcdaqEventiterator::read_next_buffer()
 {
-  int ip = 0;
   if (bptr) 
     {
       delete bptr;

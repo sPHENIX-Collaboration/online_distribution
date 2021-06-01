@@ -10,7 +10,7 @@
 #define MAX_OUTLENGTH 80000
 
 // the header length value
-#define SEVTHEADERLENGTH 4
+#define SEVTHEADERLENGTH 4U
 
 
 

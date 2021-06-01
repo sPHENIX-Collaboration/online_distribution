@@ -25,13 +25,13 @@ protected:
 
   int _broken;
   
-  int _is_decoded;
-  int _nchips;
-  int _nchannels;
-  int _nsamples;
-  int _bx_count;
+  unsigned int _is_decoded;
+  unsigned int _nchips;
+  unsigned int _nchannels;
+  unsigned int _nsamples;
+  unsigned int _bx_count;
   
-  int array[64][1002]; 
+  unsigned int array[64][1002]; 
 
 };
 

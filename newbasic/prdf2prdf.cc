@@ -13,7 +13,7 @@
 
 #include <stdio.h>
 
-#include "oBuffer.h"
+#include "ophBuffer.h"
 #include "EventTypes.h"
 
 #include "phenixOnline.h"
@@ -63,7 +63,7 @@ int main (int argc, char** argv)
       COUT << "will combine  " << frames_to_combine << " frames for each event" <<std::endl; 
     }
  static PHDWORD databuffer[MAXBUFFERSIZE];
-  oBuffer *ob = new oBuffer(outfile, databuffer, MAXBUFFERSIZE, runnumber);
+  ophBuffer *ob = new ophBuffer(outfile, databuffer, MAXBUFFERSIZE, runnumber);
 
   // add the begin-run event
   ob->nextEvent(100, BEGRUNEVENT);

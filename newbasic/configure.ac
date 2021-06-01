@@ -1,4 +1,4 @@
-AC_INIT(configure.ac)
+AC_INIT(Event,[1.00])
 AC_CONFIG_SRCDIR([configure.ac])
 
 

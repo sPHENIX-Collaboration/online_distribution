@@ -46,7 +46,6 @@ int *oncsSub_iduppetdata_v104::decode ( int *nwout)
 {
   int *p;
 
-  unsigned long long fine_timestamp;
 
 
   int i;
@@ -107,7 +106,6 @@ int *oncsSub_iduppetdata_v104::decode ( int *nwout)
       y =  ntohs( sdata[i]);
       x64 |= y;
 
-      fine_timestamp = (x64 >> 46) & 0x3f;
       unsigned long long t = x64 & 0x3fffffffffffL;
       unsigned int crystalid = ( x64 >> 52) & 0x1f;
       unsigned int block = ( x64 >> 57) & 0x1f;

@@ -47,7 +47,7 @@ prdfBuffer::~prdfBuffer()
 int prdfBuffer::buffer_swap()
 {
  
-  int i;
+  unsigned int i;
   unsigned int evtindex, frameindex;
   evtdata_ptr evtptr;
   PHDWORD *frameptr;

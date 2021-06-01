@@ -419,7 +419,8 @@ void oncsSubevent_w4::gdump(const int i, OSTREAM& out) const
       return;
     }
 
-  int j,l;
+  unsigned int j;
+  int l;
   identify(out);
   
   switch (i)
@@ -480,7 +481,9 @@ void oncsSubevent_w2::gdump(const int i, OSTREAM& out) const
       return;
     }
 
-  int j,l;
+  unsigned int j;
+  int l;
+
   identify(out);
 
   switch (i)
@@ -540,7 +543,10 @@ void oncsSubevent_w1::gdump(const int i, OSTREAM& out) const
       return;
     }
 
-  int j,l;
+  unsigned int j;
+  int l;
+
+
   char cstring[20];
   char *c;
   identify(out);

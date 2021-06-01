@@ -10,7 +10,7 @@ ogzBuffer::ogzBuffer (int fdin, PHDWORD * where,
 		      const int level,
 		      const int irun, 
 		      const int iseq): 
-  oBuffer(fdin,where,length,irun,iseq)
+  ophBuffer(fdin,where,length,irun,iseq)
 #else
 ogzBuffer::ogzBuffer (const char *fpp, PHDWORD * where, 
 		      const int length, 
@@ -18,7 +18,7 @@ ogzBuffer::ogzBuffer (const char *fpp, PHDWORD * where,
 		      const int level,
 		      const int irun, 
 		      const int iseq): 
-  oBuffer(fpp,where,length,status,irun,iseq)
+  ophBuffer(fpp,where,length,status,irun,iseq)
 #endif
 {
   // get a buffer for zlib
@@ -54,7 +54,12 @@ int ogzBuffer::writeout()
 
   while (ip<outputarray[0])
     {
-      write ( fd, cp, BUFFERBLOCKSIZE);
+	  int n = write ( fd, cp, BUFFERBLOCKSIZE);
+	  if ( n != BUFFERBLOCKSIZE)
+	    {
+	      std::cout << " could not write output, bytes written: " << n << std::endl;
+	      return 0;
+	    }
       cp += BUFFERBLOCKSIZE;
       ip += BUFFERBLOCKSIZE;
     }

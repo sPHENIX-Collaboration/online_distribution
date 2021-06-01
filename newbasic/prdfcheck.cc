@@ -33,7 +33,6 @@ main(int argc, char *argv[])
 
   int needs_swap = 0;
   int length;
-  int bufseq;
   int ip;
 
   int total_read = 0;
@@ -49,20 +48,20 @@ main(int argc, char *argv[])
 
 
       if ( buffer[1] == BUFFERMARKER || 
-	   buffer::i4swap(buffer[1]) == BUFFERMARKER || 
-	   buffer[1] == (int) ONCSBUFFERMARKER || 
-	   buffer::i4swap(buffer[1]) == (int) ONCSBUFFERMARKER ||
-	   buffer[1] == (int) GZBUFFERMARKER || 
-	   buffer::i4swap(buffer[1]) == (int) GZBUFFERMARKER ||
-	   buffer[1] == (int) LZO1XBUFFERMARKER || 
-	   buffer::i4swap(buffer[1]) == (int) LZO1XBUFFERMARKER )
+	   buffer::u4swap(buffer[1]) == BUFFERMARKER || 
+	   buffer[1] == ONCSBUFFERMARKER || 
+	   buffer::u4swap(buffer[1]) == ONCSBUFFERMARKER ||
+	   buffer[1] == GZBUFFERMARKER || 
+	   buffer::u4swap(buffer[1]) ==  GZBUFFERMARKER ||
+	   buffer[1] == LZO1XBUFFERMARKER || 
+	   buffer::u4swap(buffer[1]) == LZO1XBUFFERMARKER )
 	{
 
 
-	  if ( buffer::i4swap(buffer[1]) == BUFFERMARKER || 
-	       buffer::i4swap(buffer[1]) == (int) ONCSBUFFERMARKER ||
-	       buffer::i4swap(buffer[1]) == (int) GZBUFFERMARKER ||
-	       buffer::i4swap(buffer[1]) == (int) LZO1XBUFFERMARKER )
+	  if ( buffer::u4swap(buffer[1]) == BUFFERMARKER || 
+	       buffer::u4swap(buffer[1]) == ONCSBUFFERMARKER ||
+	       buffer::u4swap(buffer[1]) == GZBUFFERMARKER ||
+	       buffer::u4swap(buffer[1]) == LZO1XBUFFERMARKER )
 	    {
 	      needs_swap = 1;
 	    }
@@ -70,12 +69,10 @@ main(int argc, char *argv[])
 	  if (needs_swap)
 	    {
 	      length = buffer::i4swap(buffer[0]);
-	      bufseq = buffer::i4swap(buffer[2]);
 	    }
 	  else
 	    {
 	      length = buffer[0];
-	      bufseq = buffer[2];
 	    }
 
 	  if ( needs_swap ) 
@@ -94,13 +91,13 @@ main(int argc, char *argv[])
 	    }
 
 	  if ( buffer[1] == BUFFERMARKER || 
-	       buffer::i4swap(buffer[1]) == BUFFERMARKER ) std::cout << "Uncomp. Marker" << std::endl;
- 	  else if ( buffer[1] == (int) ONCSBUFFERMARKER || 
-		    buffer::i4swap(buffer[1]) == (int) ONCSBUFFERMARKER ) std::cout << "sPHENIX Marker" << std::endl;
- 	  else if ( buffer[1] == (int) GZBUFFERMARKER || 
-		    buffer::i4swap(buffer[1]) == (int) GZBUFFERMARKER ) std::cout << "GZIP Marker" << std::endl;
-	  else if ( buffer[1] == (int) LZO1XBUFFERMARKER || 
-		    buffer::i4swap(buffer[1]) == (int) LZO1XBUFFERMARKER ) 
+	       buffer::u4swap(buffer[1]) == BUFFERMARKER ) std::cout << "Uncomp. Marker" << std::endl;
+ 	  else if ( buffer[1] == ONCSBUFFERMARKER || 
+		    buffer::u4swap(buffer[1]) == ONCSBUFFERMARKER ) std::cout << "sPHENIX Marker" << std::endl;
+ 	  else if ( buffer[1] == GZBUFFERMARKER || 
+		    buffer::u4swap(buffer[1]) == GZBUFFERMARKER ) std::cout << "GZIP Marker" << std::endl;
+	  else if ( buffer[1] == LZO1XBUFFERMARKER || 
+		    buffer::u4swap(buffer[1]) == LZO1XBUFFERMARKER ) 
 	    {
 	      std::cout << "LZO Marker ";
 	      std::cout << " Or.length: " << buffer[3];
@@ -146,7 +143,7 @@ main(int argc, char *argv[])
 	  if (needs_swap)
 	    {
 	      std::cout << "found a non-buffer start..."<< total_read 
-			<< " length = " << buffer::i4swap(buffer[0]) << " marker = " << std::hex << buffer::i4swap(buffer[1]) << std::dec ;
+			<< " length = " << buffer::u4swap(buffer[0]) << " marker = " << std::hex << buffer::i4swap(buffer[1]) << std::dec ;
 	    }
 	  else
 	    {
@@ -156,9 +153,9 @@ main(int argc, char *argv[])
 
 	  int skipped = 0;
 	  while (  buffer[1] != BUFFERMARKER &&
-	   buffer::i4swap(buffer[1]) != BUFFERMARKER &&
-	   buffer[1] != (int) GZBUFFERMARKER && 
-	   buffer::i4swap(buffer[1]) != (int) GZBUFFERMARKER )
+	   buffer::u4swap(buffer[1]) != BUFFERMARKER &&
+	   buffer[1] != GZBUFFERMARKER && 
+	   buffer::u4swap(buffer[1]) != GZBUFFERMARKER )
 	    {
 	      xc = read ( fd, (char *)buffer, 8192);
 	      if ( xc < 8192 ) 

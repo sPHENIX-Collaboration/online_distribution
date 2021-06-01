@@ -10,7 +10,7 @@
 #include "fileEventiterator.h"
 #include "testEventiterator.h"
 #include "phenixTypes.h"
-#include "oBuffer.h"
+#include "ophBuffer.h"
 #include "oEvent.h"
 
 #include <sys/types.h>
@@ -50,7 +50,7 @@ public:
 
    // info & debug utils
    
-   int change_hf(const int oldhf, const int newhf);
+   int change_hf(const unsigned int oldhf, const unsigned int newhf);
 
 
 };
@@ -66,14 +66,14 @@ X_Event::X_Event (int *data)
 X_Event::~X_Event ()
 { }
 
-int X_Event::change_hf (const int oldhf, const int newhf)
+int X_Event::change_hf (const unsigned int oldhf, const unsigned int newhf)
 {
   
   int i = 0;
   PHDWORD *fp;
   PHDWORD *pp;
   
-  while ( fp = framelist[i++] )
+  while ( (fp = framelist[i++]) )
     {
       pp = findFramePacketIndex (fp, 0);
       while (  pp !=  ptrFailure) 
@@ -126,7 +126,6 @@ main(int argc, char *argv[])
 
   int eventnr = 0;
 
-  extern char *optarg;
   extern int optind;
 
   PHDWORD  *buffer;
@@ -182,18 +181,18 @@ main(int argc, char *argv[])
 
   buffer = new PHDWORD [buffer_size];
   
-  ob = new oBuffer (fd, buffer, buffer_size);
+  ob = new ophBuffer (fd, buffer, buffer_size);
 
 
   int paircount = 0;
-  int idold[1000];
-  int idnew[1000];
+  unsigned int idold[1000];
+  unsigned int idnew[1000];
 
   int argind = 0;
   while ( optind +2 + argind +1 < argc) 
     {
-      !sscanf(argv[optind +2 + argind]    , "%d", &idold[paircount]); 
-      !sscanf(argv[optind +2 + argind + 1], "%d", &idnew[paircount]); 
+      sscanf(argv[optind +2 + argind]    , "%ud", &idold[paircount]); 
+      sscanf(argv[optind +2 + argind + 1], "%ud", &idnew[paircount]); 
       COUT << "changing  " << idold[paircount] << " -> " << idnew[paircount] << std::endl;
       argind+=2;
       paircount++;

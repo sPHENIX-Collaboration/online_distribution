@@ -43,7 +43,7 @@ class WINDOWSEXPORT oncsSub_idmvtxv1 : public  oncsSubevent_w4 {
             bool mask_contains_ruchn(int mask, int ruchn);
 
         protected:
-            int *decode ();
+            int *mvtx_decode ();
 
             int _is_decoded;
 

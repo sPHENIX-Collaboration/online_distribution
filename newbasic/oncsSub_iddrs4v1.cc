@@ -21,8 +21,6 @@ oncsSub_iddrs4v1::~oncsSub_iddrs4v1()
 int *oncsSub_iddrs4v1::decode ( int *nwout)
 {
 
-  int dlength = ( getLength()-4) - getPadding();
-
 
   samples = SubeventHdr->data & 0xffff;
   enabled_channelmask = (SubeventHdr->data >> 16) & 0xf;

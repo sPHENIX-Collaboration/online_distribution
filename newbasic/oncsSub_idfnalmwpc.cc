@@ -97,7 +97,6 @@ int *oncsSub_idfnalmwpc::decode ( int *nwout)
   for ( i = 0; i< spillinfo.triggercount; i++)
     {
       te = new TDCEvent;
-      memset ( te, 0, sizeof(TDCEvent) );
       TDCEventVector.push_back ( te);
     }
 
@@ -377,7 +376,7 @@ void  oncsSub_idfnalmwpc::dump ( OSTREAM& os )
   decode (0);
   identify(os);
 
-  int i, j, k, l;
+  int j, k, l;
 
 
   os << " Date         " << iValue(0, "MONTH") 
@@ -427,9 +426,10 @@ void  oncsSub_idfnalmwpc::dump ( OSTREAM& os )
 oncsSub_idfnalmwpc::~oncsSub_idfnalmwpc()
 {
   
-  int i, j, k, l;
+
+  int l;
+  unsigned int i,k;
   TDCEvent *te;
-  TDC_hit *th;
 
   for ( k = 0; k< TDCEventVector.size() ; k++)
     {

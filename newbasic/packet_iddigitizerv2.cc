@@ -45,8 +45,8 @@ Packet_iddigitizerv2::~Packet_iddigitizerv2()
 
 
 const int offset=9;
-const int samples=12;
-const int channels=64;
+// const int samples=12;
+// const int channels=64;
 
   
 int Packet_iddigitizerv2::decode ()
