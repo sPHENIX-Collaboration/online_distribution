@@ -51,7 +51,7 @@ class pmonstate
   char * Name;
   int idflag;
 
-  Eventiterator * it;
+//  Eventiterator * it;
 
  public:
   pmonstate()

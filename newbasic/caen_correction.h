@@ -2,9 +2,10 @@
 #ifndef __CAEN_CORRECTION_H__
 #define __CAEN_CORRECTION_H__
 
+#include <string>
+
 class Packet;
 class caen_correction {
-#include <string>
 
 public:
 
