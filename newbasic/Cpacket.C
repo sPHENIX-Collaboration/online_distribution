@@ -294,8 +294,7 @@ PTRACCESSPFUNCPTR_arr CONSTANT findPacketErrorStartV = {NULLPTRACCESSPFUNC,
 							&findPacketV1ErrorStart};
 PTRACCESSPFUNCPTR_arr CONSTANT findPacketDebugStartV = {NULLPTRACCESSPFUNC, 
 							&findPacketV1DebugStart};
-PTRACCESSPFUNCPTR_arr CONSTANT findPacketDataStartV = {NULLPTRACCESSPFUNC, 
-						       &findPacketV1DataStart};
+//PTRACCESSPFUNCPTR_arr CONSTANT findPacketDataStartV = {NULLPTRACCESSPFUNC, &findPacketV1DataStart};
 PTRACCESSPFUNCPTR_arr CONSTANT findPacketDataEndV = {NULLPTRACCESSPFUNC, &findPacketV1DataEnd};
 PTRACCESSPFUNCPTR_arr CONSTANT findPacketDataDescrV = {NULLPTRACCESSPFUNC, 
 						       &findPacketV1DataDescr};
