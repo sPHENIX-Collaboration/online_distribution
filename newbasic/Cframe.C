@@ -245,7 +245,6 @@ PTRACCESSFUNCTIONPTR_arr CONSTANT findFrameErrorStartV = {0, &findFrameErrorStar
 PTRACCESSFUNCTIONPTR_arr CONSTANT findFrameAlignBlockV = {0, &findFrameAlignBlockV1};
 PTRACCESSFUNCTIONPTR_arr CONSTANT findFrameHistoryStartV = {0, &findFrameHistoryStartV1};
 
-
 MODIFYFUNCTIONPTR_arr CONSTANT orFrameStatusV = {0, &orFrameStatusV1};
 MODIFYFUNCTIONPTR_arr CONSTANT setFramePaddingV = {0, &setFramePaddingV1};
 MODIFYFUNCTIONPTR_arr CONSTANT adjustFrameDataLengthV = {0, &adjustFrameDataLengthV1};

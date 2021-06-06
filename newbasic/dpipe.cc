@@ -149,7 +149,7 @@ int
 main(int argc, char *argv[])
 {
   int c;
-  int status;
+  int status = 0;
 
   int sourcetype =DFILE;
   int destinationtype = ETPOOL;
