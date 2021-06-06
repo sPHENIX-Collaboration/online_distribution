@@ -1,7 +1,15 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> ecf5a6610a159376216f3dd1b238824abac24a92
 #include <iostream>
 #include <iomanip>
 #include <fstream>
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> ecf5a6610a159376216f3dd1b238824abac24a92
 #include "caen_correction.h"
 #include "packet.h"
 
