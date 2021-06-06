@@ -61,7 +61,6 @@ class pmonstate
 
       idflag = stream = running = number_of_events = 0;
       Name = 0;
-      int pinit();
       msg_control *Message = new msg_control(MSG_TYPE_ONLINE,
                                          MSG_SOURCE_ET,
                                          MSG_SEV_INFORMATIONAL, "pmonitor");
