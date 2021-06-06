@@ -14,7 +14,7 @@ pkginclude_HEADERS = $(include_HEADERS)
 
 noinst_HEADERS = $(LINKFILE)
 
-#BUILT_SOURCES = pmonitor_dict.C
+#BUILT_SOURCES = pmonitor_Dict.C
 
 #ROOTCINT =  $(ROOTSYS)/bin/rootcint 
 ROOTCINT =  rootcint 
@@ -27,7 +27,7 @@ LDFLAGS = -Wl,--no-as-needed
 
 if ! MAKEROOT6
   ROOT5_DICTS = \
-    pmonitor_dict.C
+    pmonitor_Dict.C
 endif
 
 libpmonitor_la_SOURCES = \
@@ -58,11 +58,22 @@ libpmonitor_la_LIBADD = \
 
 endif
 
-pmonitor_dict.C: pmonitor.h pmonstate.h  $(LINKFILE)
+pcmdir = $(libdir)
+nobase_dist_pcm_DATA = \
+   pmonitor_Dict_rdict.pcm
+
+pmonitor_Dict.C: pmonitor.h pmonstate.h  $(LINKFILE)
 	$(ROOTCINT) -f $@ @CINTDEFS@ -c $(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $^
 
 bin_SCRIPTS = writePmonProject.pl
 
+
+# get the dependency for the pcm files
+%_Dict_rdict.pcm: %_Dict.C ;
+
+
+# clean cache dir on Solaris 5.8
 clean-local:
-	rm -f *_dict.*
-	rm -f *.pcm
+	rm -rf SunWS_cache
+	rm -f *Dict* $(BUILT_SOURCES) *.pcm
+
