@@ -58,11 +58,6 @@ libpmonitor_la_LIBADD = \
 
 endif
 
-pcmdir = $(libdir)
-nobase_dist_pcm_DATA = \
-     pmonitor_dict_rdict.pcm
-
-
 pmonitor_dict.C: pmonitor.h pmonstate.h  $(LINKFILE)
 	$(ROOTCINT) -f $@ @CINTDEFS@ -c $(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $^
 
