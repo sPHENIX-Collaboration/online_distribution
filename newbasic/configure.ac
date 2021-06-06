@@ -69,12 +69,12 @@ ROOTINC=`root-config --incdir`
 AC_SUBST(ROOTGLIBS)
 AC_SUBST(ROOTINC)
 dnl test for root 6
-if test `root-config --version | awk '{print $1>=6.?"1":"0"}'` = 1; then
+if test `root-config --version | awk '{print $1=6.?"1":"0"}'` = 1; then
    CINTDEFS=" -noIncludePaths  -inlineInputHeader "
    AC_SUBST(CINTDEFS)
    AC_DEFINE(HAVE_ROOT6)
 fi
-AM_CONDITIONAL([MAKEROOT6],[test `root-config --version | awk '{print $1>=6.?"1":"0"}'` = 1])
+AM_CONDITIONAL([MAKEROOT6],[test `root-config --version | awk '{print $1=6.?"1":"0"}'` = 1])
 
 LZOLIB="-llzo2"
 AC_SUBST(LZOLIB)
