@@ -3,7 +3,7 @@
 #include <fstream>
 
 #include "caen_correction.h"
-#include "Event/packet.h"
+#include "packet.h"
 
 using namespace std;
 
