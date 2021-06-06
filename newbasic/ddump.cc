@@ -142,7 +142,7 @@ int rangeParser ( const std::string string, std::vector<int> &selection)
   std::vector<std::string>::const_iterator it, itr;
   std::vector<std::string> strs,r;
 
-  std::vector<int>::const_iterator vit;
+//  std::vector<int>::const_iterator vit;
   int low,high,i;
   boost::split(strs,string, boost::is_any_of(","));
 
@@ -328,7 +328,8 @@ main(int argc, char *argv[])
 
   // see if we can open the file
   it = 0;
-
+  status = 0;
+  
   switch (ittype)
     {
     case RCDAQEVENTITERATOR:

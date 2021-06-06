@@ -19,7 +19,7 @@ public:
 
 
 protected:
-  int decode ();
+  int digitizer_decode ();
 
 
   int _nsamples;

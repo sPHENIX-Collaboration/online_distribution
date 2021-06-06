@@ -97,7 +97,6 @@ int *oncsSub_idfnalmwpc::decode ( int *nwout)
   for ( i = 0; i< spillinfo.triggercount; i++)
     {
       te = new TDCEvent;
-      memset ( te, 0, sizeof(TDCEvent) );
       TDCEventVector.push_back ( te);
     }
 

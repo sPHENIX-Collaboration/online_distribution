@@ -16,14 +16,14 @@ olzoBuffer::olzoBuffer (int fdin, PHDWORD * where,
 		      const int length, 
 		      const int irun, 
 		      const int iseq): 
-  oBuffer(fdin,where,length,irun,iseq)
+  ophBuffer(fdin,where,length,irun,iseq)
 #else
 olzoBuffer::olzoBuffer (const char *fpp, PHDWORD * where, 
 		      const int length, 
                       int &status,
 		      const int irun, 
 		      const int iseq): 
-  oBuffer(fpp,where,length,status,irun,iseq)
+  ophBuffer(fpp,where,length,status,irun,iseq)
 #endif
 {
   // get a buffer for zlib

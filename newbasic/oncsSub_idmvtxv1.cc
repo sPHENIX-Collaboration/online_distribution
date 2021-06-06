@@ -105,7 +105,7 @@ bool oncsSub_idmvtxv1::mask_contains_ruchn ( int mask, int ruchn )
     return (((mask >> (ruchn-1)) & 1) == 1);
 }
 
-int *oncsSub_idmvtxv1::decode ()
+int *oncsSub_idmvtxv1::mvtx_decode ()
 {
     if ( _is_decoded) return 0;
     _is_decoded = 1;
@@ -424,7 +424,7 @@ int oncsSub_idmvtxv1::iValue(const int ruid, const char *what)
     }
       
   
-  decode();
+  mvtx_decode();
   
   if ( strcmp(what,"UNEXPECTED_FELIX_COUNTERS") == 0 )
     {
@@ -459,7 +459,7 @@ int oncsSub_idmvtxv1::iValue(const int ruid, const char *what)
 
 int oncsSub_idmvtxv1::iValue(const int ruid)
 {
-    decode();
+    mvtx_decode();
 
     if (ruid > _highest_ruid) return -1; // no such RU
     return _lanes_active[ruid];
@@ -467,7 +467,7 @@ int oncsSub_idmvtxv1::iValue(const int ruid)
 
 int oncsSub_idmvtxv1::iValue(const int ruid, const int ruchn, const char *what)
 {
-    decode();
+    mvtx_decode();
 
     if (ruid > _highest_ruid) return -1; // no such RU
     if (_lanes_active[ruid]==-1) return -1; // no such RU
@@ -512,7 +512,7 @@ int oncsSub_idmvtxv1::iValue(const int ruid, const int ruchn, const char *what)
 
 int oncsSub_idmvtxv1::iValue(const int ruid, const int ruchn)
 {
-    decode();
+    mvtx_decode();
 
     if (ruid > _highest_ruid) return -1; // no such RU
     if (_lanes_active[ruid]==-1) return -1; // no such RU
@@ -522,7 +522,7 @@ int oncsSub_idmvtxv1::iValue(const int ruid, const int ruchn)
 
 int oncsSub_idmvtxv1::iValue(const int ruid, const int ruchn, const int i)
 {
-    decode();
+    mvtx_decode();
 
     if (ruid > _highest_ruid) return -1; // no such RU
     if (_lanes_active[ruid]==-1) return -1; // no such RU
@@ -535,7 +535,7 @@ void  oncsSub_idmvtxv1::dump ( OSTREAM& os )
 
     identify(os);
 
-    decode();
+    mvtx_decode();
     bool first;
     for (int ruid=0; ruid<IDMVTXV1_MAXRUID+1; ruid++)
     {

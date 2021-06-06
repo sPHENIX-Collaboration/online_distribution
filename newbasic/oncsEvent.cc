@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "oncsEvent.h"
 #include "oncsStructures.h"
 #include "oncsCollection.h"
@@ -357,14 +359,28 @@ oncsEvent::existPacket (const int id)
 int
 oncsEvent::Copy (int * array, const unsigned int length, int *nw, const char *what)
 {
-  if (length<EventData->evt_length)
+
+    if (length< getEvtLength() )
     {
       *nw = 0;
       return -1;
     }
-  int *to = array;
-  int *from= (int *) EventData;
-  for (unsigned int i=0; i<EventData->evt_length; i++) *to++ = *from++;
-  *nw=EventData->evt_length;
+  char *to = (char *) array;
+  char *from;
+  unsigned int l;
+  if ( strcmp (what, "DATA") ==0  )
+    {
+      from= (char *)  &EventData->data[0];
+      l = getEvtLength() - EVTHEADERLENGTH;
+    }
+  else
+    {
+      from= (char *) EventData;
+      l = getEvtLength();
+    }
+  //  for (i=0; i<l ; i++) *to++ = *from++;
+  //
+  *nw = l;
+  memcpy (to, from, l*4);
   return 0;
 }

@@ -18,7 +18,7 @@ AC_PROG_INSTALL
 dnl   no point in suppressing warnings people should 
 dnl   at least see them, so here we go for g++: -Wall
 if test $ac_cv_prog_gxx = yes; then
-  CXXFLAGS="$CXXFLAGS -Wall"
+  CXXFLAGS="$CXXFLAGS -Wall -Werror -Wno-vexing-parse"
 fi
 
 ROOTLIBS=`root-config --libs`
@@ -27,7 +27,7 @@ AC_SUBST(ROOTLIBS)
 AC_SUBST(ROOTINC)
 
 dnl test for root 6
-if test `root-config --version | awk '{print $1>=6.?"1":"0"}'` = 1; then
+if test `root-config --version | awk '{print $1=6.?"1":"0"}'` = 1; then
    CINTDEFS=" -noIncludePaths  -inlineInputHeader "
    AC_SUBST(CINTDEFS)
    AC_DEFINE(HAVE_ROOT6)

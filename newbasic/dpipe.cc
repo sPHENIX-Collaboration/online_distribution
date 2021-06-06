@@ -14,7 +14,7 @@
 #include "ogzBuffer.h"
 #include "olzoBuffer.h"
 #include "oamlBuffer.h"
-#include "oBuffer.h"
+#include "ophBuffer.h"
 #include "dpipe_filter.h"
 
 #include "phenixTypes.h"
@@ -149,7 +149,7 @@ int
 main(int argc, char *argv[])
 {
   int c;
-  int status;
+  int status = 0;
 
   int sourcetype =DFILE;
   int destinationtype = ETPOOL;
@@ -411,7 +411,7 @@ main(int argc, char *argv[])
 	}
       else
 	{
-	  ob = new oBuffer (fd, buffer, buffer_size);
+	  ob = new ophBuffer (fd, buffer, buffer_size);
 	}
 
     }

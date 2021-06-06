@@ -31,7 +31,7 @@ public:
   void  gdump ( const int how=EVT_HEXADECIMAL, OSTREAM& os = COUT) const; // add this to override the generic gdump
 
 protected:
-  int *decode ();
+  int *mvtx_decode ();
 
   int _is_decoded;
   int _unexpected_felix_counter;

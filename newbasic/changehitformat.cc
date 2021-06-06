@@ -10,7 +10,7 @@
 #include "fileEventiterator.h"
 #include "testEventiterator.h"
 #include "phenixTypes.h"
-#include "oBuffer.h"
+#include "ophBuffer.h"
 #include "oEvent.h"
 
 #include <sys/types.h>
@@ -181,7 +181,7 @@ main(int argc, char *argv[])
 
   buffer = new PHDWORD [buffer_size];
   
-  ob = new oBuffer (fd, buffer, buffer_size);
+  ob = new ophBuffer (fd, buffer, buffer_size);
 
 
   int paircount = 0;
