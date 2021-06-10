@@ -45,7 +45,7 @@ int phsave (const char *filename ="histos.root");
 void phelp();                          
 
 void pupdate(TVirtualPad * pad, const unsigned int refresh = 5);
-//void start_update(TVirtualPad * pad);
-void pend_update(TVirtualPad * pad = 0);
-
+void pendupdate(TVirtualPad * pad = 0);
+void updatePad( TVirtualPad *myPad);
+  
 #endif /* __PMONITOR__ */

@@ -598,7 +598,6 @@ TVirtualPad * pad_to_stop = 0;
 
 void update_process (void * ptr)
 {
-  int highest_subpad = 0;
 
   // our argument
   threadargument *ta = ( threadargument *) ptr; 
@@ -610,16 +609,6 @@ void update_process (void * ptr)
   delete ta;
 
   time_t last_time = time(0) + my_refreshinterval + 1;  //force an update on start
-
-  TVirtualPad * s = 0;
-  int i;
-
-  for ( i = 0; i < 128; i++)
-    {
-      if ( s == myPad->cd(i)) break;
-      s = myPad->cd(i);
-    }
-  highest_subpad = i-1;
 
 
   while ( 1)
@@ -641,12 +630,7 @@ void update_process (void * ptr)
 	{
 	  last_time = x;
 	  
-	  for ( i = 0; i <= highest_subpad; i++)
-	    {
-	      s = myPad->cd(i);
-	      s->Modified();
-	      s->Update();
-	    }
+	  updatePad(myPad);
 	  sleep(1);
 	}
     }
@@ -676,7 +660,7 @@ void pupdate(TVirtualPad * pad, const unsigned int refresh)
   
 }
 
-void pend_update(TVirtualPad * pad)
+void pendupdate(TVirtualPad * pad)
 {  
 #ifdef HAVE_ROOT6
   stop_update = 1;
@@ -687,3 +671,18 @@ void pend_update(TVirtualPad * pad)
 
 }
 
+void updatePad( TVirtualPad *myPad)
+{
+
+  int i = 0;
+
+  TVirtualPad *s = 0;
+  while ( ! ( s == myPad->cd(i)) )
+    {
+      //      cout << " updating " << i << endl;
+      s= myPad->cd(i);
+      i++;
+      s->Modified();
+      s->Update();
+    }
+}
