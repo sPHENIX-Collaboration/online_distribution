@@ -85,6 +85,8 @@
 
 #define IDMVTXV1      104
 
+#define IDMVTXV2      105
+
 // the "level 0", meaning the raw untreated FEM data 
 
 #define IDBBC_DCM0    IDDCM0OFFSET + 1
