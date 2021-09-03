@@ -612,7 +612,7 @@ void oncsSub_idmvtxv2::gdump(const int i, OSTREAM& out) const
 {
 
     int *SubeventData = &SubeventHdr->data;
-    int j,l;
+    unsigned int j,l;
     identify(out);
 
     int current_offset;
@@ -668,7 +668,7 @@ void oncsSub_idmvtxv2::gdump(const int i, OSTREAM& out) const
                 for (l=0;l<6;l++)
                 {
                     out << SETW(10) << SubeventData[j++] << " ";
-                    if (j>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) break;
+                    if (j >= SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) break;
                 }
                 if (j>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) break;
             }
