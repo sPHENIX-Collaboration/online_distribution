@@ -303,6 +303,8 @@
 #define IDDIGITIZER_12S     94
 #define IDDIGITIZER_16S     95
 
+#define IDDIGITIZER_CTRL     2099
+
 
 
 

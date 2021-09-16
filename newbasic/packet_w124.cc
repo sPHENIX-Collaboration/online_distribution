@@ -128,7 +128,7 @@ void Packet_w2::gdump(const int i, OSTREAM& out) const
 
   if ( i == EVT_RAW)
     {
-      fwrite(packetData, sizeof(short), 2*(getDataLength() - getPadding()), stdout);
+      fwrite(packetData, sizeof(short), getDataLength(), stdout);
       return;
     }
 
@@ -162,9 +162,9 @@ void Packet_w2::gdump(const int i, OSTREAM& out) const
 	  for (l=0;l<8;l++)
 	    {
 	      out << std::hex << SETW(4) << packetData[j++] << " " ;
-	      if (j>=2*getDataLength() ) break;
+	      if (j>=getDataLength() ) break;
 	    }
-	  if (j>=2*getDataLength() ) break;
+	  if (j>=getDataLength() ) break;
 	  out << std::dec <<  std::endl;
 	}
       out << std::dec <<  std::endl;
@@ -178,9 +178,9 @@ void Packet_w2::gdump(const int i, OSTREAM& out) const
 	  for (l=0;l<8;l++)
 	    {
 	      out << SETW(6) << packetData[j++] << " ";
-	      if (j>=2*getDataLength()) break;
+	      if (j>=getDataLength()) break;
 	    }
-	  if (j>=2*getDataLength() ) break;
+	  if (j>=getDataLength() ) break;
 	  out << std::endl;
 	}
       out << std::dec <<  std::endl;
@@ -201,7 +201,7 @@ void Packet_w1::gdump(const int i, OSTREAM& out) const
 
   if ( i == EVT_RAW)
     {
-      fwrite(packetData, sizeof(char), 4*(getDataLength() - getPadding()), stdout);
+      fwrite(packetData, sizeof(char), getDataLength(), stdout);
       return;
     }
 
@@ -231,7 +231,7 @@ void Packet_w1::gdump(const int i, OSTREAM& out) const
 	  out << std::dec << SETW(5) << j << " |  ";
 	  for (l=0;l<16;l++)
 	    {
-	      if (j < 4*(getDataLength()) ) 
+	      if (j < getDataLength() ) 
 		{
 		  *c++ = packetData[j];
 		  out << std::hex << SETW(2) << packetData[j++] << " ";
@@ -244,7 +244,7 @@ void Packet_w1::gdump(const int i, OSTREAM& out) const
 	    }
 	  *c = 0;
 	  out << "  | " << cstring;
-	  if (j >= 4*getDataLength() ) break;
+	  if (j >= getDataLength() ) break;
 	  out << std::endl;
 	}
       break;
@@ -256,7 +256,7 @@ void Packet_w1::gdump(const int i, OSTREAM& out) const
 	  out << std::dec << SETW(5) << j << " |  ";
 	  for (l=0;l<12;l++)
 	    {
-	      if (j < 4*getDataLength() ) 
+	      if (j < getDataLength() ) 
 		{
 		  *c++ = packetData[j];
 		  out << std::hex << SETW(4) << packetData[j++] << " ";
@@ -269,7 +269,7 @@ void Packet_w1::gdump(const int i, OSTREAM& out) const
 	    }
 	  *c = 0;
 	  out << "  | " << cstring;
-	  if (j >= 4*getDataLength() ) break;
+	  if (j >= getDataLength() ) break;
 	  out << std::endl;
 	}
       break;
