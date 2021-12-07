@@ -5,10 +5,10 @@ AC_CONFIG_SRCDIR([configure.ac])
 dnl Checks for C++ compiler and sets default flags
 AC_PROG_CXX(cxx CC g++)
 
-AM_INIT_AUTOMAKE
-
-
 AC_CANONICAL_HOST
+AC_CONFIG_AUX_DIR([.])
+
+AM_INIT_AUTOMAKE
 
 LT_INIT([disable-static])
 
@@ -21,12 +21,15 @@ if test $ac_cv_prog_gxx = yes; then
   CXXFLAGS="$CXXFLAGS -Wall -Werror -Wno-vexing-parse -Wno-unused-parameter"
 fi
 
+ROOTCFLAGS=`root-config --cflags`
 ROOTLIBS=`root-config --libs`
 ROOTINC=`root-config --incdir`
 ROOTCFLAGS=`root-config --cflags`
 AC_SUBST(ROOTLIBS)
 AC_SUBST(ROOTINC)
 AC_SUBST(ROOTCFLAGS)
+
+CXXFLAGS="$CXXFLAGS $ROOTCFLAGS"
 
 dnl test for root 6
 if test `root-config --version | awk '{print $1=6.?"1":"0"}'` = 1; then

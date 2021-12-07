@@ -7,6 +7,7 @@ AM_CONDITIONAL(LINUX, false)
 AM_CONDITIONAL(NEWIO, false)
 
 AC_CANONICAL_HOST
+AC_CONFIG_AUX_DIR([.])
 
 dnl search for C++ compiler and set default flags
 AC_PROG_CXX(cxx CC g++)
