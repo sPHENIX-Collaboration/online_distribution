@@ -528,84 +528,91 @@ int oncsSub_idmvtxv3::iValue(const int ruid, const int ruchn, const int i)
 
 void  oncsSub_idmvtxv3::dump ( OSTREAM& os )
 {
-
     identify(os);
+    uint8_t *payload = (uint8_t *) &SubeventHdr->data; // here begins the data
+    int dlength = (getDataLength() - getPadding())*4; // length in bytes
+    uint8_t *the_end = (uint8_t *) &payload[dlength];
+    uint8_t *pos = (uint8_t *) payload;
 
-    decode();
-    bool first;
-    for (int ruid=0; ruid<IDMVTXV3_MAXRUID+1; ruid++)
+    while (pos < the_end)
     {
-        if (iValue(ruid)!=-1)
+        if (pos[30] == 0x01 && pos[31] == 0xab)
         {
-            os << "RU ID: " << ruid;
-            os << ", bad_ruchns=" << iValue(ruid,"BAD_RUCHNS");
             os << hex << setfill('0');
-            os << ", lanes_active 0x" << setw(7) << iValue(ruid);
-            os << dec;
-            first=true;
-            os << " (";
-            for ( int ruchn = 0; ruchn < IDMVTXV3_MAXRUCHN+1; ruchn++)
+            for (int i=31; i>=0; i--) os << setw(2) << (int)pos[i];
+            os << " | FWH: gbt " << (int)pos[28] << " w cnt " << dec << ((int)pos[25] + ((int)pos[26])*256)
+               << " FLXID " << (int)pos[23] <<  endl;
+            pos += 32;
+        }
+        else
+        {
+            if (pos[31] != 0xff)
             {
-                if (mask_contains_ruchn(iValue(ruid),ruchn))
+                int count = (int)pos[30] + (int)((pos[31] & 0x03)<<8);
+                int d_cnt = count % 3;
+                if (d_cnt == 0) d_cnt = 3;
+                os << hex;
+                for (int dw=0; dw<d_cnt; dw++)
                 {
-                    if (!first)
-                        os << ", ";
-                    os << ruchn;
-                    first = false;
-                }
-            }
-            os << "), inconsistent_bc=" << setw(1) << iValue(ruid,"CHECK_BC");
-            os << hex << setfill('0');
-            os << ", lane_stops=0x" << setw(7) << iValue(ruid,"LANE_STOPS");
-            os << dec;
-            first=true;
-            os << " (";
-            for ( int ruchn = 0; ruchn < IDMVTXV3_MAXRUCHN+1; ruchn++)
-            {
-                if (mask_contains_ruchn(iValue(ruid,"LANE_STOPS"),ruchn))
-                {
-                    if (!first)
-                        os << ", ";
-                    os << ruchn;
-                    first = false;
-                }
-            }
-            os << hex << setfill('0');
-            os << "), lane_timeouts=0x" << setw(7) << iValue(ruid,"LANE_TIMEOUTS");
-            os << dec;
-            first=true;
-            os << " (";
-            for ( int ruchn = 0; ruchn < IDMVTXV3_MAXRUCHN+1; ruchn++)
-            {
-                if (mask_contains_ruchn(iValue(ruid,"LANE_TIMEOUTS"),ruchn))
-                {
-                    if (!first)
-                        os << ", ";
-                    os << ruchn;
-                    first = false;
-                }
-            }
-            os << ")";
-            os << dec << setfill(' ') << endl;
-            for ( int ruchn = 0; ruchn < IDMVTXV3_MAXRUCHN+1; ruchn++)
-            {
-                if (iValue(ruid,ruchn)!=-1)
-                {
-                    os << "RU channel " << setw(2) << ruchn;
-                    os << " bad_bytes=" << iValue(ruid,ruchn,"BAD_BYTES") << " excess_bytes=" << iValue(ruid,ruchn,"EXCESS_BYTES") <<" header_found=" << iValue(ruid,ruchn,"HEADER_FOUND") << " trailer_found=" << iValue(ruid,ruchn,"TRAILER_FOUND");
-                    os << " bunchcounter=" << setw(3) << iValue(ruid,ruchn,"BUNCHCOUNTER") << " flags=" << iValue(ruid,ruchn,"READOUT_FLAGS");
-                    os << ", chip ID " << iValue(ruid,ruchn,"CHIP_ID") << ", " << iValue(ruid,ruchn) << " hits: ";
-                    for (int i=0;i<iValue(ruid,ruchn);i++)
+                    uint8_t *gbt_wd = pos + dw*10;
+                    os << hex << setfill('0');
+                    for (int i=9; i>=0; i--) os << setw(2) << (int)gbt_wd[i];
+
+                    if (count == 3 && dw == 0)
                     {
-                        int hit = iValue(ruid,ruchn,i);
-                        os << "(row " << decode_row(hit) << ", col " << decode_col(hit) << ") ";
+                        os << " | RDH - v: " << dec << (int)gbt_wd[0] << " feeid: " << hex << setfill('0')
+                           << (int)gbt_wd[3] << setw(2) << (int)gbt_wd[2];
                     }
+                    else if (count == 3 && dw == 1)
+                    {
+                        os << " | RDH - bc: " << hex << setfill('0')
+                           << (int)gbt_wd[1]
+                           << setw(2) << (int)gbt_wd[0]
+                           << " o: "
+                           << setw(2) << (int)gbt_wd[8]
+                           << setw(2) << (int)gbt_wd[7]
+                           << setw(2) << (int)gbt_wd[6]
+                           << setw(2) << (int)gbt_wd[5]
+                           << setw(2) << (int)gbt_wd[4];
+                    }
+                    else if (count == 3 && dw == 2)
+                    {
+                        os << " | RDH - pg: " << hex << setfill('0')
+                           << (int)gbt_wd[5]
+                           << setw(2) << (int)gbt_wd[4]
+                           << " stop: " << (int)gbt_wd[5]
+                           << " trg: "
+                           << setw(2) << setfill('0') << (int)gbt_wd[3]
+                           << setw(2) << setfill('0') << (int)gbt_wd[2]
+                           << setw(2) << setfill('0') << (int)gbt_wd[1]
+                           << setw(2) << setfill('0') << (int)gbt_wd[0] << " (";
+                        if((gbt_wd[1] & 0x40) == 0x40) os << "R ";
+                        if((gbt_wd[1] & 0x20) == 0x20) os << "C ";
+                        if((gbt_wd[1] & 0x10) == 0x10) os << "FErst ";
+                        if((gbt_wd[1] & 0x08) == 0x08) os << "TF ";
+                        if((gbt_wd[1] & 0x04) == 0x04) os << "EOC ";
+                        if((gbt_wd[1] & 0x02) == 0x02) os << "SOC ";
+                        if((gbt_wd[1] & 0x01) == 0x01) os << "EOT ";
+                        if((gbt_wd[0] & 0x80) == 0x80) os << "SOT ";
+                        if((gbt_wd[0] & 0x10) == 0x10) os << "PhT ";
+                        if((gbt_wd[0] & 0x07) == 0x70) os << "HBr HB ORBIT";
+                        if((gbt_wd[0] & 0x03) == 0x03) os << "HB ORBIT";
+                        os << ")";
+                    }
+                    else if (gbt_wd[9] == 0xe0) os << " | IHW";
+                    else if (gbt_wd[9] == 0xe8) os << " | TDH";
+                    else if (gbt_wd[9] == 0xf0) os << " | TDT";
+                    else if (gbt_wd[9] == 0xe4) os << " | DDW";
+                    else os << " | DATA";
                     os << endl;
                 }
             }
+            pos += 32;
         }
     }
+
 }
+
 
 //copied from oncsSubevent.cc for a generic dump 12/21/17
 void oncsSub_idmvtxv3::gdump(const int i, OSTREAM& out) const
@@ -621,15 +628,15 @@ void oncsSub_idmvtxv3::gdump(const int i, OSTREAM& out) const
     switch (i)
     {
         case (EVT_HEXADECIMAL):
-            //j = 0;
+            int dwords_remaining;
             current_offset = 0;
+            dwords_remaining = getLength()-SEVTHEADERLENGTH - getPadding(); //padding is supposed to be in units of dwords, this assumes dwords
+
             while (1)
             {
-                //int dwords_remaining = getLength()-SEVTHEADERLENGTH - getPadding()/4 - current_offset; //padding is supposed to be in units of dwords, this assumes bytes
-                int dwords_remaining = getLength()-SEVTHEADERLENGTH - getPadding() - current_offset; //padding is supposed to be in units of dwords, this assumes dwords
+                if (dwords_remaining < 8) break;
 
                 out << SETW(5) << current_offset << " |  ";
-                //for (l=0;l<DWORDS_PER_WORD;l++)
 
                 //FELIX header
                 print_stuff(out, SubeventData[current_offset+7], 4, 16, (dwords_remaining<=7));
@@ -653,9 +660,8 @@ void oncsSub_idmvtxv3::gdump(const int i, OSTREAM& out) const
                 print_stuff(out, SubeventData[current_offset+0], 8, 0, (dwords_remaining<=0));
                 out << " " << std::dec << std::endl << std::setfill(' ');
 
-                if (dwords_remaining<8) break;
-
                 current_offset += DWORDS_PER_WORD;
+                dwords_remaining -= DWORDS_PER_WORD;
             }
             break;
 
