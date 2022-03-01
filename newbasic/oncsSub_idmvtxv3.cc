@@ -581,11 +581,11 @@ void  oncsSub_idmvtxv3::dump ( OSTREAM& os )
                            << (int)gbt_wd[5]
                            << setw(2) << (int)gbt_wd[4]
                            << " stop: " << (int)gbt_wd[5]
-                           << " trg: "
-                           << setw(2) << setfill('0') << (int)gbt_wd[3]
-                           << setw(2) << setfill('0') << (int)gbt_wd[2]
-                           << setw(2) << setfill('0') << (int)gbt_wd[1]
-                           << setw(2) << setfill('0') << (int)gbt_wd[0] << " (";
+                           << " trg: " << setfill('0')
+                           << setw(2) << (int)gbt_wd[3]
+                           << setw(2) << (int)gbt_wd[2]
+                           << setw(2) << (int)gbt_wd[1]
+                           << setw(2) << (int)gbt_wd[0] << " (";
                         if((gbt_wd[1] & 0x40) == 0x40) os << "R ";
                         if((gbt_wd[1] & 0x20) == 0x20) os << "C ";
                         if((gbt_wd[1] & 0x10) == 0x10) os << "FErst ";
@@ -600,7 +600,33 @@ void  oncsSub_idmvtxv3::dump ( OSTREAM& os )
                         os << ")";
                     }
                     else if (gbt_wd[9] == 0xe0) os << " | IHW";
-                    else if (gbt_wd[9] == 0xe8) os << " | TDH";
+                    else if (gbt_wd[9] == 0xe8)
+                    {
+                        os << " | TDH - o: " << setfill('0')
+                           << setw(2) << (int) gbt_wd[8]
+                           << setw(2) << (int) gbt_wd[7]
+                           << setw(2) << (int) gbt_wd[6]
+                           << setw(2) << (int) gbt_wd[5]
+                           << setw(2) << (int) gbt_wd[4]
+                           << " bc: "
+                           << (int) (gbt_wd[3] & 0xf)
+                           << setw(2) << (int) gbt_wd[2] << ",";
+                        if((gbt_wd[1] & 0x40) == 0x40) os << " Cont.,";
+                        if((gbt_wd[1] & 0x20) == 0x20) os << " No Data,";
+                        if((gbt_wd[1] & 0x10) == 0x10) os << " Int. Trg.,";
+                        os << " trg: " << setfill('0')
+                           << (int)(gbt_wd[1] & 0xf)
+                           << setw(2) << (int)gbt_wd[0] << " (";
+                        if((gbt_wd[1] & 0x08) == 0x08) os << "TF ";
+                        if((gbt_wd[1] & 0x04) == 0x04) os << "EOC ";
+                        if((gbt_wd[1] & 0x02) == 0x02) os << "SOC ";
+                        if((gbt_wd[1] & 0x01) == 0x01) os << "EOT ";
+                        if((gbt_wd[0] & 0x80) == 0x80) os << "SOT ";
+                        if((gbt_wd[0] & 0x10) == 0x10) os << "PhT ";
+                        if((gbt_wd[0] & 0x07) == 0x70) os << "HBr HB ORBIT";
+                        if((gbt_wd[0] & 0x03) == 0x03) os << "HB ORBIT";
+                        os << ")";
+                    }
                     else if (gbt_wd[9] == 0xf0) os << " | TDT";
                     else if (gbt_wd[9] == 0xe4) os << " | DDW";
                     else os << " | DATA";
