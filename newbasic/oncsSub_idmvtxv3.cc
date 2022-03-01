@@ -580,7 +580,7 @@ void  oncsSub_idmvtxv3::dump ( OSTREAM& os )
                         os << " | RDH - pg: " << hex << setfill('0')
                            << (int)gbt_wd[5]
                            << setw(2) << (int)gbt_wd[4]
-                           << " stop: " << (int)gbt_wd[5]
+                           << " stop: " << (int)gbt_wd[6]
                            << " trg: " << setfill('0')
                            << setw(2) << (int)gbt_wd[3]
                            << setw(2) << (int)gbt_wd[2]
