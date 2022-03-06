@@ -249,7 +249,7 @@ main(int argc, char *argv[])
 	
  	for (it_itr = it.begin(); it_itr != it.end(); ++it_itr)
 	  {
-	    Event *e  = (*it_itr)->getNextEvent();
+	    e  = (*it_itr)->getNextEvent();
 	    if ( !e )
 	      {
 		go_on = 0;
