@@ -294,7 +294,7 @@ allsources = \
   caen_correction.cc
 
 
-AM_LDFLAGS = -L$(libdir) -L$(ONLINE_MAIN)/lib -L$(OPT_SPHENIX)/lib
+AM_LDFLAGS = -L$(libdir)  -L$(OPT_SPHENIX)/lib
 
 BUILT_SOURCES = ioselect.h
 
