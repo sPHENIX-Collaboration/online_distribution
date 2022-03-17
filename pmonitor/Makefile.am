@@ -19,7 +19,7 @@ noinst_HEADERS = $(LINKFILE)
 #ROOTCINT =  $(ROOTSYS)/bin/rootcint 
 ROOTCINT =  rootcint 
 
-AM_CPPFLAGS =  -I$(includedir) -I$(ONLINE_MAIN)/include -I@ROOTINC@
+AM_CPPFLAGS =  -I$(includedir) -I$(ONLINE_MAIN)/include -I@ROOTCFLAGS@
 
 lib_LTLIBRARIES = libpmonitor.la
 

@@ -1,5 +1,5 @@
-#ifndef __SUBEVT_CONSTANTS_H
-#define __SUBEVT_CONSTANTS_H
+#ifndef __ONCS_SUBEVT_CONSTANTS_H
+#define __ONCS_SUBEVT_CONSTANTS_H
 
 /* the enum types for dump style */
 #define EVT_DECIMAL     1

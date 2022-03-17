@@ -23,8 +23,10 @@ fi
 
 ROOTLIBS=`root-config --libs`
 ROOTINC=`root-config --incdir`
+ROOTCFLAGS=`root-config --cflags`
 AC_SUBST(ROOTLIBS)
 AC_SUBST(ROOTINC)
+AC_SUBST(ROOTCFLAGS)
 
 dnl test for root 6
 if test `root-config --version | awk '{print $1=6.?"1":"0"}'` = 1; then
