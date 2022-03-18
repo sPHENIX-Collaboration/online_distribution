@@ -63,7 +63,7 @@ nobase_dist_pcm_DATA = \
    pmonitor_Dict_rdict.pcm
 
 pmonitor_Dict.C: pmonitor.h pmonstate.h  $(LINKFILE)
-	$(ROOTCINT) -f $@ @CINTDEFS@ -c $(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $^
+	$(ROOTCINT) -f $@ @CINTDEFS@ -c $(DEFAULT_INCLUDES) -I$(includedir) $^
 
 bin_SCRIPTS = writePmonProject.pl
 
