@@ -264,6 +264,7 @@ allsources = \
   oncsSub_idmvtxv1.cc \
   oncsSub_idmvtxv2.cc \
   oncsSub_idmvtxv3.cc \
+  mvtx_decoder.cc \
   oncsSubevent.cc \
   oncs_mnemonic.cc \
   packet_A.cc \
