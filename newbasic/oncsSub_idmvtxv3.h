@@ -51,8 +51,17 @@ class WINDOWSEXPORT oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
             unsigned short decode_col(int hit) const;
             bool mask_contains_ruchn(int mask, int ruchn);
 
+	    typedef struct
+	    {
+ 	        uint8_t d0[3][10];
+    		uint8_t counter;
+    		uint8_t ruid;
+	    } data32_mvtx;
+
+
         protected:
             int *decode ();
+	    int *decode_old ();
             bool checkBC(const int ruid);
 
             int _is_decoded;
