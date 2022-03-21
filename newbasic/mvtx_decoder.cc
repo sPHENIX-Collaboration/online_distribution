@@ -7,12 +7,13 @@
 #include <oncsSub_idmvtxv3.h>
 using namespace std;
 
-void readMSD(vector<uint8_t> sensor_data){
+void readMSD(vector<uint8_t> sensor_data)
+{
     cout << hex;
   // Delete the identifier (20, 21, 22, etc)
   for(int i = 0; i < (int)(sensor_data.size()); i++){
     //if((sensor_data.at(i)>>4) == 0x2){ sensor_data.erase(sensor_data.begin()+i); i--; }
-    if(sensor_data.at(i) >= 0x20 && sensor_data.at(i) <= 0x29){ sensor_data.erase(sensor_data.begin()+i); i--; }  
+    if(sensor_data.at(i) >= 0x20 && sensor_data.at(i) <= 0x29){ sensor_data.erase(sensor_data.begin()+i); i--; }
   }
 
   for(int i = 0; i < (int)(sensor_data.size()); i++){
@@ -80,11 +81,11 @@ void wordHandler(int word_number, vector<uint8_t> vec, vector<uint8_t>& lane0dat
   bool isMSD = (vec[9] >= 0x20 && vec[9] <= 0x29);
 
   //Felix data header
-  if(isFDH){ 
+  if(isFDH){
     bool isEmpty = true;
     for(int i = 0; i < (int)vec.size(); i++) if(vec[i] != 0xff) isEmpty = false;
-    if(!isEmpty) cout << "//////////   Felix Data Header. Reading from lane " << (unsigned int)vec[8] << "   //////////" << endl; 
-    isFDH = false; 
+    if(!isEmpty) cout << "//////////   Felix Data Header. Reading from lane " << (unsigned int)vec[8] << "   //////////" << endl;
+    isFDH = false;
   }
 
   // Raw Data Header
@@ -313,10 +314,11 @@ void wordHandler(int word_number, vector<uint8_t> vec, vector<uint8_t>& lane0dat
       cdw_index       << hex << vec[8].to_ulong() << vec[7].to_ulong() << vec[6].to_ulong();
 
   }
-*/}
+*/
+}
 
-void mvtx_decoder(std::vector<oncsSub_idmvtxv3::data32_mvtx*> data_vec){
-  
+void mvtx_decoder(std::vector<oncsSub_idmvtxv3::data32_mvtx*> data_vec)
+{
   vector<uint8_t> vBuf;
   vector<uint8_t> lane0data;
   vector<uint8_t> lane1data;
