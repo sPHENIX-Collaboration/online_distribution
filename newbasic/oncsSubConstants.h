@@ -71,8 +71,9 @@
 
 #define IDPCONTAINER     89
 
-#define IDFNALMWPC     90
+#define IDFNALMWPC       90
 #define IDFNALMWPCV2     91
+#define IDDIGITIZERV1    92
 
 #define IDTPCFEEV1     97
 #define IDMVTXV0       98
