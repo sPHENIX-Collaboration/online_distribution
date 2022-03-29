@@ -7,30 +7,24 @@
 #include <oncsSub_idmvtxv3.h>
 using namespace std;
 
-void readMSD(vector<uint8_t> sensor_data)
-{
-    cout << hex;
-  // Delete the identifier (20, 21, 22, etc)
-  for(int i = 0; i < (int)(sensor_data.size()); i++){
-    //if((sensor_data.at(i)>>4) == 0x2){ sensor_data.erase(sensor_data.begin()+i); i--; }
-    if(sensor_data.at(i) >= 0x20 && sensor_data.at(i) <= 0x29){ sensor_data.erase(sensor_data.begin()+i); i--; }
-  }
+void readMSD(vector<uint8_t> sensor_data) {
+  cout << hex;
 
-  for(int i = 0; i < (int)(sensor_data.size()); i++){
+  for(int i = 0; i < (int)(sensor_data.size()); i++) {
     if(sensor_data.at(i) == 0xff) cout << "IDLE:             " << (unsigned int)sensor_data.at(i) << " ";
     if(sensor_data.at(i) == 0xf1) cout << "BUSY ON:          " << (unsigned int)sensor_data.at(i) << " ";
     if(sensor_data.at(i) == 0xf0) cout << "BUSY OFF:         " << (unsigned int)sensor_data.at(i) << " ";
-    if((sensor_data.at(i)>>4) == 0xb){
+    if((sensor_data.at(i)>>4) == 0xb) {
       cout << "Chip Trailer:     " << (unsigned int)sensor_data.at(i) << "     -> ";
       cout << "Readout Flags: " << (unsigned int)(sensor_data.at(i) & 0xf) << " " << endl;
       break;
     }
-    if((sensor_data.at(i)>>5) == 0x6){
+    if((sensor_data.at(i)>>5) == 0x6) {
       cout << "Region Header:    " << (unsigned int)sensor_data.at(i) << "     -> ";
       cout << "Region ID:     " << (unsigned int)(sensor_data.at(i) & 0x1f) << " " << endl;
       continue;
     }
-    if((sensor_data.at(i)>>4) == 0xa){
+    if((sensor_data.at(i)>>4) == 0xa) {
       if(i >= (int)(sensor_data.size())-2) continue;
       cout << "Chip Header:      " << (unsigned int)sensor_data.at(i) << " " << (unsigned int)sensor_data.at(i+1) << "  -> ";
       cout << "Chip ID: " << (unsigned int)(sensor_data.at(i) & 0xf) << " // ";
@@ -38,7 +32,7 @@ void readMSD(vector<uint8_t> sensor_data)
       if(i < (int)(sensor_data.size())-2) i++;
       continue;
     }
-    if((sensor_data.at(i)>>4) == 0xe){
+    if((sensor_data.at(i)>>4) == 0xe) {
       if(i >= (int)(sensor_data.size())-2) continue;
       cout << "Chip Empty Frame: " << (unsigned int)sensor_data.at(i) << " " << (unsigned int)sensor_data.at(i+1) << "     -> ";
       cout << "Chip ID: " << (unsigned int)(sensor_data.at(i) & 0xf) << " // ";
@@ -46,7 +40,7 @@ void readMSD(vector<uint8_t> sensor_data)
       if(i < (int)(sensor_data.size())-2) i++;
       break;
     }
-    if((sensor_data.at(i)>>6) == 0x1){
+    if((sensor_data.at(i)>>6) == 0x1) {
       if(i >= (int)(sensor_data.size())-2) continue;
       cout << "Data Short:       " << (unsigned int)sensor_data.at(i) << " " << (unsigned int)sensor_data.at(i+1) << "     -> ";
       uint16_t dsBin = (sensor_data.at(i)<<8) + sensor_data.at(i+1);
@@ -55,7 +49,7 @@ void readMSD(vector<uint8_t> sensor_data)
       if(i < (int)(sensor_data.size())-2) i++;
       continue;
     }
-    if((sensor_data.at(i)>>6) == 0x0){
+    if((sensor_data.at(i)>>6) == 0x0) {
       if(i >= (int)(sensor_data.size())-3) continue;
       cout << "Data Long:        " << (unsigned int)sensor_data.at(i) << " " << (unsigned int)sensor_data.at(i+1) << " " << (unsigned int)sensor_data.at(i+2) << " -> ";
       uint32_t dlBin = (sensor_data.at(i)<<16) + (sensor_data.at(i+1)<<8) + sensor_data.at(i+2);
@@ -68,7 +62,7 @@ void readMSD(vector<uint8_t> sensor_data)
   }
 }
 
-void wordHandler(int word_number, vector<uint8_t> vec, vector<uint8_t>& lane0data, vector<uint8_t>& lane1data, vector<uint8_t>& lane2data, bool isFDH, vector<uint8_t>& MSDword){
+void wordHandler(int word_number, vector<uint8_t> vec, vector<uint8_t>& lane0data, vector<uint8_t>& lane1data, vector<uint8_t>& lane2data, bool isFDH, vector<uint8_t>& MSDword) {
   cout << "   | ";
   cout << hex;
 
@@ -81,7 +75,7 @@ void wordHandler(int word_number, vector<uint8_t> vec, vector<uint8_t>& lane0dat
   bool isMSD = (vec[9] >= 0x20 && vec[9] <= 0x29);
 
   //Felix data header
-  if(isFDH){
+  if(isFDH) {
     bool isEmpty = true;
     for(int i = 0; i < (int)vec.size(); i++) if(vec[i] != 0xff) isEmpty = false;
     if(!isEmpty) cout << "//////////   Felix Data Header. Reading from lane " << (unsigned int)vec[8] << "   //////////" << endl;
@@ -89,7 +83,7 @@ void wordHandler(int word_number, vector<uint8_t> vec, vector<uint8_t>& lane0dat
   }
 
   // Raw Data Header
-  if(isRDH && word_number == 0){
+  if(isRDH && word_number == 0) {
     uint8_t  header_version = vec[0];
     uint8_t  header_size    = vec[1];
     uint16_t fee_id         = (vec[3]<<8) + vec[2];
@@ -103,7 +97,7 @@ void wordHandler(int word_number, vector<uint8_t> vec, vector<uint8_t>& lane0dat
     cout << "detector_field: " << (unsigned int)detector_field;
   }
 
-  if(isRDH && word_number == 1){
+  if(isRDH && word_number == 1) {
     uint16_t lhc_bc    = ((vec[1] & 0xf)<<8) + vec[0];
     uint64_t gtm_bco_1 = (vec[7]<<24) + (vec[6]<<16) + (vec[5]<<8) + vec[4];
     uint64_t gtm_bco_2 = (vec[8]);
@@ -113,7 +107,7 @@ void wordHandler(int word_number, vector<uint8_t> vec, vector<uint8_t>& lane0dat
     cout << "gtm_bco: " << (unsigned long)gtm_bco;
   }
 
-  if(isRDH && word_number == 2){
+  if(isRDH && word_number == 2) {
     uint32_t trigger_type   = (vec[3]<<24) + (vec[2]<<16) + (vec[1]<<8) + vec[0];
     uint16_t pages_counter  = (vec[5]<<8) + vec[4];
     uint8_t  stop_bit       = vec[6];
@@ -148,7 +142,7 @@ void wordHandler(int word_number, vector<uint8_t> vec, vector<uint8_t>& lane0dat
   }
 
   // ITS Header Word
-  if(isIHW){
+  if(isIHW) {
     uint8_t IHW_id        = vec[9];
     uint32_t active_lanes = ((vec[3] & 0xf)<<24) + (vec[2]<<16) + (vec[1]<<8) + vec[0];
 
@@ -157,7 +151,7 @@ void wordHandler(int word_number, vector<uint8_t> vec, vector<uint8_t>& lane0dat
   }
 
   // Trigger Data Header
-  if(isTDH){
+  if(isTDH) {
     uint8_t  TDH_id           = vec[9];
     uint64_t tdh_gtm_bco_1    = (vec[7]<<24) + (vec[6]<<16) + (vec[5]<<8) + vec[4];
     uint64_t tdh_gtm_bco_2    = vec[8];
@@ -192,7 +186,7 @@ void wordHandler(int word_number, vector<uint8_t> vec, vector<uint8_t>& lane0dat
   }
 
   // Trigger Data Trailer
-  if(isTDT){
+  if(isTDT) {
     uint8_t  TDT_id           = vec[9];
     uint8_t  tdt_error         = (vec[8] & 0xf);
     uint64_t tdt_lane_status_1 = (vec[3]<<24) + (vec[2]<<16) + (vec[1]<<8) + vec[0];
@@ -209,21 +203,21 @@ void wordHandler(int word_number, vector<uint8_t> vec, vector<uint8_t>& lane0dat
     cout << "tdt_lane_status: ";
     bool lsError = false;
     for(int i = 0; i < 56; i+=2){
-      if((tdt_lane_status>>i) & 0x1){ cout << "WARNING: Lane " << i; lsError = true; }
-      if((tdt_lane_status>>i) & 0x2){ cout << "ERROR: Lane " << i; lsError = true; }
-      if((tdt_lane_status>>i) & 0x3){ cout << "FAULT: Lane " << i; lsError = true; }
+      if((tdt_lane_status>>i) & 0x1) { cout << "WARNING: Lane " << i; lsError = true; }
+      if((tdt_lane_status>>i) & 0x2) { cout << "ERROR: Lane " << i; lsError = true; }
+      if((tdt_lane_status>>i) & 0x3) { cout << "FAULT: Lane " << i; lsError = true; }
     }
     if(!lsError) cout << "OK";
     else lsError = false;
 
-    if(lane0data.size()){ cout << endl << endl << "Lane 0:" << endl; readMSD(lane0data); cout << endl; }
-    if(lane1data.size()){ cout << endl << "Lane 1:" << endl; readMSD(lane1data); cout << endl; }
-    if(lane2data.size()){ cout << endl << "Lane 2:" << endl; readMSD(lane2data); }
-    if(lane0data.size()){ lane0data.clear(); lane1data.clear(); lane2data.clear(); MSDword.clear();}
+    if(lane0data.size()) { cout << endl << endl << "Lane 0:" << endl; readMSD(lane0data); cout << endl; }
+    if(lane1data.size()) { cout << endl << "Lane 1:" << endl; readMSD(lane1data); cout << endl; }
+    if(lane2data.size()) { cout << endl << "Lane 2:" << endl; readMSD(lane2data); }
+    if(lane0data.size()) { lane0data.clear(); lane1data.clear(); lane2data.clear(); MSDword.clear(); }
   }
 
   // Diagnostic Data Word
-  if(isDDW){
+  if(isDDW) {
     uint8_t  DDW_id            = vec[9];
     uint8_t  ddw_index         = ((vec[8]>>4) & 0xf);
     uint8_t  ddw_error         = ((vec[8]>>1) & 0x7);
@@ -241,7 +235,7 @@ void wordHandler(int word_number, vector<uint8_t> vec, vector<uint8_t>& lane0dat
 
     cout << "ddw_lane_status: ";
     bool lsError = false;
-    for(int i = 0; i < 56; i+=2){
+    for(int i = 0; i < 56; i+=2) {
       if((ddw_lane_status>>i) & 0x1){ cout << "WARNING: Lane " << i; lsError = true; }
       if((ddw_lane_status>>i) & 0x2){ cout << "ERROR: Lane " << i; lsError = true; }
       if((ddw_lane_status>>i) & 0x3){ cout << "FAULT: Lane " << i; lsError = true; }
@@ -252,7 +246,7 @@ void wordHandler(int word_number, vector<uint8_t> vec, vector<uint8_t>& lane0dat
   }
 
   // Calibration Data Word
-  if(isCDW){
+  if(isCDW) {
     uint8_t  CDW_id            = vec[9];
     uint32_t cdw_index         = vec[8] + vec[7] + vec[6];
     uint64_t cdw_user_fields_1 = (vec[3]<<24) + (vec[2]<<16) + (vec[1]<<8) + vec[0];
@@ -265,25 +259,25 @@ void wordHandler(int word_number, vector<uint8_t> vec, vector<uint8_t>& lane0dat
   }
 
   // MAP Sensor Data
-  if(isMSD){
+  if(isMSD) {
     cout << "Reading chip data...";
     bool newWord = true;
     if(!MSDword.size()){
         MSDword.push_back(vec[9]);
     }
-    for(int i=0; i<(int)(MSDword.size()); i++){
+    for(int i=0; i<(int)(MSDword.size()); i++) {
         if(vec[9] == MSDword.at(i)){
             newWord = false;
         }
     }
-    if(newWord){
+    if(newWord) {
         MSDword.push_back(vec[9]);
     }
 
-    for(int i = 0; i < (int)(vec.size()); i++){
-      if(MSDword.size()>0){ if(vec[9] == MSDword.at(0)) lane0data.push_back(vec.at(i)); }
-      if(MSDword.size()>1){ if(vec[9] == MSDword.at(1)) lane1data.push_back(vec.at(i)); }
-      if(MSDword.size()>2){ if(vec[9] == MSDword.at(2)) lane2data.push_back(vec.at(i)); }
+    for(int i = 0; i < (int)(vec.size()-1); i++){
+      if(MSDword.size()>0) { if(vec[9] == MSDword.at(0)) lane0data.push_back(vec.at(i)); }
+      if(MSDword.size()>1) { if(vec[9] == MSDword.at(1)) lane1data.push_back(vec.at(i)); }
+      if(MSDword.size()>2) { if(vec[9] == MSDword.at(2)) lane2data.push_back(vec.at(i)); }
     }
   }
 /*
@@ -314,20 +308,19 @@ void wordHandler(int word_number, vector<uint8_t> vec, vector<uint8_t>& lane0dat
       cdw_index       << hex << vec[8].to_ulong() << vec[7].to_ulong() << vec[6].to_ulong();
 
   }
-*/
-}
+*/}
 
-void mvtx_decoder(std::vector<oncsSub_idmvtxv3::data32_mvtx*> data_vec)
-{
+void mvtx_decoder(std::vector<oncsSub_idmvtxv3::data32_mvtx*> data_vec) {
+
   vector<uint8_t> vBuf;
   vector<uint8_t> lane0data;
   vector<uint8_t> lane1data;
   vector<uint8_t> lane2data;
   vector<uint8_t> MSDword;
 
-  for(int dword = 0; dword < (int)(data_vec.size()); dword++){
-    for(int i = 0; i < 3; i++){
-      for(int j = 0; j <10; j++){
+  for(int dword = 0; dword < (int)(data_vec.size()); dword++) {
+    for(int i = 0; i < 3; i++) {
+      for(int j = 0; j <10; j++) {
         vBuf.push_back(data_vec[dword]->d0[i][j]);
       }
     }
@@ -335,15 +328,15 @@ void mvtx_decoder(std::vector<oncsSub_idmvtxv3::data32_mvtx*> data_vec)
     vBuf.push_back(data_vec[dword]->ruid);
 
     bool isFDH = false;
-    if( (vBuf[vBuf.size()-1] & 0xab) == 0xab ){ cout << endl; isFDH = true; }
+    if( (vBuf[vBuf.size()-1] & 0xab) == 0xab ) { cout << endl; isFDH = true; }
 
     vector<uint8_t> eightbitVec;
     bool goodLine = false;
-    for(int word_number = 1; word_number < (int)(vBuf.size()+1); word_number++){
+    for(int word_number = 1; word_number < (int)(vBuf.size()+1); word_number++) {
       eightbitVec.push_back(vBuf[word_number-1]);
       cout.fill('0');
       cout.width(2);
-      if(word_number % 10 == 0){
+      if(word_number % 10 == 0) {
         // skip any empty lines
         for(int i = 0; i < (int)(eightbitVec.size()); i++) if(eightbitVec.at(i) != 0) goodLine = true;
         if(!goodLine){eightbitVec.clear(); continue;}
