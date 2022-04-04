@@ -85,6 +85,7 @@ int caen_correction::init (Packet *p)
       for ( i = 0; i < 1024; i++)
 	{
 	  current_time[i][chip] = timevec[idx][chip];
+	  idx++;
 	  if (idx >=1024) idx=0;
 	}
 
@@ -122,5 +123,5 @@ float caen_correction::caen_corrected(const int sample, const int channel) const
 float caen_correction::caen_time(const int sample, const int channel) const
 {
   if ( sample < 0 || sample >1023 || channel < 0 || channel > 31) return 0;
-  return current_wave[sample][channel/8];
+  return current_time[sample][channel/8];
 }
