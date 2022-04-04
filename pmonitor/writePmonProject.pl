@@ -148,7 +148,33 @@ EOF
 
 close LF;
 
+open (HC, "> $projectname.C");
+print HC <<EOF;
+#include "$projectname.h"
+R__LOAD_LIBRARY(lib$projectname.so)
+
+void $projectname(const char * filename)
+{
+  if ( filename != NULL)
+    {
+      pfileopen(filename);
+    }
+}
+EOF
 
 
+open (HS, "> $projectname.sh");
+print HS <<EOF;
+#! /bin/bash
 
+FILE=\"\$1\"
 
+if [ -z \"\$FILE\" ] ; then
+
+    root -l $projectname.C\\(0\\)
+else
+
+    root -l $projectname.C\\(\\\"\$FILE\\\"\\)
+fi
+EOF
+    
