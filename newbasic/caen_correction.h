@@ -19,6 +19,10 @@ public:
   float caen_corrected(const int sample, const int channel) const;
   float caen_time(const int sample, const int channel) const;
 
+  float caen_rollover(const int channel) const {
+    return (channel >= 0 && channel <= 31 ? timevec[1023][channel/8] : 0); 
+  };
+
   //  virtual void identify(std::ostream& os = std::cout) const;
 
  protected:
