@@ -187,6 +187,31 @@ int oncsSub_idcaenv1742::iValue(const int n,const char *what)
     return decoded_data2[2*samples + n];
   }
 
+  if ( strcmp(what,"TR0-0") == 0 )
+  {
+    if ( n <0 || n >=samples) return 0;
+
+    return decoded_data2[            n];
+  }
+  if ( strcmp(what,"TR0-1") == 0 )
+  {
+    if ( n <0 || n >=samples) return 0;
+
+    return decoded_data2[1*samples + n];
+  }
+  if ( strcmp(what,"TR1-0") == 0 )
+  {
+    if ( n <0 || n >=samples) return 0;
+
+    return decoded_data2[2*samples + n];
+  }
+  if ( strcmp(what,"TR1-1") == 0 )
+  {
+    if ( n <0 || n >=samples) return 0;
+
+    return decoded_data2[3*samples + n];
+  }
+
   if ( strcmp(what,"INDEXCELL") == 0 )
   {
     if ( n <0 || n >=4) return 0;
