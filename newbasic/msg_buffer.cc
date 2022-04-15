@@ -171,9 +171,9 @@ void streambuf_add_date (STREAMBUF * sb)
 {
 
   
-  struct timeb tp;
-  ftime(&tp);
-  char *timestr = ctime(&tp.time);
+  struct timespec tp;
+  clock_gettime( CLOCK_REALTIME, &tp);
+  char *timestr = ctime(&tp.tv_sec);
   int length = strlen(timestr);
   
   //  char timestr[128];
