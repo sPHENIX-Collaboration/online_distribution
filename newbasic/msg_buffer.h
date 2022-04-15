@@ -16,7 +16,7 @@
 #include <cstdarg>
 #include <string>
 #include <ctime>
-#include <sys/timeb.h>
+#include <time.h>
 
 #endif
 
