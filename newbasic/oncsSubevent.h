@@ -36,6 +36,8 @@ public:
   // debugging-type information
   virtual void  identify( OSTREAM& =COUT) const;
 
+  virtual int setIdentifier(const int newid);
+  
   // getting decoded values
   int    iValue(const int);
   int    iValue(const int,const char *);

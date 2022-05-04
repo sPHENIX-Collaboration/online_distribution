@@ -236,7 +236,8 @@ class  Packet
 
   virtual void identify(std::ostream& os = std::cout) const = 0;
 
-
+  /// set a new packet identifier
+  virtual int	setIdentifier(const int newid) = 0; // Identifier
 
   /// write an indepth identification message to the supplied OSTREAM.
   virtual void fullIdentify(std::ostream& os = std::cout) const 
