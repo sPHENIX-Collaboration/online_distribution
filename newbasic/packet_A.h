@@ -66,6 +66,7 @@ public:
   void  dumpErrorBlock ( OSTREAM& =COUT ) ;
   void  dumpDebugBlock ( OSTREAM& =COUT ) ;
 
+  int   setIdentifier(const int newid);
 
   // getting decoded values
   int    iValue(const int);

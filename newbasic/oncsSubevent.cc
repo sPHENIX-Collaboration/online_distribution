@@ -59,6 +59,16 @@ int oncsSubevent::getIdentifier() const
 }
 
 // ----------------------------------------------
+
+int oncsSubevent::setIdentifier(const int newid) 
+{
+   // check that we have short range; we want the parameter to be int
+  if ( newid & 0xffff0000) return -1; 
+  SubeventHdr->sub_id = newid;
+  return 0;
+}
+
+// ----------------------------------------------
 //int oncsSubevent::get_type()
 //{
 //  return SubeventHdr->sub_type;

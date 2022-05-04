@@ -168,6 +168,16 @@ getPacketDebugLength(packet); }
 int Packet_A::getIdentifier() const { return getPacketId (packet); } 
 
 //------------------------------------------------------ 
+int Packet_A::setIdentifier(const int newid) 
+{
+   // check that we have short range; we want the parameter to be int
+  if ( newid & 0xffff0000) return -1;
+  setPacketId (packet, newid);
+  return 0;
+}
+
+
+//------------------------------------------------------ 
 int Packet_A::getPadding() const { 
 return 
 getPacketPadding(packet); 
