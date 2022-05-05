@@ -149,8 +149,6 @@ int fileEventiterator::read_next_buffer()
 {
   PHDWORD initialbuffer[BUFFERBLOCKSIZE/4];
 
-  unsigned int ip = 8192;
- 
   buffer_size = 0;
   
   if (bptr) 
@@ -241,24 +239,18 @@ int fileEventiterator::read_next_buffer()
 
   int errorinread=0;
 
-  // now we read records until the whole buffer is read 
-  while ( ip < buffer_size)
+  // we calculate how many BUFFERBLOCKSIZE-sized records we need to read
+  // we have already one, so this is the number of records -1.
+  // normally we would round up  (buffer_size + BUFFERBLOCKSIZE -1) /BUFFERBLOCKSIZE
+  int records_to_read =  (buffer_size -1) /BUFFERBLOCKSIZE;
+  unsigned int bytes_to_read   =  records_to_read * BUFFERBLOCKSIZE;
+  
+  xc = read ( fd, cp, bytes_to_read);
+  if ( xc < bytes_to_read ) 
     {
-      //      COUT << "ip is " << ip << std::endl;
-      // read the next record
-      xc = read ( fd, cp, BUFFERBLOCKSIZE);
-      if ( xc < BUFFERBLOCKSIZE ) 
-	{
-	  COUT << "error in buffer, salvaging" << std::endl;
-	  bp[0] = read_so_far; 
-	  errorinread =1;
-	  break;
-	}
-
-      // update the pointer and byte count
-      cp += BUFFERBLOCKSIZE;
-      ip += BUFFERBLOCKSIZE;
-      read_so_far += BUFFERBLOCKSIZE;
+      COUT << "error in buffer, salvaging" << std::endl;
+      bp[0] = read_so_far + xc; 
+      errorinread =1;
     }
 
   // and initialize the current_index to be the first event
