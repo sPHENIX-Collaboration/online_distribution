@@ -4,6 +4,7 @@
 // this iterator reads events froma data file. 
 
 
+
 #include "oncsEventiterator.h"
 #include <stdio.h>
 #include "oncsEvent.h"
@@ -122,7 +123,6 @@ Event * oncsEventiterator::getNextEvent()
 
 int oncsEventiterator::read_next_buffer()
 {
-  int ip = 8192;
   if (bptr) 
     {
       delete bptr;
@@ -165,34 +165,39 @@ int oncsEventiterator::read_next_buffer()
       if  (buffer_size > allocatedsize*4)
 	{
 	  delete [] bp;
-	  i = (buffer_size +8191) /8192;
+	  i = (buffer_size + BUFFERBLOCKSIZE -1) /BUFFERBLOCKSIZE;
 	  allocatedsize = i * 2048;
 	  bp = new int[allocatedsize];
 	}
     }
   else
     {
-      i = (buffer_size +8191) /8192;
-      allocatedsize = i * 2048;
+      i = (buffer_size + BUFFERBLOCKSIZE) /BUFFERBLOCKSIZE;
+      allocatedsize = i * BUFFERBLOCKSIZE/4;
       bp = new int[allocatedsize];
     }
-  for (i = 0; i<2048; i++ ) bp[i] = initialbuffer[i];
 
+  // for (i = 0; i<2048; i++ ) bp[i] = initialbuffer[i];
+  memcpy ( bp, initialbuffer, BUFFERBLOCKSIZE);
+
+  unsigned int read_so_far =  BUFFERBLOCKSIZE;
+  
   cp = (char *) bp;
 
   // and update the destination buffer pointer
-  cp += 8192;
+  cp += BUFFERBLOCKSIZE;
 
-  // now we read records until the whole buffer is read 
-  while ( ip < buffer_size)
+  // we calculate how many BUFFERBLOCKSIZE-sized records we need to read
+  // we have already one, so this is the number of records -1.
+  // normally we would round up  (buffer_size + BUFFERBLOCKSIZE -1) /BUFFERBLOCKSIZE
+  int records_to_read =  (buffer_size -1) /BUFFERBLOCKSIZE;
+  unsigned int bytes_to_read   =  records_to_read * BUFFERBLOCKSIZE;
+  
+  xc = read ( fd, cp, bytes_to_read);
+  if ( xc < bytes_to_read )
     {
-      // read the next record
-      xc = read ( fd, cp, BUFFERBLOCKSIZE);
-      if ( xc < BUFFERBLOCKSIZE ) return -1;
-
-      // update the pointer and byte count
-      cp += 8192;
-      ip += 8192;
+      COUT << "error in buffer, salvaging" << std::endl;
+      bp[0] = read_so_far + xc; 
     }
 
   // and initialize the current_index to be the first event
