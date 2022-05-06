@@ -61,6 +61,7 @@ public:
   // pointer or data based handling
   virtual int is_pointer_type() const;
   virtual int convert();
+  virtual int   copyMe(int [],  const int maxlength) const;
 
   int setInternalParameter ( const int p1=0, const int p2=0, const char *what = "") {return 0;};
 
