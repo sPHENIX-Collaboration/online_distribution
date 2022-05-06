@@ -134,6 +134,13 @@ int oncsEvent::createMap()
 
   for (i=0; i<datalength; i+=  EventData->data[i])
     {
+      if ( EventData->data[i] <= 0) 
+	{
+	  std::cout << "found 0-length packet" << std::endl;
+	  errorcode =-1;
+	  break;
+	}
+
       // each data[i] is the start of a subevent;
       // we map it on a subevent_ptr
 

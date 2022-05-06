@@ -385,6 +385,18 @@ float*   oncsSubevent::getFloatArray (int *nwout, const char *what)
 
 // ----------------------------------------------
 
+int oncsSubevent::copyMe(int dest[],  const int maxlength) const
+{
+  
+  if ( getLength() > maxlength )
+    {
+      return 0;
+    }
+
+  memcpy((void *) dest, (void *) SubeventHdr, 4*getLength() );
+  return getLength();
+}
+
 
 
 // now the member functions common to all
