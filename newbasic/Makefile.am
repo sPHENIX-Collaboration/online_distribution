@@ -118,6 +118,7 @@ allheaders = \
   fileEventiterator.h \
   listEventiterator.h \
   md5.h \
+	mvtx/mvtx_decoder.h \
   PHmd5Utils.h \
   gen_utilities.h \
   dpipe_filter.h \
@@ -224,6 +225,7 @@ allsources = \
   fileEventiterator.cc \
   listEventiterator.cc \
   md5.cc \
+	mvtx/mvtx_decoder.cc \
   PHmd5Utils.cc \
   PHmd5Value.cc \
   gzbuffer.cc \
@@ -264,7 +266,6 @@ allsources = \
   oncsSub_idmvtxv1.cc \
   oncsSub_idmvtxv2.cc \
   oncsSub_idmvtxv3.cc \
-  mvtx_decoder.cc \
   oncsSubevent.cc \
   oncs_mnemonic.cc \
   packet_A.cc \
