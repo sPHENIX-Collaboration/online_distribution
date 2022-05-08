@@ -1,10 +1,36 @@
+#include "mvtx_decoder.h"
+
+using namespace mvtx;
+
+
+uint32_t mvtx::encode_hit(uint16_t row, uint16_t col)
+{
+  return (row << kBitShiftRow) | col;
+}
+
+
+uint16_t mvtx::get_row(uint32_t encoded_hit)
+{
+  return (encoded_hit >> kBitShiftRow) & DUMMY16;
+}
+
+
+uint16_t get_col(uint32_t encoded_hit)
+{
+  return (encoded_hit & DUMMY16);
+}
+
+
+
+//#include "oncsSub_idmvtxv3.h"
+/*
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <string>
 #include <sstream>
 #include <bitset>
-#include <oncsSub_idmvtxv3.h>
+
 using namespace std;
 
 void readMSD(vector<uint8_t> sensor_data) {
@@ -279,7 +305,7 @@ void wordHandler(int word_number, vector<uint8_t> vec, vector<uint8_t>& lane0dat
       if(MSDword.size()>1) { if(vec[9] == MSDword.at(1)) lane1data.push_back(vec.at(i)); }
       if(MSDword.size()>2) { if(vec[9] == MSDword.at(2)) lane2data.push_back(vec.at(i)); }
     }
-  }
+  }*/
 /*
   // Felix data header
   if(isFDH){
@@ -307,12 +333,12 @@ void wordHandler(int word_number, vector<uint8_t> vec, vector<uint8_t>& lane0dat
 
       cdw_index       << hex << vec[8].to_ulong() << vec[7].to_ulong() << vec[6].to_ulong();
 
-  }
-*/}
+  }*/
+//}
 
-void mvtx_decoder(std::vector<oncsSub_idmvtxv3::data32_mvtx*> data_vec) {
-
-  vector<uint8_t> vBuf;
+void mvtx::mvtx_decoder( uint8_t *pos, uint8_t *the_end )
+{
+/*  vector<uint8_t> vBuf;
   vector<uint8_t> lane0data;
   vector<uint8_t> lane1data;
   vector<uint8_t> lane2data;
@@ -352,6 +378,6 @@ void mvtx_decoder(std::vector<oncsSub_idmvtxv3::data32_mvtx*> data_vec) {
     cout << endl;
     vBuf.clear();
   }
-
+*/
   return;
 }
