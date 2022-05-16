@@ -2,9 +2,10 @@
 #define __ONCSSUB_IDMVTXV3_H__
 
 #include "oncsSubevent.h"
-#include "mvtx/mvtx_decoder.h"
 
 #include <utility> // std::pair, std::make_pair
+
+using packet_range_t = std::pair<uint8_t *, uint8_t *>;
 
 #ifndef __CINT__
 class WINDOWSEXPORT oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
@@ -12,81 +13,31 @@ class WINDOWSEXPORT oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
     class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
 #endif
 
-/*
-#define IDMVTXV3_MAXRUID       8
-#define IDMVTXV3_RUHEADER      0xE0
-#define IDMVTXV3_RUTRAILER     0xF0
-#define IDMVTXV3_MAXRUCHN      9
+ public:
+  explicit oncsSub_idmvtxv3(subevtdata_ptr);
+  ~oncsSub_idmvtxv3() = default;
 
-#define NROW  512
-#define NCOL 1024
+#ifndef _MVTX_DECODER_ // define public dummy inline methods
+  void dump(OSTREAM &os = COUT) override {};
+  void gdump(const int how=EVT_HEXADECIMAL, OSTREAM &os = COUT) const override {};
+#else
+  void dump(OSTREAM &os = COUT) override;
+  void gdump(const int how=EVT_HEXADECIMAL, OSTREAM &os = COUT) const override;
+#endif
 
-#define CHIPHEADER     1
-#define CHIPEMPTYFRAME 2
-#define DATASHORT      3
-#define DATALONG0      4
-#define DATALONG1      5
-*/
-  public:
-    explicit oncsSub_idmvtxv3(subevtdata_ptr);
-    ~oncsSub_idmvtxv3() = default;
-/*
-    int    iValue(const int ruid, const char *what);
-    int    iValue(const int ruid);
-    int    iValue(const int ruid, const int ruchn, const char *what);
-    int    iValue(const int ruid, const int ruchn);
-    int    iValue(const int ruid, const int ruchn, const int i);
-*/
-    //max 24 RUs
-    //max 28 ruchn/RU (each is a chip)
-    //ruid, what -> RU info
-    //ruid -> chn mask
-    //ruid, ruchn, what -> chip info
-    //ruid, ruchn -> chip hit count
-    //ruid, ruchn, i -> hit info
-    //hit info: 32 bits, 1024x512 -> 9 bits row, 10 bits col
+ protected:
+  void print_stuff(
+    OSTREAM &out, uint32_t data, uint8_t width /*bytes*/, uint8_t shift = 0) const;
 
-    std::pair < uint8_t *, uint8_t * > get_packet_range() const;
-    // override functions
-    void dump( OSTREAM &os = COUT ) override;
-    void gdump( const int how=EVT_HEXADECIMAL, OSTREAM &os = COUT ) const override;
-/*
-    int encode_hit(unsigned short row, unsigned short col) const;
-    unsigned short decode_row(int hit) const;
-    unsigned short decode_col(int hit) const;
-    bool mask_contains_ruchn(int mask, int ruchn);
-*/
-  protected:
+#ifndef _MVTX_DECODER_  // define private dummy inlide methods
+  packet_range_t get_packet_range() const { return std::make_pair(nullptr, nullptr); }
+  int decode() { return 0; }
+#else
+  packet_range_t get_packet_range() const;
+  int decode();
+#endif
 
-    int *decode();
-    void print_stuff( OSTREAM &out, uint32_t data, uint8_t width /*bytes*/, uint8_t shift = 0 ) const;
-
-    bool m_is_decoded;
-/*
-    bool checkBC(const int ruid);
-
-    std::vector<int> _hit_vectors[IDMVTXV3_MAXRUID+1][IDMVTXV3_MAXRUCHN+1];
-
-    int _is_decoded;
-    int _highest_ruid;
-    int _decoder_error;
-    int _unexpected_felix_counters;
-    int _bad_ruids;
-    int _bad_ruchns[IDMVTXV3_MAXRUID+1];
-    int _lanes_active[IDMVTXV3_MAXRUID+1];
-    int _lane_stops[IDMVTXV3_MAXRUID+1];
-    int _lane_timeouts[IDMVTXV3_MAXRUID+1];
-    int _inconsistent_bc[IDMVTXV3_MAXRUID+1];
-    int _chip_id[IDMVTXV3_MAXRUID+1][IDMVTXV3_MAXRUCHN+1];
-    int _bad_bytes[IDMVTXV3_MAXRUID+1][IDMVTXV3_MAXRUCHN+1];
-    int _excess_bytes[IDMVTXV3_MAXRUID+1][IDMVTXV3_MAXRUCHN+1];
-    int _bunchcounter[IDMVTXV3_MAXRUID+1][IDMVTXV3_MAXRUCHN+1];
-    int _readout_flags[IDMVTXV3_MAXRUID+1][IDMVTXV3_MAXRUCHN+1];
-    bool _header_found[IDMVTXV3_MAXRUID+1][IDMVTXV3_MAXRUCHN+1];
-    bool _trailer_found[IDMVTXV3_MAXRUID+1][IDMVTXV3_MAXRUCHN+1];
-*/
+  bool m_is_decoded;
 };
-
-
 
 #endif /* __ONCSSUB_IDMVTXV3_H__ */

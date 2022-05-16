@@ -1,5 +1,9 @@
 #include "oncsSub_idmvtxv3.h"
 
+#ifdef _MVTX_DECODER_
+#include "mvtx/mvtx_decoder.h"
+#endif
+
 #include <cassert>  // for assert
 
 //#include <cstring>
@@ -11,12 +15,10 @@
 //#include <arpa/inet.h>
 //
 
-using packet_range_t = std::pair < uint8_t *, uint8_t * >;
-
 //
 //extern void mvtx_decoder(std::vector<oncsSub_idmvtxv3::data32_mvtx*>);
 
-oncsSub_idmvtxv3::oncsSub_idmvtxv3( subevtdata_ptr data )
+oncsSub_idmvtxv3::oncsSub_idmvtxv3(subevtdata_ptr data)
   : oncsSubevent_w4(data)
   , m_is_decoded(false)
 {
@@ -45,23 +47,6 @@ oncsSub_idmvtxv3::oncsSub_idmvtxv3( subevtdata_ptr data )
 }
 
 
-
-
-//int oncsSub_idmvtxv3::encode_hit(unsigned short row, unsigned short col) const
-//{
-//    return (row << 16) + col;
-//}
-//
-//unsigned short oncsSub_idmvtxv3::decode_row(int hit) const
-//{
-//    return hit >> 16;
-//}
-//
-//unsigned short oncsSub_idmvtxv3::decode_col(int hit) const
-//{
-//    return hit & 0xffff;
-//}
-//
 //bool oncsSub_idmvtxv3::mask_contains_ruchn ( int mask, int ruchn )
 //{
 //    if (ruchn<=0) return false; //invalid ruchn
@@ -513,39 +498,71 @@ oncsSub_idmvtxv3::oncsSub_idmvtxv3( subevtdata_ptr data )
 //}
 
 
+void oncsSub_idmvtxv3::print_stuff(
+    OSTREAM &out, uint32_t data, uint8_t width, uint8_t shift) const
+{
+  assert( ((void) "FATAL: Width greater than 8.", width <= 8) );
+  uint32_t mask = (1 << (width * 8)) - 1;
+
+  out << std::hex << SETW(width * 2) << SETFILL('0');
+  out << ( (data >> shift) & mask );
+  out << std::dec << SETW(0) << SETFILL(' ');
+}
+
+
+#ifdef _MVTX_DECODER_
+
 packet_range_t oncsSub_idmvtxv3::get_packet_range() const
 {
   uint8_t *payload = (uint8_t *) &SubeventHdr->data; // here begins the data
-  int dlength = ( getDataLength() - getPadding() ) * 4; // length in bytes
-  uint8_t *the_end = (uint8_t *) &payload[dlength];
-  uint8_t *pos = (uint8_t *) payload;
+  size_t dlength = (getDataLength() - getPadding()) * 4; // length in bytes
 
-  return std::make_pair( pos, the_end );
+  if ( (dlength % mvtx::kFlxWordBytes) != 0 )
+  {
+    dlength -= dlength % mvtx::kFlxWordBytes;
+    COUT
+      << ENDL
+      << "!!!!!!!!!!!!!!!!!!WARNING!!!!!!!!!!!!!!!!!!!! \n"
+      << "DMA packet has incomplete FLX words, only "
+      << dlength << " bytes(" << (dlength / mvtx::kFlxWordBytes)
+      << " FLX words), will be decoded. \n"
+      << "!!!!!!!!!!!!!!!!!!WARNING!!!!!!!!!!!!!!!!!!!! \n"
+      << ENDL;
+  }
+
+  uint8_t *the_end = (uint8_t *) &payload[dlength];
+  uint8_t *the_pos = (uint8_t *) payload;
+
+  return std::make_pair(the_pos, the_end);
 }
 
 
-int *oncsSub_idmvtxv3::decode()
+int oncsSub_idmvtxv3::decode()
 {
-  if (m_is_decoded) return nullptr;
+  if ( m_is_decoded )
+  {
+    return 0;
+  }
 
   packet_range_t range = get_packet_range();
-  mvtx::mvtx_decoder( range.first, range.second );
+  mvtx::mvtx_decoder(range.first, range.second);
 
   m_is_decoded = true;
 
-  return nullptr;
+  return 0;
 }
 
 
-void oncsSub_idmvtxv3::dump( OSTREAM &os )
+void oncsSub_idmvtxv3::dump(OSTREAM &os)
 {
   identify(os);
+  mvtx::VERBOSITY = 9;
   decode();
   return;
 }
 
 
-void oncsSub_idmvtxv3::gdump( const int how, OSTREAM &out ) const
+void oncsSub_idmvtxv3::gdump(const int how, OSTREAM &out) const
 {
   identify(out);
 
@@ -556,67 +573,47 @@ void oncsSub_idmvtxv3::gdump( const int how, OSTREAM &out ) const
   switch (how)
   {
     case (EVT_HEXADECIMAL):
-    while ( pos < range.second )
-    {
-      mvtx::flx_word_t *word = (mvtx::flx_word_t *)pos;
-
-      out << std::setfill(' ') << SETW(5) << offset << " |  ";
-
-      //FELIX header
-      print_stuff( out, word->count, 2 );
-      out << " ";
-      for ( int8_t i(mvtx::kGBTinFLX - 1); i >= 0; i-- )
+      while ( pos < range.second )
       {
-        for ( int8_t j(mvtx::kBytesGBT - 1); j >= 0; j-- )
-        {
-          print_stuff( out, word->gbt_word[i][j], 1 );
-        }
+        mvtx::flx_word_t *flxWord = (mvtx::flx_word_t *)pos;
+
+        out << SETFILL(' ') << SETW(5) << offset << " |  ";
+
+        //FELIX header
+        print_stuff(out, flxWord->header, 2);
         out << " ";
+
+        auto gbtWord_it = std::cend(flxWord->gbt_words);
+        while ( gbtWord_it != std::cbegin(flxWord->gbt_words) )
+        {
+          --gbtWord_it;
+          auto gbtBytes_it = std::cend(*gbtWord_it);
+          while ( gbtBytes_it != std::cbegin(*gbtWord_it) )
+          {
+            print_stuff(out, *(--gbtBytes_it), 1);
+          }
+          out << " ";
+        }
+        out << ENDL;
+
+        pos += mvtx::kFlxWordBytes;
+        offset += mvtx::kFlxWordBytes;
       }
-      out<< std::dec << std::endl;
-      pos += mvtx::kBytesFLX;
-      offset += mvtx::kBytesFLX;
-    }
-    break;
+      break;
 
     case (EVT_DECIMAL):
-      out << "WARNING: Printout option NOT implemented" << std::endl;
+      out << ENDL
+      << "!!!!!!!!!!!!!!!!!!WARNING!!!!!!!!!!!!!!!!!!!! \n"
+      << "Not implemented...\n"
+      << "!!!!!!!!!!!!!!!!!!WARNING!!!!!!!!!!!!!!!!!!!! \n"
+      << ENDL;
       break;
 
     default:
       break;
   }
-  out << std::endl;
+
+  out << ENDL;
 }
 
-
-void oncsSub_idmvtxv3::print_stuff( OSTREAM &out,
-    uint32_t data, uint8_t width, uint8_t shift ) const
-{
-  assert( width <= 8 );
-  uint32_t mask = ( ( 1 << ( width * 8 ) ) - 1 );
-  out << std::hex << SETW( width * 2 ) << std::setfill('0')
-      << ( ( data >> shift ) & mask ) << std::dec;
-}
-
-
-//bool oncsSub_idmvtxv3::checkBC(const int ruid)
-//{
-//  bool first_active = true;
-//  unsigned int first_active_lane;
-//  for (int iruchn = 0; iruchn < IDMVTXV3_MAXRUCHN+1; ++iruchn)
-//  {
-//    if (this->mask_contains_ruchn(_lanes_active[ruid], iruchn))
-//    {
-//      if (first_active)
-//      {
-//        first_active_lane = iruchn;
-//        first_active = false;
-//      }
-//      else if (_bunchcounter[ruid][iruchn] != _bunchcounter[ruid][first_active_lane])
-//        return true;
-//    }
-//  }
-//
-//  return false;
-//}
+#endif /* MVTX_DECODER */
