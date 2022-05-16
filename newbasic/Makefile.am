@@ -118,7 +118,6 @@ allheaders = \
   fileEventiterator.h \
   listEventiterator.h \
   md5.h \
-	mvtx/mvtx_decoder.h \
   PHmd5Utils.h \
   gen_utilities.h \
   dpipe_filter.h \
@@ -225,7 +224,6 @@ allsources = \
   fileEventiterator.cc \
   listEventiterator.cc \
   md5.cc \
-	mvtx/mvtx_decoder.cc \
   PHmd5Utils.cc \
   PHmd5Value.cc \
   gzbuffer.cc \
@@ -297,8 +295,7 @@ allsources = \
   packet_idcdevdescr.cc \
   caen_correction.cc
 
-
-AM_LDFLAGS = -L$(libdir)  -L$(OPT_SPHENIX)/lib
+AM_LDFLAGS = -L$(libdir) -L$(ONLINE_MAIN)/lib -L$(OPT_SPHENIX)/lib
 
 BUILT_SOURCES = ioselect.h
 
@@ -313,6 +310,11 @@ msgheaders = \
   strnstr.h
 
 AM_CPPFLAGS = -I$(includedir)  -I@ROOTINC@ -I$(OPT_SPHENIX)/include
+
+if MVTX_DECODER
+AM_CPPFLAGS += -D_MVTX_DECODER_
+AM_LDFLAGS += -L$(RCDAQ_ROOT)/lib -lmvtx_decoder
+endif
 
 noinst_HEADERS = \
   eventLinkDef.h \

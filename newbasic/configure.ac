@@ -148,5 +148,16 @@ AC_ARG_ENABLE(demos,
 	demos=true)
 AM_CONDITIONAL(DEMOS, test "$demos" = true)
 
+AC_ARG_ENABLE(mvtx_decoder,
+	[  --enable-mvtx-decoder  build using mvtx_decoder [default=no]],
+	[case "${enableval}" in
+		yes) mvtx_decoder=true ;;
+		no)  mvtx_decoder=false ;;
+		*) AC_MSG_ERROR(bad value ${enableval} for --enable-mvtx-decoder) ;;
+		esac],
+	mvtx_decoder=false)
+AM_CONDITIONAL(MVTX_DECODER, test "x$mvtx_decoder" = xtrue)
+
+
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
