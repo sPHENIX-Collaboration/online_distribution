@@ -101,27 +101,31 @@ int caen_correction::init (Packet *p)
 	    }
 	}
 
-      //      // the TR cells
-      // idx = cell;
-      //for ( i = 0; i < 1024; i++)
-      //	{
-      //	  if (chip < 2)	  current_wave[i][chip*8+8] = p->iValue(i,"TR0") - base[idx][chip*9+8];
-      //	  else  current_wave[i][chip*9+8] = p->iValue(i,"TR1") - base[idx][chip*9+8];
-      //	  idx++;
-      //	  if (idx >=1024) idx=0;
-      //	}
+      // Trigger cells;
+      {
+	idx = cell;
+	for ( i = 0; i < 1024; i++)
+	  {
+	    current_wave[i][32+chip] = p->iValue(i,32+chip) - base[idx][chip*9+8];
+	    idx++;
+	    if (idx >=1024) idx=0;
+	  }
+      }
     }
   return 0;
 }
 	  
 float caen_correction::caen_corrected(const int sample, const int channel) const
 {
-  if ( sample < 0 || sample >1023 || channel < 0 || channel > 31) return 0;
+  //if ( sample < 0 || sample >1023 || channel < 0 || channel > 31) return 0;
+  if ( sample < 0 || sample >1023 || channel < 0 || channel > 35) return 0;
   return current_wave[sample][channel];
 }
 
 float caen_correction::caen_time(const int sample, const int channel) const
 {
-  if ( sample < 0 || sample >1023 || channel < 0 || channel > 31) return 0;
-  return current_time[sample][channel/8];
+  //if ( sample < 0 || sample >1023 || channel < 0 || channel > 31) return 0;
+  //return current_time[sample][channel/8];
+  if ( sample < 0 || sample >1023 || channel < 0 || channel > 35) return 0;
+  return current_time[sample][channel < 32 ? channel/8 : channel-32];
 }
