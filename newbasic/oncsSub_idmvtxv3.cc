@@ -1,7 +1,10 @@
 #include "oncsSub_idmvtxv3.h"
 
-#ifdef _MVTX_DECODER_
-#include "mvtx/mvtx_decoder.h"
+#ifdef MVTX_DECODER
+#include "MVTXDecoder/ChipMappingMVTX.h"
+#include "MVTXDecoder/RawPixelReader.h"
+//#include "MVTXDecoder/mvtx_decoder.h"
+#include "MVTXDecoder/FLXWord.h"
 #endif
 
 #include <cassert>  // for assert
@@ -497,34 +500,22 @@ oncsSub_idmvtxv3::oncsSub_idmvtxv3(subevtdata_ptr data)
 //    return _hit_vectors[ruid][ruchn].at(i);
 //}
 
+#ifdef MVTX_DECODER
 
-void oncsSub_idmvtxv3::print_stuff(
-    OSTREAM &out, uint32_t data, uint8_t width, uint8_t shift) const
-{
-  assert( ((void) "FATAL: Width greater than 8.", width <= 8) );
-  uint32_t mask = (1 << (width * 8)) - 1;
-
-  out << std::hex << SETW(width * 2) << SETFILL('0');
-  out << ( (data >> shift) & mask );
-  out << std::dec << SETW(0) << SETFILL(' ');
-}
-
-
-#ifdef _MVTX_DECODER_
-
+//_________________________________________________
 packet_range_t oncsSub_idmvtxv3::get_packet_range() const
 {
   uint8_t *payload = (uint8_t *) &SubeventHdr->data; // here begins the data
   size_t dlength = (getDataLength() - getPadding()) * 4; // length in bytes
 
-  if ( (dlength % mvtx::kFlxWordBytes) != 0 )
+  if ((dlength % mvtx::FLXWordLength) != 0)
   {
-    dlength -= dlength % mvtx::kFlxWordBytes;
+    dlength -= dlength % mvtx::FLXWordLength;
     COUT
       << ENDL
       << "!!!!!!!!!!!!!!!!!!WARNING!!!!!!!!!!!!!!!!!!!! \n"
       << "DMA packet has incomplete FLX words, only "
-      << dlength << " bytes(" << (dlength / mvtx::kFlxWordBytes)
+      << dlength << " bytes(" << (dlength / mvtx::FLXWordLength)
       << " FLX words), will be decoded. \n"
       << "!!!!!!!!!!!!!!!!!!WARNING!!!!!!!!!!!!!!!!!!!! \n"
       << ENDL;
@@ -536,32 +527,32 @@ packet_range_t oncsSub_idmvtxv3::get_packet_range() const
   return std::make_pair(the_pos, the_end);
 }
 
-
+//_________________________________________________
 int oncsSub_idmvtxv3::decode()
 {
-  if ( m_is_decoded )
+  if (m_is_decoded)
   {
     return 0;
   }
-
   packet_range_t range = get_packet_range();
-  mvtx::mvtx_decoder(range.first, range.second);
+  //mvtx::mvtx_decoder(range.first, range.second);
+  mvtx::RawPixelReader<mvtx::ChipMappingMVTX> mRawReader;
+
 
   m_is_decoded = true;
 
   return 0;
 }
 
-
+//_________________________________________________
 void oncsSub_idmvtxv3::dump(OSTREAM &os)
 {
   identify(os);
-  mvtx::VERBOSITY = 9;
   decode();
   return;
 }
 
-
+//_________________________________________________
 void oncsSub_idmvtxv3::gdump(const int how, OSTREAM &out) const
 {
   identify(out);
@@ -569,43 +560,25 @@ void oncsSub_idmvtxv3::gdump(const int how, OSTREAM &out) const
   packet_range_t range = get_packet_range();
   uint8_t *pos = range.first;
 
-  uint32_t offset = 0;
   switch (how)
   {
     case (EVT_HEXADECIMAL):
-      while ( pos < range.second )
+      mvtx::FLXWord flxWord;
+      while (pos < range.second)
       {
-        mvtx::flx_word_t *flxWord = (mvtx::flx_word_t *)pos;
-
-        out << SETFILL(' ') << SETW(5) << offset << " |  ";
-
-        //FELIX header
-        print_stuff(out, flxWord->header, 2);
-        out << " ";
-
-        auto gbtWord_it = std::cend(flxWord->gbt_words);
-        while ( gbtWord_it != std::cbegin(flxWord->gbt_words) )
-        {
-          --gbtWord_it;
-          auto gbtBytes_it = std::cend(*gbtWord_it);
-          while ( gbtBytes_it != std::cbegin(*gbtWord_it) )
-          {
-            print_stuff(out, *(--gbtBytes_it), 1);
-          }
-          out << " ";
-        }
+        flxWord.copyFrom((void*)pos);
+        out << SETFILL(' ') << SETW(5) << (pos - range.first) << " |  ";
+        out << flxWord.asString() << " ";
         out << ENDL;
-
-        pos += mvtx::kFlxWordBytes;
-        offset += mvtx::kFlxWordBytes;
+        pos += mvtx::FLXWordLength;
       }
       break;
 
     case (EVT_DECIMAL):
       out << ENDL
-      << "!!!!!!!!!!!!!!!!!!WARNING!!!!!!!!!!!!!!!!!!!! \n"
+      << "!!!!!!!!!!!!!!!!!!WARNING!!!!!!!!!!!!!!!!!!!!\n"
       << "Not implemented...\n"
-      << "!!!!!!!!!!!!!!!!!!WARNING!!!!!!!!!!!!!!!!!!!! \n"
+      << "!!!!!!!!!!!!!!!!!!WARNING!!!!!!!!!!!!!!!!!!!!\n"
       << ENDL;
       break;
 
