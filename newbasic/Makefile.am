@@ -311,9 +311,9 @@ msgheaders = \
 
 AM_CPPFLAGS = -I$(includedir)  -I@ROOTINC@ -I$(OPT_SPHENIX)/include
 
-if MVTX_DECODER
-AM_CPPFLAGS += -D_MVTX_DECODER_
-AM_LDFLAGS += -L$(RCDAQ_ROOT)/lib -lmvtx_decoder
+if ENABLE_MVTX_DECODER
+AM_CPPFLAGS += -DMVTX_DECODER
+AM_LDFLAGS +=  -lmvtxdecoder
 endif
 
 noinst_HEADERS = \

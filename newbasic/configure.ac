@@ -156,7 +156,7 @@ AC_ARG_ENABLE(mvtx_decoder,
 		*) AC_MSG_ERROR(bad value ${enableval} for --enable-mvtx-decoder) ;;
 		esac],
 	mvtx_decoder=false)
-AM_CONDITIONAL(MVTX_DECODER, test "x$mvtx_decoder" = xtrue)
+AM_CONDITIONAL(ENABLE_MVTX_DECODER, test "x$mvtx_decoder" = xtrue)
 
 
 AC_CONFIG_FILES([Makefile])
