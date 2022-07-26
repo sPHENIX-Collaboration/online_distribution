@@ -38,18 +38,18 @@ public:
   virtual int *getNextEventData() {return 0;};
   virtual int releaseEventData() {return 0;};
 
-  virtual void setBlockingMode(const int mode) {};
+  virtual void setBlockingMode(const int /*mode*/) {};
   virtual int getBlockingMode() const {return 0;};
 
-  virtual void setSelectMode(const int mode) {};
+  virtual void setSelectMode(const int /*mode*/) {};
   virtual int getSelectMode() const {return 0;};
 
-  virtual void setSelectWords(const int i1, const int i2, const int i3, const int i4 ) {};
-  virtual void getSelectWords(int val[]) const {};
+  virtual void setSelectWords(const int , const int , const int , const int  ) {};
+  virtual void getSelectWords(int []) const {};
 
   virtual const char * getCurrentFileName() const { return " "; };
 
-  virtual int  setVerbosity(const int v) { return -1; }; // most iterators don't have the concept
+  virtual int  setVerbosity(const int ) { return -1; }; // most iterators don't have the concept
   virtual int  getVerbosity() const { return -1; };
 
 
