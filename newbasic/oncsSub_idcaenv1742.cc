@@ -151,10 +151,12 @@ int oncsSub_idcaenv1742::iValue(const int sample, const int ch)
 
   if ( decoded_data1 == 0 ) decoded_data1 = decode(&data1_length);
 
-  if ( ch < 0 || ch >= 32 ) return 0;
+  //if ( ch < 0 || ch >= 32 ) return 0;
+  if ( ch < 0 || ch >= 36 ) return 0;
   if ( sample < 0 || sample >= samples ) return 0;
 
-  return decoded_data1[ch*samples + sample];
+  //return decoded_data1[ch*samples + sample];
+  return (ch < 32 ? decoded_data1[ch*samples + sample] : decoded_data2[(ch-32)*samples + sample]);
 
 }
 

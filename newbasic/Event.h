@@ -75,11 +75,10 @@ public:
   */
 
 
+  virtual void listFrame(  const int /*id*/=0, std::ostream& /*os*/=std::cout) const {};
 
-  virtual void listFrame(  const int id=0, std::ostream& os=std::cout) const {};
-
-  virtual void listHistory(  const int id=0, std::ostream& os=std::cout) const {};
-  virtual void listError(  const int id=0, std::ostream& os=std::cout) const {};
+  virtual void listHistory(  const int /*id*/=0, std::ostream& /*os*/=std::cout) const {};
+  virtual void listError(  const int /*id*/=0, std::ostream& /*os*/=std::cout) const {};
 
   /**
    getFrameEntry will return a particular entry from the frame header which contains
@@ -103,7 +102,7 @@ public:
    Asking for a word beyond the number of such words will return 0.
   */
 
-  virtual unsigned int getFrameEntry(  const char *what, const int id=0, const int index =0) const { return 0; };
+  virtual unsigned int getFrameEntry(  const char * /*what*/, const int /*id*/=0, const int /*index */=0) const { return 0; };
 
 
   // ***** packet handling *****
@@ -119,7 +118,7 @@ public:
    For debugging purposes mostly.
     
   */
-  virtual Packet* getPacket(const int, const int hitFormat)=0;
+  virtual Packet* getPacket(const int, const int /*hitFormat*/)=0;
 
   /**
     getPacketList returns a simple-minded array of pointers
@@ -127,13 +126,13 @@ public:
     of packets returned in the array. The second parameter tells
     the packet how long the array is.
   */
-  virtual int getPacketList(Packet*[], const int length) =0;
+  virtual int getPacketList(Packet*[], const int /*length*/) =0;
 
   /**
    existPacket returns 1 if such a packet exists in the
    event. 0 else.
   */
-  virtual int existPacket (const int packetid)=0;
+  virtual int existPacket (const int /*packetid*/)=0;
 
   // **** event copying *****
   /**
@@ -143,7 +142,7 @@ public:
 
    if what = "RAW" then we just copy the payload data without the event header.
   */
-  virtual int Copy ( int *destination, const unsigned int length, int *nw, const char * what ="" )=0;
+  virtual int Copy ( int *destination, const unsigned int /*length*/, int *nw, const char * /*what */="" )=0;
 
 
   /**
@@ -159,7 +158,7 @@ public:
    the header for fast event selection purposes. This is mainly used by the
    ET system to distribute events based on its properties.
   */
-  virtual unsigned int getTagWord( const int i=0) const { return 0;};
+  virtual unsigned int getTagWord( const int /*i*/ =0) const { return 0;};
 
   virtual int is_pointer_type() const =0;
 
