@@ -534,7 +534,7 @@ int oncsSub_idmvtxv3::decode()
   {
     return 0;
   }
-  packet_range_t range = get_packet_range();
+  //packet_range_t range = get_packet_range();
   //mvtx::mvtx_decoder(range.first, range.second);
   mvtx::RawPixelReader<mvtx::ChipMappingMVTX> mRawReader;
 
