@@ -56,8 +56,15 @@ AC_PROG_INSTALL
 dnl   no point in suppressing warnings people should 
 dnl   at least see them, so here we go for g++: -Wall
 if test $ac_cv_prog_gxx = yes; then
-  CXXFLAGS="$CXXFLAGS -Wall -Werror -Wno-overloaded-virtual -Wno-class-memaccess -Wno-unknown-warning-option -Wno-unused-parameter -Wno-type-limits -Wno-unused-but-set-parameter -Wno-unused-but-set-variable"
+  CXXFLAGS="$CXXFLAGS -Wall -Werror -Wno-overloaded-virtual -Wno-class-memaccess -Wno-unused-parameter -Wno-type-limits -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-deprecated-declarations"
 fi
+
+case $CXX in
+ clang++)
+   CXXFLAGS="$CXXFLAGS -Wno-unknown-warning-option"
+ ;;
+esac
+
 
 AC_HEADER_STDC
 AC_CHECK_HEADERS(getopt.h)
