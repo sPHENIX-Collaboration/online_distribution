@@ -455,6 +455,7 @@ endif
 
 
 event_Dict.C : \
+  ioselect.h \
   Event.h  \
   Eventiterator.h \
   fileEventiterator.h \
