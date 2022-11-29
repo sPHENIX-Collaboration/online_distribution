@@ -431,6 +431,7 @@ libRootmessage_la_SOURCES = \
 #  msg_dict.C
 
 msg_Dict.C : \
+  ioselect.h \
   msg_control.h \
   date_filter_msg_buffer.h \
   filter_msg_buffer.h \
