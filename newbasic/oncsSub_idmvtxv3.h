@@ -19,7 +19,7 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
 
 #ifndef MVTX_DECODER // define public dummy inline methods
   void dump(OSTREAM &os = COUT) override { COUT << "MVTX DECODER DISABLED" << ENDL;};
-  void gdump(const int how=EVT_HEXADECIMAL, OSTREAM &os = COUT) const override 
+  void gdump(const int how=EVT_HEXADECIMAL, OSTREAM &os = COUT) const override
   {
     COUT << "MVTX DECODER DISABLED" << ENDL;
   };

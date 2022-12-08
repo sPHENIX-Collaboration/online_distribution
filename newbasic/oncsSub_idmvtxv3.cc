@@ -2,9 +2,12 @@
 
 #ifdef MVTX_DECODER
 #include "MVTXDecoder/ChipMappingMVTX.h"
-#include "MVTXDecoder/RawPixelReader.h"
+//#include "MVTXDecoder/RawPixelReader.h"
+#include "MVTXDecoder/RawPixelDecoder.h"
 //#include "MVTXDecoder/mvtx_decoder.h"
 #include "MVTXDecoder/FLXWord.h"
+#include "MVTXDecoder/PixelData.h"
+
 #endif
 
 #include <cassert>  // for assert
@@ -25,6 +28,10 @@ oncsSub_idmvtxv3::oncsSub_idmvtxv3(subevtdata_ptr data)
   : oncsSubevent_w4(data)
   , m_is_decoded(false)
 {
+#ifdef MVTX_DECODER
+  fair::Logger::SetConsoleColor(false);
+  fair::Logger::SetConsoleSeverity("debug");
+#endif
 //    _highest_ruid = -1;
 //    _decoder_error = 0;
 //    for (int ruid=0; ruid<IDMVTXV3_MAXRUID+1; ruid++)
@@ -521,11 +528,12 @@ packet_range_t oncsSub_idmvtxv3::get_packet_range() const
       << ENDL;
   }
 
-  uint8_t *the_end = (uint8_t *) &payload[dlength];
-  uint8_t *the_pos = (uint8_t *) payload;
+  uint8_t *the_start = (uint8_t *) payload;
+  uint8_t *the_end   = (uint8_t *) &payload[dlength];
 
-  return std::make_pair(the_pos, the_end);
+  return std::make_pair(the_start, the_end);
 }
+
 
 //_________________________________________________
 int oncsSub_idmvtxv3::decode()
@@ -534,10 +542,76 @@ int oncsSub_idmvtxv3::decode()
   {
     return 0;
   }
-  //packet_range_t range = get_packet_range();
-  //mvtx::mvtx_decoder(range.first, range.second);
-  mvtx::RawPixelReader<mvtx::ChipMappingMVTX> mRawReader;
+  packet_range_t start_end = get_packet_range();
+  LOGF(debug, "oncsSub_idmvtxv3::decode() Felix packet length: %lld Bytes",
+      (start_end.second - start_end.first));
+  using unique_decoder_t = mvtx::RawPixelDecoder<mvtx::ChipMappingMVTX>;
+  std::unique_ptr<unique_decoder_t> mDecoder = std::make_unique<unique_decoder_t>();
+  //mvtx::RawPixelDecoder<mvtx::ChipMappingMVTX> mDecoder;
+  mDecoder->init();
+  mDecoder->setVerbosity(20);
+  mDecoder->OpenInput(start_end.first, start_end.second, mvtx::FLXWordLength);
+  mDecoder->startNewPacket();
+  mvtx::ChipPixelData chipData;
+  mDecoder->getNextChipData(chipData);
+ // mDecoder->startNewTF(pc.inputs());
 
+  /*std::vector<Digit> digVec;
+  std::vector<ROFRecord> digROFVec;
+  digVec.reserve(mEstNDig);
+  digROFVec.reserve(mEstNROF);
+
+  mDecoder->setDecodeNextAuto(false);
+  while (mDecoder->decodeNextTrigger()) {
+    //if (mDoDigits || mClusterer->getMaxROFDepthToSquash()) { // call before clusterization, since the latter will hide the digits
+      mDecoder->fillDecodedDigits(digVec, digROFVec);        // lot of copying involved
+      //if (mDoCalibData) {
+      //  mDecoder->fillCalibData(calVec);
+      //}
+   // }
+    //if (mDoClusters && !mClusterer->getMaxROFDepthToSquash()) { // !!! THREADS !!!
+    //  mClusterer->process(mNThreads, *mDecoder.get(), &clusCompVec, mDoPatterns ? &clusPattVec : nullptr, &clusROFVec);
+   // }
+  }
+*/
+  /*mvtx::RawPixelDecoder<mvtx::ChipMappingMVTX> mRawDecoder;
+  mRawDecoder.setVerbosity(20);
+  mvtx::ChipPixelData chipData;
+  mRawDecoder.getNextChipData(chipData);*/
+
+ // mvtx::RawPixelReader<mvtx::ChipMappingMVTX> mRawReader;
+  //mRawReader.OpenInput(start_end.first, start_end.second, mvtx::FLXWordLength);
+  //mRawReader.setVerbosity(20);
+  //mvtx::ChipPixelData chipData;
+  //mRawReader.getNextChipData(chipData);
+
+  // mrawReader.setPadding256(padding); // payload GBT words are padded to 16B
+  // mRawReader.imposeMaxPage(page8kb); // pages are 8kB in size (no skimming)
+  //rawReader.setMinTriggersToCache(nTriggersToCache);
+
+  //TStopwatch sw;
+  //sw.Start();
+  //uint32_t roFrame = 0;
+  //o2::InteractionRecord irHB, irTrig;
+  /*std::vector<o2::itsmft::Digit> digits, *digitsPtr = &digits;
+  std::vector<o2::itsmft::ROFRecord> rofRecVec, *rofRecVecPtr = &rofRecVec;
+  std::size_t rofEntry = 0, nrofdig = 0;
+  std::unique_ptr<TFile> outFileDig;
+  std::unique_ptr<TTree> outTreeDig; // output tree with digits
+
+  if (!outDigName.empty()) { // output to digit is requested
+    outFileDig = std::make_unique<TFile>(outDigName.c_str(), "recreate");
+    outTreeDig = std::make_unique<TTree>("o2sim", "Digits tree");
+    outTreeDig->Branch("ITSDigit", &digitsPtr);
+    outTreeDig->Branch("ITSDigitROF", &rofRecVecPtr);
+  }*/
+
+  //while (rawReader.getNextChipData(chipData)) {
+
+  //chipData.print(); <- YCM comment for test
+
+
+  //RDHUtils::printRDH(reinterpret_cast<const mvtx::RAWDataHeaderV8*>(getGBTLink(decData.links[decData.cableLinkID[icab]])->lastRDH));
 
   m_is_decoded = true;
 
@@ -557,20 +631,21 @@ void oncsSub_idmvtxv3::gdump(const int how, OSTREAM &out) const
 {
   identify(out);
 
-  packet_range_t range = get_packet_range();
-  uint8_t *pos = range.first;
+  packet_range_t start_end = get_packet_range();
+  //set ptr position to start bufffer
+  uint8_t *the_pos = start_end.first;
 
   switch (how)
   {
     case (EVT_HEXADECIMAL):
-      mvtx::FLXWord flxWord;
-      while (pos < range.second)
+      while (the_pos < start_end.second)
       {
-        flxWord.copyFrom((void*)pos);
-        out << SETFILL(' ') << SETW(5) << (pos - range.first) << " |  ";
-        out << flxWord.asString() << " ";
+        //flxWord.copyFrom(reinterpret_cast<void *>(the_pos));
+        mvtx::FLXWord *flxWord = reinterpret_cast<mvtx::FLXWord *>(the_pos);
+        out << SETFILL(' ') << SETW(5) << (the_pos - start_end.first) << " |  ";
+        out << flxWord->asString() << " ";
         out << ENDL;
-        pos += mvtx::FLXWordLength;
+        the_pos += mvtx::FLXWordLength;
       }
       break;
 
