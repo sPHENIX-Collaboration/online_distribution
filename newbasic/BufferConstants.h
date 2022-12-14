@@ -10,6 +10,7 @@
 #define ONCSBUFFERMARKER  0xffffc0c0U
 #define GZBUFFERMARKER    0xfffffafeU
 #define LZO1XBUFFERMARKER 0xffffbbfeU
+#define ONCSLZO1XBUFFERMARKER 0xffffbbc0U
 
 #define BUFFERBLOCKSIZE 8192U
 
