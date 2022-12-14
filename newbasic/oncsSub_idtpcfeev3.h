@@ -64,16 +64,17 @@ protected:
   //std::vector<sampa_waveform *> waveform_vector[MAX_FEECOUNT * MAX_CHANNELS];
 
   // our sort functional
-  struct BCOSort:
-    public std::binary_function<const sampa_waveform *, const sampa_waveform *, bool> {
-    
+
+struct bco_compare {
     bool operator() (const sampa_waveform *lhs, const sampa_waveform *rhs) const
     {
       return  ( lhs->bx_timestamp <= rhs->bx_timestamp );
     }
-  };
+};
 
-  typedef std::multiset< sampa_waveform* , BCOSort> waveform_set;
+
+  
+  typedef std::multiset< sampa_waveform* , bco_compare> waveform_set;
   //typedef waveform_set::iterator wf_iter;
   
   waveform_set waveforms;
