@@ -56,35 +56,35 @@ class  Packet
 
 
   /// iValue returns the value of a given channel as an int. 
-  virtual int    iValue(const int channel) =0;
+  virtual int    iValue(const int /*channel*/) =0;
 
   /** with the "what" parameter you can decide which aspect 
       of the data you want to see (for devices which have more than one)
   */
-  virtual int    iValue(const int channel, const char * what) =0;
+  virtual int    iValue(const int /*channel*/, const char * /*what*/) =0;
 
   /** we have a few recent devices which have one more dimension 
       (such as card, time sample, channel)
   */
-  virtual int    iValue(const int channel, const int y, const char * what) =0;
+  virtual int    iValue(const int /*channel*/, const int /*y*/, const char * /*what*/) =0;
 
   /** this supports devices which are inherently organized as two-dimensional
       data, such as flash ADC's (channel vs time slice) 
   */
-  virtual int    iValue(const int channel,const int iy) =0;
+  virtual int    iValue(const int /*channel*/,const int /*iy*/) =0;
 
   /** this supports devices  organized as three-dimensional
       data (card vs channel vs time slice ) 
   */
-  virtual int    iValue(const int channel,const int iy, const int iz) =0;
+  virtual int    iValue(const int /*channel*/,const int /*iy*/, const int /*iz*/) =0;
 
   /** this supports devices  organized as three-dimensional
       data (card vs channel vs time slice, with a "what" selection ) 
   */
-  virtual int    iValue(const int channel,const int iy, const int iz, const char *what) =0;
+  virtual int    iValue(const int /*channel*/,const int /*iy*/, const int /*iz*/, const char */*what*/) =0;
 
   /** rValue returns the value of a given channel as a float */
-  virtual float  rValue(const int channel) =0;
+  virtual float  rValue(const int /*channel*/) =0;
 
   /** dValue returns the value of a given channel as a double */
   virtual double  dValue(const int channel) 
@@ -110,25 +110,25 @@ class  Packet
   /** with the "what" parameter you can decide which aspect 
       of the data you want to see (for devices which have more than one)
   */
-  virtual float  rValue(const int channel, const char * what) =0;
+  virtual float  rValue(const int /*channel*/, const char * /*what*/) =0;
 
 
   /** this supports devices which are inherently organized as two-dimensional
       data, such as flash ADC's (channel vs time slice) 
   */
-  virtual float  rValue(const int channel, const int iy) =0;
+  virtual float  rValue(const int /*channel*/, const int /*iy*/) =0;
 
-  virtual void * pValue(const int chan)
+  virtual void * pValue(const int /*channel*/)
   {
     return 0;
   }
 
-  virtual void * pValue(const int chan, const char *what)
+  virtual void * pValue(const int /*channel*/, const char * /*what*/)
   {
     return 0;
   }
 
-  virtual void * pValue(const int chan, const int iy)
+  virtual void * pValue(const int /*chan*/, const int /*iy*/)
   {
     return 0;
   }
@@ -149,24 +149,24 @@ class  Packet
       with the decoded data
   */ 
   virtual int    fillIntArray (int destination[],    // the data go here 
-			       const int length,      // space we have in destination
-			       int * nw,              // words actually used
+			       const int /*length*/,      // space we have in destination
+			       int * /*nw*/,              // words actually used
 			       const char * what="") = 0; // type of data (see above)
 
   ///  fillFloatArray fills an array of floats
   virtual int    fillFloatArray (float destination[],    // the data go here 
-				 const int length,      // space we have in destination
-				 int * nw,              // words actually used
+				 const int /*length*/,      // space we have in destination
+				 int * /*nw*/,              // words actually used
 				 const char * what="") = 0; // type of data (see above)
 
   /** getIntArray and getFloatArray create a new array of the approriate size
       fill it with the decoded values, and return a pointer to the array. 
       nw is the length of the array created. 
   */
-  virtual int*   getIntArray (int * nw,const char * ="") =0;
+  virtual int*   getIntArray (int * /*nw*/,const char * ="") =0;
 
   ///  getFloatArray creates and returns an array of floats
-  virtual float* getFloatArray (int * nw,const char * ="") =0;
+  virtual float* getFloatArray (int * /*nw*/,const char * ="") =0;
 
   
   /// find out what type (pointer- or data based) packet object we have
@@ -237,7 +237,7 @@ class  Packet
   virtual void identify(std::ostream& os = std::cout) const = 0;
 
   /// set a new packet identifier
-  virtual int	setIdentifier(const int newid) = 0; // Identifier
+  virtual int	setIdentifier(const int /*newid*/) = 0; // Identifier
 
   /// write an indepth identification message to the supplied OSTREAM.
   virtual void fullIdentify(std::ostream& os = std::cout) const 
@@ -267,7 +267,7 @@ class  Packet
 
   */
   virtual int getCheckSumStatus() const { return 0;};
-  virtual int   copyMe(int [],  const int maxlength) const { return 0;};
+  virtual int   copyMe(int [],  const int /*maxlength*/) const { return 0;};
 
   virtual int setInternalParameter ( const int p1=0, const int p2=0, const char *what = "") = 0;
 
