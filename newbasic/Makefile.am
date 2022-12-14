@@ -198,7 +198,6 @@ allheaders = \
   packet_cdevringnopol.h \
   packet_cdevbuckets.h \
   packet_cdevdvm.h \
-  packet_idcdevdescr.h\
   caen_correction.h
 
 
@@ -294,7 +293,6 @@ allsources = \
   packet_cdevringnopol.cc \
   packet_cdevbuckets.cc \
   packet_cdevdvm.cc \
-  packet_idcdevdescr.cc \
   caen_correction.cc
 
 
