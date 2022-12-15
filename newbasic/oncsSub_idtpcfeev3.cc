@@ -82,7 +82,7 @@ int oncsSub_idtpcfeev3::tpc_decode ()
     }
   //  coutfl << " done with tcp_decode index = " << index << endl;
 
-  std::vector<unsigned short>::const_iterator fee_data_itr;
+  // std::vector<unsigned short>::const_iterator fee_data_itr;
 
   // for ( int ifee = 0 ; ifee < MAX_FEECOUNT ; ifee++)
   //   {
@@ -92,8 +92,6 @@ int oncsSub_idtpcfeev3::tpc_decode ()
   
   for ( int ifee = 0 ; ifee < MAX_FEECOUNT ; ifee++)
     {
-      
-      //      coutfl << " starting with fee number " << ifee << " size of vector " << fee_data[ifee].size() << endl;
       
       unsigned int pos;   // I'm too tired to play with iterators; pos is the position in a FEE vector
       
@@ -106,34 +104,58 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 	  //for ( int i = 0; i < skip_amount; i++) ++fee_data_itr;  // skip that many words
 	  pos +=  skip_amount;
 
-	  // capture the header so we can easier get the bit shift stuff
-	  uint16_t header[HEADER_LENGTH];
-	  for ( int i = 0; i < HEADER_LENGTH; i++ ) header[i] = (fee_data[ifee][pos++]) ;
+	  // as we advance pos, let's remember where the start is
+	  unsigned int startpos = pos;
 
-	  sampa_waveform *sw = new sampa_waveform;
-	  
-	  sw->fee           = ifee;
-	  sw->pkt_length    = header[0];
-	  sw->adc_length    = header[5];
-	  sw->sampa_address = (header[1] >> 5) & 0xf;
-	  sw->sampa_channel = header[1] & 0x1f;
-	  sw->channel       = header[1] & 0x1ff;
-	  sw->bx_timestamp  = ((header[3] & 0x1ff) << 11)
-	    | ((header[2] & 0x3ff) << 1)
-	    | (header[1] >> 9);	  
-	  
-	  // coutfl << " Fee: " << ifee << " Sampa " << sw->sampa_address
-	  // 	 << " sampa channel: " << sw->sampa_channel
-	  // 	 << " channel: " << sw->channel
-	  // 	 << "  waveform length: " << data_size  << endl;
-
-	  // now we add the actual waveform
-	  uint16_t data_size = header[5] -1 ;
-	  for (int i = 0 ; i < data_size ; i++)
+	  // first the check if our vector cuts off before the fixed-length header, then we are already done
+	  if ( startpos + HEADER_LENGTH >= fee_data[ifee].size() || startpos + fee_data[ifee][startpos] > fee_data[ifee].size())
 	    {
-	      sw->waveform.push_back( fee_data[ifee][pos++]);
+	      pos = fee_data[ifee].size() + 1; // make sure we really terminate the loop
 	    }
-	  waveforms.insert(sw);
+	  else
+	    {
+	      // capture the header so we can easier get the bit shift stuff
+	      uint16_t header[HEADER_LENGTH];
+	      for ( int i = 0; i < HEADER_LENGTH; i++ ) header[i] = (fee_data[ifee][pos++]) ;
+
+	      sampa_waveform *sw = new sampa_waveform;
+	  
+	      sw->fee           = ifee;
+	      sw->pkt_length    = header[0];
+	      sw->adc_length    = header[5];
+	      sw->sampa_address = (header[1] >> 5) & 0xf;
+	      sw->sampa_channel = header[1] & 0x1f;
+	      sw->channel       = header[1] & 0x1ff;
+	      sw->bx_timestamp  = ((header[3] & 0x1ff) << 11)
+		| ((header[2] & 0x3ff) << 1)
+		| (header[1] >> 9);	  
+	      
+	      // coutfl << " Fee: " << ifee << " Sampa " << sw->sampa_address
+	      // 	 << " sampa channel: " << sw->sampa_channel
+	      // 	 << " channel: " << sw->channel
+	      // 	 << "  waveform length: " << data_size  << endl;
+	      
+	      // now we add the actual waveform
+	      uint16_t data_size = header[5] -1 ;
+	      for (int i = 0 ; i < data_size ; i++)
+		{
+		  sw->waveform.push_back( fee_data[ifee][pos++]);
+		}
+	      
+	      // we calculate the checksum here because "pos" is at the right place
+	      uint16_t crc = crc16(ifee, startpos, header[0]-1);
+	      // coutfl << "fee " << setw(3) << sw->fee
+	      // 	     << " sampla channel " << setw(3) <<  sw->channel
+	      // 	     << " crc and value " << hex << setw(5) << crc << " " << setw(5) << fee_data[ifee][pos] << dec;
+	      // if (  crc != fee_data[ifee][pos] ) cout << "  *********";
+	      // cout << endl;
+	      
+	      sw->checksum = crc;
+	      sw->valid = ( crc == fee_data[ifee][pos]);
+	      
+	      waveforms.insert(sw);
+	    }
+	  
 	  //coutfl << "inserting at " << ifee*MAX_CHANNELS + sw->channel << " size is " << waveforms.size() << endl;
 	  //waveform_vector[ifee*MAX_CHANNELS + sw->channel].push_back(sw);
 	}
@@ -252,7 +274,26 @@ int oncsSub_idtpcfeev3::iValue(const int n, const char *what)
 	}
       return 0;
     }
-  
+
+  else if ( strcmp(what,"CHECKSUM") == 0 )
+    {
+      if ( cacheIterator(n) )
+	{
+	  return (int) (*_cached_iter)->checksum;
+	}
+      return 0;
+    }
+
+  else if ( strcmp(what,"CHECKSUMERROR") == 0 )
+    {
+      if ( cacheIterator(n) )
+	{
+	  if ( (*_cached_iter)->valid ) return 0; 
+	  return 1;
+	}
+      return 0;
+    }
+
   return 0;
   
 }
@@ -326,19 +367,13 @@ void  oncsSub_idtpcfeev3::dump ( OSTREAM& os )
   // for ( int i = 0 ; i < iValue(0,"MAX_FEECOUNT"); i++)
   //   {
   //     fee_data_iter[i] = fee_data[i].begin();
-  //     os << setw(5) << i;
+  //     os << setw(8) << i;
   //   }
   // os << endl;
   // os << "-----------------------------------------------" << endl;
+
   // int still_data = 1;
   // int count = 0;
-
-
-  // for ( fee_data_iter[0] = fee_data[0].begin(); fee_data_iter[0] != fee_data[0].end(); ++fee_data_iter[0])
-  //   {
-
-  //     os << hex << *(fee_data_iter[0]) << dec << endl;
-  //   }
 
   // while (still_data)
   //   {
@@ -364,13 +399,17 @@ void  oncsSub_idtpcfeev3::dump ( OSTREAM& os )
 
   for ( int i = 0; i < iValue(0, "NR_WF") ; i++) // go through the datasets
     {
-      os << "  FEE   Channel   Sampachannel   Samples     BCO  " << endl;
+      os << "  FEE   Channel   Sampachannel   Samples     BCO     CRC_ERR" << endl;
 
       os << setw(5) << iValue(i, "FEE")  << " "
 	 << setw(9) << iValue(i, "CHANNEL")  << " "
 	 << setw(9) << iValue(i, "SAMPACHANNEL")  << " "
 	 << setw(12) << iValue(i, "SAMPLES") << " "
-	 <<  "     0x" << setw(5) << hex << iValue(i, "BCO") << dec << endl;
+	 <<  "     0x" << setw(5) << hex << iValue(i, "BCO") << dec
+	//	 << " 0x" << setw(4) << hex << iValue(i, "CHECKSUM") << dec
+	 <<  setw(4) << iValue(i, "CHECKSUMERROR")
+	 << endl;
+      
       for (int j = 0; j  < iValue(i, "SAMPLES") ; j += 10)
 	{
 	  os << "                                                       ";
@@ -402,13 +441,12 @@ unsigned short oncsSub_idtpcfeev3::reverseBits(const unsigned short x) const
 
 unsigned short oncsSub_idtpcfeev3::crc16(const unsigned int fee, const unsigned int index, const int  l) const 
 {
-  int len = l;
-  int i = index;
+
   unsigned short crc = 0xffff;
     
-  while (len--)
+  for ( int i = 0; i < l; i++)
     {
-      unsigned short x = fee_data[fee].at(i++);
+      unsigned short x = fee_data[fee][index+i];
       //      cout << "in crc " << hex << x << dec << endl;
       crc ^= reverseBits( x);
       for (unsigned short k = 0; k < 16; k++)
