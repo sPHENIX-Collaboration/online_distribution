@@ -433,6 +433,7 @@ libRootmessage_la_SOURCES = \
 #  msg_dict.C
 
 msg_Dict.C : \
+  ioselect.h \
   msg_control.h \
   date_filter_msg_buffer.h \
   filter_msg_buffer.h \
@@ -457,6 +458,7 @@ endif
 
 
 event_Dict.C : \
+  ioselect.h \
   Event.h  \
   Eventiterator.h \
   fileEventiterator.h \
