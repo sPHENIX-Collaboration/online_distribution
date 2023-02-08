@@ -681,11 +681,6 @@ Packet *A_Event::makePacket(PHDWORD *pp, const int hitFormat)
       return new Packet_starscaler(pp);
       break;
 
-    case IDCDEVDESCR:
-      return new Packet_idcdevdescr(pp);
-      break;
-
-
     default:
       switch (getUnstructPacketWordSize (pp))
 	{

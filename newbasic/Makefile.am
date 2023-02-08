@@ -164,6 +164,8 @@ allheaders = \
   oncsSub_idmvtxv0.h \
   oncsSub_idtpcfeev1.h \
   oncsSub_idtpcfeev2.h \
+  oncsSub_idtpcfeev3.h \
+  oncsSub_idinttv0.h \
   oncsSub_iddreamv0.h \
   oncsSub_idmvtxv1.h \
   oncsSub_idmvtxv2.h \
@@ -196,7 +198,6 @@ allheaders = \
   packet_cdevringnopol.h \
   packet_cdevbuckets.h \
   packet_cdevdvm.h \
-  packet_idcdevdescr.h\
   caen_correction.h
 
 
@@ -259,6 +260,8 @@ allsources = \
   oncsSub_idmvtxv0.cc \
   oncsSub_idtpcfeev1.cc \
   oncsSub_idtpcfeev2.cc \
+  oncsSub_idtpcfeev3.cc \
+  oncsSub_idinttv0.cc \
   oncsSub_iddreamv0.cc \
   oncsSub_idmvtxv1.cc \
   oncsSub_idmvtxv2.cc \
@@ -290,7 +293,6 @@ allsources = \
   packet_cdevringnopol.cc \
   packet_cdevbuckets.cc \
   packet_cdevdvm.cc \
-  packet_idcdevdescr.cc \
   caen_correction.cc
 
 
