@@ -169,6 +169,7 @@ allheaders = \
   oncsSub_iddreamv0.h \
   oncsSub_idmvtxv1.h \
   oncsSub_idmvtxv2.h \
+  oncsSub_idmvtxv3.h \
   oncsSubevent.h \
   packet.h \
   packetConstants.h \
@@ -265,6 +266,7 @@ allsources = \
   oncsSub_iddreamv0.cc \
   oncsSub_idmvtxv1.cc \
   oncsSub_idmvtxv2.cc \
+  oncsSub_idmvtxv3.cc \
   oncsSubevent.cc \
   oncs_mnemonic.cc \
   packet_A.cc \
@@ -295,8 +297,7 @@ allsources = \
   packet_cdevdvm.cc \
   caen_correction.cc
 
-
-AM_LDFLAGS = -L$(libdir)  -L$(OPT_SPHENIX)/lib
+AM_LDFLAGS = -L$(libdir) -L$(ONLINE_MAIN)/lib -L$(OPT_SPHENIX)/lib
 
 BUILT_SOURCES = ioselect.h
 
@@ -311,6 +312,11 @@ msgheaders = \
   strnstr.h
 
 AM_CPPFLAGS = -I$(includedir)  -I@ROOTINC@ -I$(OPT_SPHENIX)/include
+
+if ENABLE_MVTX_DECODER
+AM_CPPFLAGS += -DMVTX_DECODER
+AM_LDFLAGS +=  -lmvtxdecoder
+endif
 
 noinst_HEADERS = \
   eventLinkDef.h \

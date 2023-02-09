@@ -51,7 +51,6 @@ const char *oncs_get_mnemonic (const int structure, const int format)
     case(IDMVTXV3): return  "IDMVTXV3";
     case(IDINTTV0): return  "IDINTTV0";
   
-    
   }
   return "UNKNOWN";
 }

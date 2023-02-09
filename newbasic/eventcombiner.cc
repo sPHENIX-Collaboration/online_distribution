@@ -268,7 +268,7 @@ main(int argc, char *argv[])
 	int current = 0;
 	int take_this = 1;
 	
-	if ( eventnumber && e->getEvtSequence() < eventnumber)  take_this = 0;
+	if ( eventnumber && e != 0 && e->getEvtSequence() < eventnumber)  take_this = 0;
 
 	if ( countnumber && count+1 < countnumber)  take_this = 0;
 	

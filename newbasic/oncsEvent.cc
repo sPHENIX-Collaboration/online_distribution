@@ -296,6 +296,10 @@ Packet *oncsEvent::makePacket(PHDWORD *pp, const int hitFormat)
 	oncsSub_idmvtxv2( sevt_ptr );
       break;
 
+    case (IDMVTXV3):
+      return new
+	oncsSub_idmvtxv3( sevt_ptr );
+      break;
 
     default:
       switch (sevt_ptr->sub_type)
