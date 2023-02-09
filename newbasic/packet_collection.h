@@ -23,7 +23,6 @@
 #include "packet_cdevpoltarget.h"
 #include "packet_cdevbuckets.h"
 #include "packet_cdevringnopol.h"
-#include "packet_idcdevdescr.h"
 
 #include "packet_starscaler.h"
 

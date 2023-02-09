@@ -29,8 +29,8 @@ public:
 protected:
   int tpc_decode ();
 
-#define MAX_FEECOUNT 8
-#define MAX_FEECHANNELS 256
+  static const int MAX_FEECOUNT=8;
+  static const int MAX_FEECHANNELS=256;
 
   
   unsigned short reverseBits(const unsigned short x) const;
