@@ -50,7 +50,7 @@ dnl  CXXFLAGS="+p -mt -g -xildoff"
   ;;
 esac
 
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE(Event,1.00)
 
 AC_PROG_INSTALL
 
