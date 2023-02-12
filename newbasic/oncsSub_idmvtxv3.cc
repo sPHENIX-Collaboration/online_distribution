@@ -151,7 +151,7 @@ int oncsSub_idmvtxv3::decode()
 
   b80 = *itr++; //  RDH Word 1
   cout << " LHC BC   = 0x" << hex << (get_GBT_value (b80, Rdh8ByteMapW1::BC_LSB, 16) & 0xfff)  << dec << endl;
-  cout << " BCO      = 0x" << hex << (get_GBT_lvalue (b80, Rdh8ByteMapW1::BCO_SB0, 40) & 0xfff)  << dec << endl;
+  cout << " BCO      = 0x" << hex << get_GBT_lvalue (b80, Rdh8ByteMapW1::BCO_SB0, 40)   << dec << endl;
   
   b80 = *itr++; //  RDH Word 2
   cout << " trg_type    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW2::TRG_TYPE_SB0, 32)  << dec << endl;
