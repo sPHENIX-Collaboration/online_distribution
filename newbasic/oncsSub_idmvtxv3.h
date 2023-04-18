@@ -6,6 +6,7 @@
 #include <map>
 #include <vector>
 #include <bitset>
+#include <stdint.h>
 
 #ifndef __CINT__
 class WINDOWSEXPORT oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
@@ -54,7 +55,7 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
   std::vector<std::bitset<80>> gbtvector;
 
   
-  uint64_t last_BCO;
+  unsigned long long last_BCO;
   unsigned short last_source_id;
   unsigned short last_fee_id;
   unsigned short last_lane;
