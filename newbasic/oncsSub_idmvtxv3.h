@@ -3,6 +3,7 @@
 
 #include "oncsSubevent.h"
 
+#include <map>
 #include <vector>
 #include <bitset>
 
@@ -14,8 +15,12 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
 
  public:
   explicit oncsSub_idmvtxv3(subevtdata_ptr);
-  ~oncsSub_idmvtxv3() = default;
+  ~oncsSub_idmvtxv3();
 
+  int    iValue(const int ,const char * what);
+
+
+  
   void dump(OSTREAM &os = COUT) override;
 
 
@@ -33,16 +38,46 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
 
   unsigned long get_GBT_value( const std::bitset<80> gbtword, const int pos, const int size) const;
   unsigned long long get_GBT_lvalue( const std::bitset<80> gbtword, const int pos, const int size) const;
-  
+  int  decode_chipdata( const std::bitset<80> gbtword);
+
   void  pretty_print( const std::bitset<80> gbtword) const;
 
-  unsigned char *payload;
+  int  decode_lane( const std::vector<uint8_t> v);
+
+  uint8_t *payload;
   unsigned int payload_position;
 
-  struct 
+  // the per-lane keeper of the chip data
+  // lane, vector 
+  std::map<unsigned int, std::vector<unsigned char>> chipdata;
   
   std::vector<std::bitset<80>> gbtvector;
 
+  
+  uint64_t last_BCO;
+  uint16_t last_source_id;
+  uint16_t last_fee_id;
+  uint16_t last_lane;
+  
+  
+  struct mvtx_hit
+  {
+    uint64_t BCO;
+    unsigned int source_id;
+    unsigned int fee_id;
+    unsigned int lane;
+    unsigned int encoder_id;
+    unsigned int addr;
+
+    // unsigned int chipid;
+    // unsigned int region_id;
+    // unsigned int readout_flags;
+    // unsigned int bunchcounter;
+  };
+    
+  std::vector<mvtx_hit *> hit_vector;
+
+  
   enum WordTypeMarker
     {
      IHW = 0xe0,
