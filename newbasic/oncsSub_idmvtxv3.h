@@ -22,7 +22,7 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
 
 
   
-  void dump(OSTREAM &os = COUT) override;
+  void dump(OSTREAM &os = COUT);
 
 
  protected:
