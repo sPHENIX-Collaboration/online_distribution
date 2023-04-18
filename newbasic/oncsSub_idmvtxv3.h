@@ -50,9 +50,9 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
 
   // the per-lane keeper of the chip data
   // lane, vector 
-  std::map<unsigned int, std::vector<unsigned char>> chipdata;
+  std::map<unsigned int, std::vector<unsigned char> > chipdata;
   
-  std::vector<std::bitset<80>> gbtvector;
+  std::vector<std::bitset<80> > gbtvector;
 
   
   unsigned long long last_BCO;
