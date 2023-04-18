@@ -55,14 +55,14 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
 
   
   uint64_t last_BCO;
-  uint16_t last_source_id;
-  uint16_t last_fee_id;
-  uint16_t last_lane;
+  unsigned short last_source_id;
+  unsigned short last_fee_id;
+  unsigned short last_lane;
   
   
   struct mvtx_hit
   {
-    uint64_t BCO;
+    unsigned long long BCO;
     unsigned int source_id;
     unsigned int fee_id;
     unsigned int lane;

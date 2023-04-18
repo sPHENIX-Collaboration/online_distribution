@@ -99,12 +99,12 @@ int  oncsSub_idmvtxv3::decode_lane( const std::vector<uint8_t> v)
       else if  ((marker & 0xe0) ==  0xc0)  // region header 110x xxxx
 	{
 	  region_id    = marker & 0x1f;
-	  // cout  << " chip region hdr " << hex << marker << " region id " << region_id  << " next word is " << (uint16_t) v[pos] << dec;
+	  // cout  << " chip region hdr " << hex << marker << " region id " << region_id  << " next word is " << (unsigned short) v[pos] << dec;
 	}
 
       else if  ((marker & 0xc0) ==  0x40) // we have a DATA short report
 	{
-	  uint16_t secondword = v[pos++];
+	  unsigned short secondword = v[pos++];
 	  if ( pos >= v.size() ) break;
 	  encoder_id     = (marker >>2) & 0xf;
 	  addr           = (marker & 0x3) << 8 | secondword;
@@ -125,9 +125,9 @@ int  oncsSub_idmvtxv3::decode_lane( const std::vector<uint8_t> v)
 
       else if  ((marker & 0xc0) ==  0x00) // we have a DATA long report
 	{
-	  uint16_t secondword = v[pos++];
+	  unsigned short secondword = v[pos++];
 	  if ( pos >= v.size() ) break;
-	  uint16_t bits  = v[pos++];
+	  unsigned short bits  = v[pos++];
 	  if ( pos >= v.size() ) break;
 	  encoder_id     = (marker >>2) & 0xf;
 	  addr           = (marker & 0x3) << 8 | secondword;
