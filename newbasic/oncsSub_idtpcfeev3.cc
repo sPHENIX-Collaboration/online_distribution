@@ -67,9 +67,9 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 
   while ( (buffer[index] & 0xFF00 ) == 0xBA00  && (index < payload_length) )
     {
-      unsigned int fee_id = (buffer[index] >> 4) & 0xf;
-      unsigned int datalength = buffer[index] & 0xf;
-      //coutfl << " index = " << index << " fee_id = " << fee_id << " len = " << datalength << endl;
+      unsigned int fee_id = buffer[index] & 0xff;
+      const unsigned int datalength = 0xf;
+//      coutfl << " index = " << index << " fee_id = " << fee_id << " len = " << datalength << endl;
       index++;
       if ( fee_id < MAX_FEECOUNT)
 	{
@@ -80,15 +80,15 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 	}
   
     }
-  //  coutfl << " done with tcp_decode index = " << index << endl;
+//    coutfl << " done with tcp_decode index = " << index << endl;
 
   // std::vector<unsigned short>::const_iterator fee_data_itr;
 
-  // for ( int ifee = 0 ; ifee < MAX_FEECOUNT ; ifee++)
-  //   {
+//   for ( int ifee = 0 ; ifee < MAX_FEECOUNT ; ifee++)
+//     {
 
-  //     coutfl << " starting with fee number " << ifee << " size of vector " << fee_data[ifee].size() << endl;
-  //   }
+//       coutfl << " starting with fee number " << ifee << " size of vector " << fee_data[ifee].size() << endl;
+//     }
   
   for ( int ifee = 0 ; ifee < MAX_FEECOUNT ; ifee++)
     {
@@ -128,15 +128,18 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 	      sw->channel       = header[1] & 0x1ff;
 	      sw->bx_timestamp  = ((header[3] & 0x1ff) << 11)
 		| ((header[2] & 0x3ff) << 1)
-		| (header[1] >> 9);	  
-	      
-	      // coutfl << " Fee: " << ifee << " Sampa " << sw->sampa_address
-	      // 	 << " sampa channel: " << sw->sampa_channel
-	      // 	 << " channel: " << sw->channel
-	      // 	 << "  waveform length: " << data_size  << endl;
-	      
+		| (header[1] >> 9);
+
 	      // now we add the actual waveform
 	      uint16_t data_size = header[5] -1 ;
+
+
+//         coutfl << " Fee: " << ifee << " Sampa " << sw->sampa_address
+//           << " sampa channel: " << sw->sampa_channel
+//           << " channel: " << sw->channel
+//           << "  waveform length: " << data_size  << endl;
+
+
 	      for (int i = 0 ; i < data_size ; i++)
 		{
 		  sw->waveform.push_back( fee_data[ifee][pos++]);
