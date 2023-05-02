@@ -129,14 +129,15 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 	      sw->bx_timestamp  = ((header[3] & 0x1ff) << 11)
 		| ((header[2] & 0x3ff) << 1)
 		| (header[1] >> 9);	  
-	      
-	      // coutfl << " Fee: " << ifee << " Sampa " << sw->sampa_address
-	      // 	 << " sampa channel: " << sw->sampa_channel
-	      // 	 << " channel: " << sw->channel
-	      // 	 << "  waveform length: " << data_size  << endl;
-	      
+
 	      // now we add the actual waveform
 	      uint16_t data_size = header[5] -1 ;
+
+	     //  coutfl << " Fee: " << ifee << " Sampa " << sw->sampa_address
+	     //  	 << " sampa channel: " << sw->sampa_channel
+	     //  	 << " channel: " << sw->channel
+	     //  	 << "  waveform length: " << data_size  << endl;
+
 	      for (int i = 0 ; i < data_size ; i++)
 		{
 		  sw->waveform.push_back( fee_data[ifee][pos++]);
