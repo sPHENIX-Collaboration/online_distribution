@@ -6,7 +6,6 @@
 #include <set>
 #include <algorithm>
 #include <functional>
-#include <stdint.h>
 
 #ifndef __CINT__
 class WINDOWSEXPORT oncsSub_idtpcfeev3 : public  oncsSubevent_w2 {
@@ -33,7 +32,7 @@ protected:
   static const unsigned short  MAGIC_KEY_0 = 0xfe;
   static const unsigned short  MAGIC_KEY_1 = 0x00;
 
-  static const unsigned short  MAX_FEECOUNT = 16;   // that many FEEs
+  static const unsigned short  MAX_FEECOUNT = 26;   // that many FEEs
   static const unsigned short  MAX_CHANNELS   = 8*32; // that many channels per FEE
   static const unsigned short  HEADER_LENGTH  = 7;
   
