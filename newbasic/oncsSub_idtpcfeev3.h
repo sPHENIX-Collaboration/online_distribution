@@ -6,6 +6,7 @@
 #include <set>
 #include <algorithm>
 #include <functional>
+#include <stdint.h>
 
 #ifndef __CINT__
 class WINDOWSEXPORT oncsSub_idtpcfeev3 : public  oncsSubevent_w2 {

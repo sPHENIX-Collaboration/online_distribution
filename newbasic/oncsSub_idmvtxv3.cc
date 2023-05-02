@@ -1,540 +1,283 @@
 #include "oncsSub_idmvtxv3.h"
 
-#ifdef MVTX_DECODER
-#include "MVTXDecoder/ChipMappingMVTX.h"
-//#include "MVTXDecoder/RawPixelReader.h"
-#include "MVTXDecoder/RawPixelDecoder.h"
-//#include "MVTXDecoder/mvtx_decoder.h"
-#include "MVTXDecoder/FLXWord.h"
-#include "MVTXDecoder/PixelData.h"
+// for memset
+#include <string.h>  
 
-#endif
 
-#include <cassert>  // for assert
+using namespace std;
 
-//#include <cstring>
-//#include <bitset>
-//#include <map>
-//#include <vector>
-//#include <functional>
-//
-//#include <arpa/inet.h>
-//
-
-//
-//extern void mvtx_decoder(std::vector<oncsSub_idmvtxv3::data32_mvtx*>);
 
 oncsSub_idmvtxv3::oncsSub_idmvtxv3(subevtdata_ptr data)
   : oncsSubevent_w4(data)
-  , m_is_decoded(false)
 {
-#ifdef MVTX_DECODER
-  fair::Logger::SetConsoleColor(false);
-  fair::Logger::SetConsoleSeverity("debug");
-#endif
-//    _highest_ruid = -1;
-//    _decoder_error = 0;
-//    for (int ruid=0; ruid<IDMVTXV3_MAXRUID+1; ruid++)
-//    {
-//        _bad_ruchns[ruid] = 0;
-//        _lanes_active[ruid] = -1;
-//        _lane_stops[ruid] = -1;
-//        _lane_timeouts[ruid] = -1;
-//        _inconsistent_bc[ruid] = -1;
-//        for ( int ruchn = 0; ruchn < IDMVTXV3_MAXRUCHN+1; ruchn++)
-//        {
-//            _chip_id[ruid][ruchn] = -1;
-//            _bad_bytes[ruid][ruchn] = 0;
-//            _excess_bytes[ruid][ruchn] = 0;
-//            _bunchcounter[ruid][ruchn] = -1;
-//            _header_found[ruid][ruchn] = false;
-//            _trailer_found[ruid][ruchn] = false;
-//            _readout_flags[ruid][ruchn] = -1;
-//        }
-//    }
-//    _unexpected_felix_counters = 0;
-//    _bad_ruids = 0;
+  m_is_decoded = false;
+  payload = 0;
+  payload_position = 0;
 }
 
-
-//bool oncsSub_idmvtxv3::mask_contains_ruchn ( int mask, int ruchn )
-//{
-//    if (ruchn<=0) return false; //invalid ruchn
-//    if (mask<0) return false;
-//    return (((mask >> (ruchn-1)) & 1) == 1);
-//}
-//
-//int *oncsSub_idmvtxv3::decode_old ()
-//{
-//    if ( _is_decoded) return 0;
-//    _is_decoded = 1;
-//    _decoder_error = 0;
-//
-//    unsigned int *payload = (unsigned int *) &SubeventHdr->data;  // here begins the payload
-//
-//    int dlength = getDataLength() - getPadding() - 1; //padding is supposed to be in units of dwords, this assumes dwords
-//    unsigned char *the_end = ( unsigned char *) &payload[dlength];
-//
-//    unsigned char *pos = (unsigned char *) payload;
-//
-//    unsigned char b;
-//
-//    vector<unsigned char> ruchn_stream[IDMVTXV3_MAXRUID+1][IDMVTXV3_MAXRUCHN+1];
-//
-//    unsigned char felix_counter [IDMVTXV3_MAXRUID+1];
-//
-//    for( int i=0; i < IDMVTXV3_MAXRUID+1; i++)
-//    {
-//        felix_counter[i] = 0;
-//    }
-//
-//    while ( pos < the_end )
-//    {
-//
-//        data32 *d32 = ( data32*) pos;
-//
-//        //cout << hex << " pos = " << (unsigned long long ) pos << "  the end  " << (unsigned long long) the_end << dec << endl;
-//        if (d32->ruid > IDMVTXV3_MAXRUID)
-//        {
-//            cout << __FILE__ << " " << __LINE__ << " --- invalid ruid " << hex << (int) d32->ruid << " at pos " << (long) pos << dec << endl;
-//            _bad_ruids++;
-//            _decoder_error |= ( 1 << 0 );
-//            break;
-//        }
-//        else if (d32->ruid > _highest_ruid)
-//        {
-//            _highest_ruid = d32->ruid;
-//        }
-//        //FELIX counter is 8 bits, max value 256
-//        //check that the new counter value is consistent with the previous value (it should have increased by no more than 3, and the amount of the difference is the number of data chunks in this FELIX word)
-//        int counter_increment = (d32->counter + 256 - felix_counter[d32->ruid])%256;
-//        if (counter_increment > 3)
-//        {
-//            if (d32->counter != 0)
-//            {
-//                //cout << __FILE__ << " " << __LINE__ << " --- unexpected FELIX counter " << hex << (int) d32->counter << " following previous counter value " << felix_counter << " at pos " << (long) pos << dec << endl;
-//                _unexpected_felix_counters++;
-//            }
-//            break;
-//        }
-//        felix_counter[d32->ruid] = d32->counter;
-//
-//        //for (int ichnk = 0; ichnk < 3; ichnk++)
-//        for (int ichnk = 0; ichnk < counter_increment; ichnk++)
-//        {
-//            unsigned char ruchn = d32->d0[ichnk][9];
-//            if (ruchn >> 4 == 0x2) {
-//              ruchn &= 0x1F;
-//              ruchn += 1;
-//            }
-//            if (ruchn == IDMVTXV3_RUHEADER)
-//            {
-//                memcpy(&_lanes_active[d32->ruid],&d32->d0[ichnk][2],4);
-//            }
-//            else if (ruchn == IDMVTXV3_RUTRAILER)
-//            {
-//                memcpy(&_lane_stops[d32->ruid],&d32->d0[ichnk][0],4);
-//                memcpy(&_lane_timeouts[d32->ruid],&d32->d0[ichnk][4],4);
-//            }
-//            else if (ruchn > IDMVTXV3_MAXRUCHN)
-//            {
-//                _bad_ruchns[d32->ruid]++;
-//                cout << __FILE__ << " " << __LINE__ << " --- invalid ruchn " << hex << ruchn << ", full RU word: ";
-//                _decoder_error |= ( 1 << 1 );
-//                for (int ibyte=9;ibyte>=0;ibyte--)
-//                {
-//                    cout << setfill('0') << setw(2) << hex << (unsigned int) d32->d0[ichnk][ibyte] << " ";
-//                }
-//                cout << setfill(' ') << setw(0) << dec << endl;
-//            }
-//            else for ( int ibyte = 0; ibyte < 9; ibyte++)
-//            {
-//                //cout << __FILE__ << " " << __LINE__ << hex << " --- ruchn " << (unsigned int) ruchn << " byte " << (unsigned int) d32->d0[ichnk][ibyte] << dec << endl;
-//                ruchn_stream[d32->ruid][ruchn].push_back(d32->d0[ichnk][ibyte]);
-//            }
-//        } // ichnk
-//
-//        pos += sizeof(*d32);
-//    } // while (pos < the_end)
-//
-//    //we ignore ruchn 0 (trigger information and padding words) for now
-//    /*
-//       if (ruchn_stream[0].size()!=9) for ( int ruchn = 0; ruchn < IDMVTXV3_MAXRUCHN+1; ruchn++)
-//       {
-//       cout << __FILE__ << " " << __LINE__ << " --- ruchn " << ruchn << " has " << ruchn_stream[ruchn].size() << " bytes" << endl;
-//       }
-//       */
-//
-//    for ( int ruid = 1; ruid < IDMVTXV3_MAXRUID+1; ruid++)
-//    {
-//        for ( int ruchn = 1; ruchn < IDMVTXV3_MAXRUCHN+1; ruchn++)
-//        {
-//
-//            bool header_seen=false;
-//            int status = 0;
-//            int ibyte_endofdata = -1;
-//            int the_region = -1;
-//            unsigned int address = 0;
-//            unsigned int encoder_id = 0;
-//            for (unsigned int ibyte = 0; ibyte < ruchn_stream[ruid][ruchn].size(); ibyte++)
-//            {
-//                b = ruchn_stream[ruid][ruchn].at(ibyte);
-//
-//                //cout << __FILE__ << " " << __LINE__ << " --- ruchn " << hex << ruchn << " next value " << (unsigned int)  b << dec << " status:" << status << endl;
-//
-//                if (status) // we mop up what we started in the last round -
-//                    // these are all cases with more than one byte
-//                {
-//                    switch (status)
-//                    {
-//                        case CHIPHEADER:
-//
-//                            _bunchcounter[ruid][ruchn] = b;
-//                            //cout << __FILE__ << " " << __LINE__ << " chip header, ruchn= " << ruchn << " bunchctr= " << hex << _bunchcounter[ruchn] << dec << endl;
-//                            status = 0;
-//                            _header_found[ruid][ruchn] = true;
-//                            break;
-//
-//                        case CHIPEMPTYFRAME:
-//
-//                            _bunchcounter[ruid][ruchn] = b;
-//                            // cout << __FILE__ << " " << __LINE__ << " chip empty frame " << hex << ruchn << " " << _bunchcounter[ruchn] << dec << endl;
-//                            ibyte_endofdata = ibyte;
-//                            _header_found[ruid][ruchn] = true;
-//                            _trailer_found[ruid][ruchn] = true;
-//                            status = 0;
-//                            break;
-//
-//                        case DATASHORT:
-//                            address += b;
-//                            //cout << __FILE__ << " " << __LINE__ << " data short report, hex:" << hex << address << dec << " enc. id " << encoder_id << " address= " << address << " the_region:" << the_region << " ruchn:" << ruchn;
-//                            // the numbering "snakes" its way through a column (fig. 4.5 in the Alpide manual)
-//                            //  0 1  > >    row 0
-//                            //  3 2  < <    row 1
-//                            //  4 5  > >    row 2
-//                            //  7 6  < <   so we need to know if we are in an even or odd row
-//                            if ( the_region >= 0 && encoder_id >=0 )
-//                            {
-//                                unsigned int row = (address >> 1);
-//                                unsigned int col = (the_region * 32);
-//                                col += (encoder_id * 2) + ( (row & 1) ? ( (address & 1) ^ 1 ) : (address & 1) );
-//                                if ( row < 0 || row >= NROW || col < 0 || col >= NCOL )
-//                                {
-//                                    cout << __FILE__ << " " << __LINE__ << " impossible pixel coord: " << row
-//                                         << ", " << col << "." << endl;
-//                                    cout << "Check region " << the_region << ", encoder " <<  encoder_id
-//                                         << ", addr " << address << endl;
-//                                    _decoder_error |= ( 1 << 2);
-//                                }
-//                                _hit_vectors[ruid][ruchn].push_back(encode_hit(row,col));
-//                            }
-//
-//                            //cout << endl;
-//                            status = 0;
-//                            break;
-//
-//                        case DATALONG0:
-//                            address += b;
-//                            status = DATALONG1;
-//                            break;
-//
-//                        case DATALONG1:
-//                            if ( (b & 0x80) != 0) //required to be 0
-//                            {
-//                                //cout << __FILE__ << " " << __LINE__ << " unexpected word " << hex << (unsigned int) b << dec << " at ibyte " << ibyte << endl;
-//                                _bad_bytes[ruid][ruchn]++;
-//                            }
-//                            //cout << __FILE__ << " " << __LINE__ << " data long report, hex:" << hex << address << dec << " enc. id " << encoder_id << " address= " << address << " the_region:" << the_region << " ruchn:" << ruchn << endl;
-//                            // Loop over the hits in the cluster. The pixel specified by the address always has a hit.
-//                            // The next 7 pixels (in priority encoder order) have hits if the corresponding bit in this byte is high.
-//                            // See ALPIDE manual section 3.4.1 on DATA LONG: page 63.
-//                            for (int ihit = 0; ihit<8; ihit++)
-//                            {
-//                                if (ihit==0 || ((b >> (ihit-1)) & 1))
-//                                {
-//                                    int hit_address = address + ihit;
-//                                    if ( the_region >= 0 && encoder_id >=0 )
-//                                    {
-//                                        unsigned int row = (hit_address >> 1);
-//                                        unsigned int col = the_region*32;
-//                                        col += (encoder_id * 2) + ( (row & 1) ? ( (hit_address & 1) ^ 1 ) : (hit_address & 1) );
-//                                        if ( row < 0 || row >= NROW || col < 0 || col >= NCOL )
-//                                        {
-//                                            cout << __FILE__ << " " << __LINE__ << " impossible pixel coord: " << row
-//                                                  << ", " << col << "." << endl;
-//                                            cout << "Check region " << the_region << ", encoder " <<  encoder_id
-//                                                  << ", addr " << hit_address << endl;
-//                                            _decoder_error |= ( 1 << 2);
-//                                        }
-//                                        _hit_vectors[ruid][ruchn].push_back(encode_hit(row,col));
-//                                    }
-//                                }
-//                            }
-//                            status = 0;
-//                            break;
-//                    }
-//                    continue;
-//                }
-//
-//                if (ibyte_endofdata != -1) break;
-//
-//                if ( b == 0xff)  // Idle byte, skip
-//                {
-//                    //cout << __FILE__ << " " << __LINE__ << " IDLE byte " << hex << (unsigned int)  b << dec << endl;
-//                    status = 0;
-//                }
-//
-//                else if ( ( b >> 4) == 0xa) // we have a chip header
-//                {
-//                    _chip_id[ruid][ruchn] = ( b & 0xf);
-//                    header_seen = true;
-//                    status = CHIPHEADER;
-//                }
-//
-//                else if ( ( b >> 4) == 0xb) // we have a chip trailer
-//                {
-//                    // cout << __FILE__ << " " << __LINE__ << " chip trailer, ruchn= " << hex << ruchn << dec << endl;
-//                    // break out of the loop, done with this chip
-//                    ibyte_endofdata = ibyte;
-//                    _trailer_found[ruid][ruchn] = true;
-//                    if (!_header_found[ruid][ruchn]) // shouldn't see a trailer without having seen a header
-//                    {
-//                        _bad_bytes[ruid][ruchn]++;
-//                    }
-//                    else
-//                    {
-//                        _readout_flags[ruid][ruchn] = (b & 0xf);
-//                    }
-//                    break;
-//                }
-//
-//                else if ( ( b >> 4) == 0xE) // we have a chip empty frame
-//                {
-//                    _chip_id[ruid][ruchn] = ( b & 0xf);
-//                    header_seen = true;
-//                    status = CHIPEMPTYFRAME;
-//                }
-//
-//                else if ( ( b >> 5) == 0x6) // we have a region header
-//                {
-//                    unsigned int region_id = (b & 0x1f);
-//                    if ( region_id <32)
-//                    {
-//                        the_region = region_id;
-//                    }
-//                    else //this is impossible since the region ID is 5 bits
-//                    {
-//                        cout << __FILE__ << " " << __LINE__ << " wrong region header, id=  " << hex << region_id << dec << endl;
-//                        _decoder_error |= ( 1 << 3);
-//                    }
-//                }
-//
-//                else if ( ( b >> 6) == 0x1) // we have a DATA short report
-//                {
-//                    encoder_id = ( b>>2) & 0xf;
-//                    address = (b & 0x3) << 8;
-//                    status = DATASHORT;
-//                }
-//
-//                else if ( ( b >> 6) == 0x0) // we have a DATA long report
-//                {
-//                    encoder_id = ( b>>2) & 0xf;
-//                    address = (b & 0x3) << 8;
-//                    status = DATALONG0;
-//                }
-//
-//                else if ( b == 0xF1) // we have a BUSY on
-//                {
-//                    //cout << __FILE__ << " " << __LINE__ << " Busy on "  << endl;
-//                }
-//
-//                else if ( b == 0xF0) // we have a BUSY off
-//                {
-//                    //cout << __FILE__ << " " << __LINE__ << " Busy off "  << endl;
-//                }
-//
-//                else
-//                {
-//                    cout << __FILE__ << " " << __LINE__ << " unexpected word " << hex << (unsigned int) b << dec << " at ibyte " << ibyte << endl;
-//                    _bad_bytes[ruid][ruchn]++;
-//                    _decoder_error |= ( 1 << 4 );
-//                }
-//
-//                if (ibyte==0 && !header_seen)
-//                {
-//                  cout << __FILE__ << " " << __LINE__ << " " << "first byte of the ALPIDE stream must be a chip header or chip empty;" <<endl;
-//                  cout << "Aborting so we don't get confused by bad data." << endl;
-//                  _decoder_error |= ( 1 << 5 );
-//                   break;
-//                }
-//
-//            } // ibyte
-//
-//            //cout << __FILE__ << " " << __LINE__ << "  ruchn " << ruchn << "  ibyte_endofdata " << ibyte_endofdata << endl;
-//            for (unsigned int ibyte = ibyte_endofdata+1; ibyte < ruchn_stream[ruid][ruchn].size(); ibyte++)
-//            {
-//                b = ruchn_stream[ruid][ruchn].at(ibyte);
-//                if (b!=0)
-//                {
-//                    //cout << __FILE__ << " " << __LINE__ << " --- ruchn " << hex << ruchn << " unexpected nonzero value " << (unsigned int)  b << dec << " at ibyte " << ibyte << " after ibyte_endofdata " << ibyte_endofdata << endl;
-//                    _excess_bytes[ruid][ruchn]++;
-//                }
-//            }
-//        } // ruchn
-//        if (_lanes_active[ruid] != -1)
-//        {
-//          _inconsistent_bc[ruid]  = this->checkBC(ruid);
-//        }
-//    } // ruid
-//
-//
-//    return 0;
-//}
-//
-//int oncsSub_idmvtxv3::iValue(const int ruid, const char *what)
-//{
-//    decode();
-//    if ( strcmp(what, "DECODER_ERROR") == 0 )
-//    {
-//        return _decoder_error;
-//    }
-//    if ( strcmp(what,"UNEXPECTED_FELIX_COUNTERS") == 0 )
-//    {
-//        return _unexpected_felix_counters;
-//    }
-//
-//    else if ( strcmp(what,"BAD_RUIDS") == 0 )
-//    {
-//        return _bad_ruids;
-//    }
-//
-//    if (ruid > _highest_ruid) return -1; // no such RU
-//    if (_lanes_active[ruid]==-1) return -1; // no such RU
-//
-//    if ( strcmp(what,"BAD_RUCHNS") == 0 )
-//    {
-//        return _bad_ruchns[ruid];
-//    }
-//
-//    else if ( strcmp(what,"LANE_STOPS") == 0 )
-//    {
-//        return _lane_stops[ruid];
-//    }
-//
-//    else if ( strcmp(what,"LANE_TIMEOUTS") == 0 )
-//    {
-//        return _lane_timeouts[ruid];
-//    }
-//
-//    else if ( strcmp(what,"CHECK_BC") == 0 )
-//    {
-//      return _inconsistent_bc[ruid];
-//    }
-//
-//    return 0;
-//}
-//
-//int oncsSub_idmvtxv3::iValue(const int ruid)
-//{
-//    decode();
-//
-//    if (ruid > _highest_ruid) return -1; // no such RU
-//    return _lanes_active[ruid];
-//}
-//
-//int oncsSub_idmvtxv3::iValue(const int ruid, const int ruchn, const char *what)
-//{
-//    decode();
-//
-//    if (ruid > _highest_ruid) return -1; // no such RU
-//    if (_lanes_active[ruid]==-1) return -1; // no such RU
-//
-//    if ( strcmp(what,"CHIP_ID") == 0 )
-//    {
-//        return _chip_id[ruid][ruchn];
-//    }
-//
-//    else if ( strcmp(what,"BAD_BYTES") == 0 )
-//    {
-//        return _bad_bytes[ruid][ruchn];
-//    }
-//
-//    else if ( strcmp(what,"EXCESS_BYTES") == 0 )
-//    {
-//        return _excess_bytes[ruid][ruchn];
-//    }
-//
-//    else if ( strcmp(what,"BUNCHCOUNTER") == 0 )
-//    {
-//        return _bunchcounter[ruid][ruchn];
-//    }
-//
-//    else if ( strcmp(what,"HEADER_FOUND") == 0 )
-//    {
-//        return _header_found[ruid][ruchn]?1:0;
-//    }
-//
-//    else if ( strcmp(what,"TRAILER_FOUND") == 0 )
-//    {
-//        return _trailer_found[ruid][ruchn]?1:0;
-//    }
-//
-//    else if ( strcmp(what,"READOUT_FLAGS") == 0 )
-//    {
-//        return _readout_flags[ruid][ruchn];
-//    }
-//
-//    return 0;
-//}
-//
-//int oncsSub_idmvtxv3::iValue(const int ruid, const int ruchn)
-//{
-//    decode();
-//
-//    if (ruid > _highest_ruid) return -1; // no such RU
-//    if (_lanes_active[ruid]==-1) return -1; // no such RU
-//    if (!mask_contains_ruchn(_lanes_active[ruid],ruchn)) return -1; // no such RU channel
-//    return _hit_vectors[ruid][ruchn].size();
-//}
-//
-//int oncsSub_idmvtxv3::iValue(const int ruid, const int ruchn, const int i)
-//{
-//    decode();
-//
-//    if (ruid > _highest_ruid) return -1; // no such RU
-//    if (_lanes_active[ruid]==-1) return -1; // no such RU
-//    if (!mask_contains_ruchn(_lanes_active[ruid],ruchn)) return -1; // no such RU channel
-//    return _hit_vectors[ruid][ruchn].at(i);
-//}
-
-#ifdef MVTX_DECODER
+// 01234567890 123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789
+// 00000000000 000000000 0000000000 0000000000 1010101000 0000000000 0000000000 1000000000
 
 //_________________________________________________
-packet_range_t oncsSub_idmvtxv3::get_packet_range() const
+void  oncsSub_idmvtxv3::pretty_print( const std::bitset<80> gbtword) const 
 {
-  uint8_t *payload = (uint8_t *) &SubeventHdr->data; // here begins the data
-  size_t dlength = (getDataLength() - getPadding()) * 4; // length in bytes
 
-  if ((dlength % mvtx::FLXWordLength) != 0)
-  {
-    dlength -= dlength % mvtx::FLXWordLength;
-    COUT
-      << ENDL
-      << "!!!!!!!!!!!!!!!!!!WARNING!!!!!!!!!!!!!!!!!!!! \n"
-      << "DMA packet has incomplete FLX words, only "
-      << dlength << " bytes(" << (dlength / mvtx::FLXWordLength)
-      << " FLX words), will be decoded. \n"
-      << "!!!!!!!!!!!!!!!!!!WARNING!!!!!!!!!!!!!!!!!!!! \n"
-      << ENDL;
-  }
+  //  cout  << std::setfill('0');
+  for ( int i = 0; i < 10; i++)
+    {
+      //  cout << hex << setw(2) << get_GBT_value (gbtword, i * 8, 8) << " " << dec;
+    }
+  //cout  << std::setfill(' ');
+}
 
-  uint8_t *the_start = (uint8_t *) payload;
-  uint8_t *the_end   = (uint8_t *) &payload[dlength];
+//_________________________________________________
+int  oncsSub_idmvtxv3::decode_lane( const std::vector<uint8_t> v) 
+{
 
-  return std::make_pair(the_start, the_end);
+  uint32_t pos = 0;
+  std::vector<uint8_t>::const_iterator itr = v.begin();
+
+  int ret = 0; // currently we just print stuff, but we will add stuff to our
+               // structures and return a status later (that's why it's not a const function)
+
+  unsigned int chipid;
+  unsigned int region_id;
+  unsigned int readout_flags;
+  unsigned int addr;
+  unsigned int bunchcounter;
+  unsigned int encoder_id;
+
+  mvtx_hit *h = 0;
+
+
+  
+  while ( pos < v.size() )
+    {
+      unsigned int marker = v[pos];
+      if  ((marker >> 4) ==  0xa)
+	{
+	  //	  cout  << " chip header found at position " << pos << endl;
+	  break;
+	}
+      pos++; 
+    }
+      
+  while ( pos < v.size() )
+    {
+      if ( pos >= v.size() ) break;
+      unsigned int marker = v[pos++];
+      
+      if  ((marker >> 4) ==  0xa)  // chip header
+	{
+	  chipid    = marker & 0xf;
+	  bunchcounter = v[pos++];
+	  if ( pos >= v.size() ) break;
+	  // cout  << " chip header " << hex << marker << " chip id: " << chipid << " bunch " << bunchcounter << dec;
+	}
+  
+      else if  ((marker ) ==  0xff)  // idle frame
+	{
+	  // cout  << " idle frame " << hex << marker <<  dec;
+	  if ( pos >= v.size() ) break;
+	}
+  
+      else if  ((marker >> 4) ==  0xe)  // chip empty frame
+	{
+	  chipid    = marker & 0xf;
+	  bunchcounter = v[pos++];
+	  if ( pos >= v.size() ) break;
+	  // cout  << " chip empty frame " << hex << marker << " chip id: " << chipid << " bunch " << bunchcounter << dec;
+	}
+
+
+      else if  ((marker >> 4) ==  0xb)  // chip trailer
+	{
+	  readout_flags    = marker & 0xf;
+	  // cout  << " chip header " << hex << marker << " readout_flags " << readout_flags << dec;
+	}
+
+      else if  ((marker & 0xe0) ==  0xc0)  // region header 110x xxxx
+	{
+	  region_id    = marker & 0x1f;
+	  // cout  << " chip region hdr " << hex << marker << " region id " << region_id  << " next word is " << (unsigned short) v[pos] << dec;
+	}
+
+      else if  ((marker & 0xc0) ==  0x40) // we have a DATA short report
+	{
+	  unsigned short secondword = v[pos++];
+	  if ( pos >= v.size() ) break;
+	  encoder_id     = (marker >>2) & 0xf;
+	  addr           = (marker & 0x3) << 8 | secondword;
+	  // cout  << " data short hdr " << hex << setw(2) << marker << " " << setw(2) << secondword 
+	  // 	<< " encoder_id " << setw(5) << encoder_id
+	  // 	<< " addr " << setw(5) << addr << dec ;
+
+	  h = new mvtx_hit;
+	  memset(h, 0, sizeof(*h));
+	  
+	  h->BCO = last_BCO;
+	  h->source_id = last_source_id;
+	  h->fee_id = last_fee_id;
+	  h->lane = last_lane;
+	  h->addr  = addr;
+	  hit_vector.push_back(h);
+	}
+
+      else if  ((marker & 0xc0) ==  0x00) // we have a DATA long report
+	{
+	  unsigned short secondword = v[pos++];
+	  if ( pos >= v.size() ) break;
+	  unsigned short bits  = v[pos++];
+	  if ( pos >= v.size() ) break;
+	  encoder_id     = (marker >>2) & 0xf;
+	  addr           = (marker & 0x3) << 8 | secondword;
+	  // cout  << " data long hdr  " << hex << setw(2) << marker << " " << setw(2) << secondword << " " << setw(2) << bits
+	  // 	<< " encoder_id " << setw(5) << encoder_id
+	  // 	<< " addr " << setw(5) << addr; 
+	  h = new mvtx_hit;
+	  memset(h, 0, sizeof(*h));
+	  
+	  h->BCO = last_BCO;
+	  h->source_id = last_source_id;
+	  h->fee_id = last_fee_id;
+	  h->lane = last_lane;
+	  h->addr  = addr;
+	  hit_vector.push_back(h);
+	  
+	  while ( bits != 0)
+	    {
+	      addr++;
+	      if ( bits & 1)
+		{
+		  // another bit in a data long
+		  h = new mvtx_hit;
+		  memset(h, 0, sizeof(*h));
+		  
+		  h->BCO = last_BCO;
+		  h->source_id = last_source_id;
+		  h->fee_id = last_fee_id;
+		  h->lane = last_lane;
+		  h->addr  = addr;
+		  hit_vector.push_back(h);
+
+
+		  // cout << setw(5) << addr;
+		}
+	      bits >>=1;
+	    }
+	  
+	}
+  
+      else if  ((marker & 0xF0) == 0xB0) // we have a CHIP trailer
+	{
+	  readout_flags     = (marker >> 4) & 0xf;
+	  //  cout  << " chip trailer " << hex  << " readout flags " << setw(5) << readout_flags << dec;
+	}
+
+      //cout << endl;
+    }
+  
+  return ret;
+  
+}
+
+//_________________________________________________
+int  oncsSub_idmvtxv3::decode_chipdata( const std::bitset<80> gbtword) 
+{
+  // unsigned int chipid;
+  // unsigned int timestamp;
+  // unsigned int region_id;
+  // unsigned int dl_bitmap;
+  // unsigned int readout_flags;
+  // unsigned int layer;
+  // unsigned int chipnr;
+  // unsigned int addr;
+
+  unsigned int marker =  get_GBT_value (gbtword, 72,8);
+  unsigned int laneidx = marker & 0x1F;
+
+  // add a check if that lane matches the embedded lane
+  
+  std::map<unsigned int, std::vector<uint8_t>>::iterator itr;
+  itr = chipdata.find(laneidx);
+  // if ( itr == chipdata.end())
+  //   {
+  //     cout << __FILE__ << " " << __LINE__ << " new laneidx " << laneidx << endl;
+  //   }
+  // else
+  //   {
+  //     cout << __FILE__ << " " << __LINE__ << " adding to laneidx " << laneidx << endl;
+  //   }
+  
+  //take the first 9 bytes off
+  for ( unsigned int index = 0; index < 72; index += 8)
+    {
+      chipdata[laneidx].push_back ( get_GBT_value (gbtword, index,8));
+    }
+
+  return 0;
 }
 
 
+//_________________________________________________
+unsigned long  oncsSub_idmvtxv3::get_GBT_value( const std::bitset<80> gbtword, const int pos, const int size) const 
+{
+  unsigned long value = 0;
+  
+  for (int i = 0; i < size; i++)
+    {
+      //cout << __FILE__ << " " << __LINE__ << " pos " << pos+i << " " << gbtword.test(pos+i) << endl;
+      value |= ( gbtword.test(pos+i) << i) ;
+    }
+  return value;
+}
+
+//_________________________________________________
+// this one can do sizes > 32 bit (like the BCO)
+unsigned long  long oncsSub_idmvtxv3::get_GBT_lvalue( const std::bitset<80> gbtword, const int pos, const int size) const 
+{
+  unsigned long long value = 0;
+  
+  for (int i = 0; i < size; i++)
+    {
+      //cout << __FILE__ << " " << __LINE__ << " pos " << pos+i << " " << gbtword.test(pos+i) << endl;
+      value |= ( gbtword.test(pos+i) << i) ;
+    }
+  return value;
+}
+
+//_________________________________________________
+// this function reads in 32 bytes  =  3 GBT words and 2 bytes 
+int oncsSub_idmvtxv3::read_32( std::bitset<80> &gbtword0
+			       , std::bitset<80> &gbtword1 
+			       , std::bitset<80> &gbtword2
+			       , unsigned short &w0
+			       , unsigned short &w1 )
+{
+
+
+  std::bitset<80> gbtw[3] = {0};
+  std::bitset<80> b80;
+
+  for ( int k = 0; k < 3; k++)
+    {
+      // we shift the bytes in so it looks like a normal binary number
+      for ( int i = 9; i >=0 ; i--)
+	{
+	  b80 = payload[i + payload_position];
+	  gbtw[k] = ( gbtw[k] << 8) | b80;
+	}
+      payload_position +=10;
+    }
+  gbtword0 = gbtw[0];
+  gbtword1 = gbtw[1];
+  gbtword2 = gbtw[2];
+    
+  w0 = payload[payload_position++];
+  w1 = payload[payload_position++];
+
+  return 0;
+}
 //_________________________________________________
 int oncsSub_idmvtxv3::decode()
 {
@@ -542,78 +285,208 @@ int oncsSub_idmvtxv3::decode()
   {
     return 0;
   }
-  packet_range_t start_end = get_packet_range();
-  LOGF(debug, "oncsSub_idmvtxv3::decode() Felix packet length: %lld Bytes",
-      (start_end.second - start_end.first));
-  using unique_decoder_t = mvtx::RawPixelDecoder<mvtx::ChipMappingMVTX>;
-  std::unique_ptr<unique_decoder_t> mDecoder = std::make_unique<unique_decoder_t>();
-  //mvtx::RawPixelDecoder<mvtx::ChipMappingMVTX> mDecoder;
-  mDecoder->init();
-  mDecoder->setVerbosity(20);
-  mDecoder->OpenInput(start_end.first, start_end.second, mvtx::FLXWordLength);
-  mDecoder->startNewPacket();
-  mvtx::ChipPixelData chipData;
-  mDecoder->getNextChipData(chipData);
- // mDecoder->startNewTF(pc.inputs());
-
-  /*std::vector<Digit> digVec;
-  std::vector<ROFRecord> digROFVec;
-  digVec.reserve(mEstNDig);
-  digROFVec.reserve(mEstNROF);
-
-  mDecoder->setDecodeNextAuto(false);
-  while (mDecoder->decodeNextTrigger()) {
-    //if (mDoDigits || mClusterer->getMaxROFDepthToSquash()) { // call before clusterization, since the latter will hide the digits
-      mDecoder->fillDecodedDigits(digVec, digROFVec);        // lot of copying involved
-      //if (mDoCalibData) {
-      //  mDecoder->fillCalibData(calVec);
-      //}
-   // }
-    //if (mDoClusters && !mClusterer->getMaxROFDepthToSquash()) { // !!! THREADS !!!
-    //  mClusterer->process(mNThreads, *mDecoder.get(), &clusCompVec, mDoPatterns ? &clusPattVec : nullptr, &clusROFVec);
-   // }
-  }
-*/
-  /*mvtx::RawPixelDecoder<mvtx::ChipMappingMVTX> mRawDecoder;
-  mRawDecoder.setVerbosity(20);
-  mvtx::ChipPixelData chipData;
-  mRawDecoder.getNextChipData(chipData);*/
-
- // mvtx::RawPixelReader<mvtx::ChipMappingMVTX> mRawReader;
-  //mRawReader.OpenInput(start_end.first, start_end.second, mvtx::FLXWordLength);
-  //mRawReader.setVerbosity(20);
-  //mvtx::ChipPixelData chipData;
-  //mRawReader.getNextChipData(chipData);
-
-  // mrawReader.setPadding256(padding); // payload GBT words are padded to 16B
-  // mRawReader.imposeMaxPage(page8kb); // pages are 8kB in size (no skimming)
-  //rawReader.setMinTriggersToCache(nTriggersToCache);
-
-  //TStopwatch sw;
-  //sw.Start();
-  //uint32_t roFrame = 0;
-  //o2::InteractionRecord irHB, irTrig;
-  /*std::vector<o2::itsmft::Digit> digits, *digitsPtr = &digits;
-  std::vector<o2::itsmft::ROFRecord> rofRecVec, *rofRecVecPtr = &rofRecVec;
-  std::size_t rofEntry = 0, nrofdig = 0;
-  std::unique_ptr<TFile> outFileDig;
-  std::unique_ptr<TTree> outTreeDig; // output tree with digits
-
-  if (!outDigName.empty()) { // output to digit is requested
-    outFileDig = std::make_unique<TFile>(outDigName.c_str(), "recreate");
-    outTreeDig = std::make_unique<TTree>("o2sim", "Digits tree");
-    outTreeDig->Branch("ITSDigit", &digitsPtr);
-    outTreeDig->Branch("ITSDigitROF", &rofRecVecPtr);
-  }*/
-
-  //while (rawReader.getNextChipData(chipData)) {
-
-  //chipData.print(); <- YCM comment for test
-
-
-  //RDHUtils::printRDH(reinterpret_cast<const mvtx::RAWDataHeaderV8*>(getGBTLink(decData.links[decData.cableLinkID[icab]])->lastRDH));
-
   m_is_decoded = true;
+
+  payload = (uint8_t *) &SubeventHdr->data;  // here begins the payload
+  payload_position = 0;
+
+  
+  unsigned int dlength = getDataLength() - getPadding(); //padding is supposed to be in units of dwords, this assumes dwords
+  dlength *= 4;
+
+  std::bitset<80> report[3] = {0};
+  std::bitset<80> b80;
+  unsigned short w0,  w1, old_len;
+  w1 = 0;
+  
+  do
+    {
+      read_32( report[0], report[1], report[2], w0, w1);
+    }  while (w1 != 0xab);
+  // here we have found the "ab" unit
+
+  unsigned int packet_cnt = get_GBT_value (report[2],flxhdr_word2::DMA_WRD_CTR_LSB,16);
+  
+  //  cout << __FILE__ << " " << __LINE__ <<  " packet count " << packet_cnt << endl;
+
+  w0 = w1 = old_len = 0;
+
+  for ( unsigned int i = 0 ; i < packet_cnt; i++)
+    {
+      // do we still have 32 bytes to read?
+      if (payload_position >  dlength - 32 )
+	{
+	  cerr <<  __FILE__ << " " << __LINE__ <<  " unexpected end of data at pos " << payload_position << " length = " << dlength << endl;
+	  break;
+	}
+      read_32( report[0], report[1], report[2], w0, w1);
+
+      //calculate how many GBT words these 32 bytes contain
+      unsigned short c = (w1 << 8 ) + w0  - old_len;
+      old_len = (w1 << 8 ) + w0;
+
+      //  cout << __FILE__ << " " << __LINE__ << " found "<< c << " GBT words w0 = " << hex << w0 << " "  << w1 << dec << endl;
+      
+      for ( int i = 0; i < c; i++) gbtvector.push_back(report[i]);
+  }   
+
+  //  cout << __FILE__ << " " << __LINE__ << " number of GBT words " << gbtvector.size()  << endl;
+  
+  vector<std::bitset<80>>::const_iterator itr = gbtvector.begin();
+
+//  cout << "RDH Header *** " << endl;
+
+  last_BCO = get_GBT_lvalue (b80, Rdh8ByteMapW1::BCO_SB0, 40);
+  last_source_id = get_GBT_value (b80, Rdh8ByteMapW0::SOURCE_ID, 16);
+  last_fee_id = get_GBT_value (b80, Rdh8ByteMapW0::FEEID_LSB, 16);
+  
+  // decode the RDH
+  b80 = *itr++; //  RDH Word 0
+  // cout << " h_ver    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::HDRVERSION, 8) << dec << endl;
+  // cout << " h_len    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::SIZE, 8) << dec << endl;
+  // cout << " feeid    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::FEEID_LSB, 16) << dec << endl;
+  // cout << " sourceid = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::SOURCE_ID, 16) << dec << endl;
+  // cout << " detfield = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::DET_FIELD_SB0, 32) << dec << endl;
+
+  b80 = *itr++; //  RDH Word 1
+  // cout << " LHC BC   = 0x" << hex << (get_GBT_value (b80, Rdh8ByteMapW1::BC_LSB, 16) & 0xfff)  << dec << endl;
+  // cout << " BCO      = 0x" << hex << get_GBT_lvalue (b80, Rdh8ByteMapW1::BCO_SB0, 40)   << dec << endl;
+  
+  b80 = *itr++; //  RDH Word 2
+  // cout << " trg_type    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW2::TRG_TYPE_SB0, 32)  << dec << endl;
+  // cout << " pages_count = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW2::PAGE_CNT_LSB, 16)  << dec << endl;
+  // cout << " stop_bit    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW2::STOP_BIT, 8)  << dec << endl;
+
+  //  cout << endl;
+  
+  for ( ; itr != gbtvector.end();  itr++)
+    {
+      unsigned int marker =  get_GBT_value (*itr, 72,8);
+      //  cout << __FILE__ << " " << __LINE__ << " marker: " << hex << marker << dec << endl;
+      if ( marker == WordTypeMarker::IHW)
+	{
+	  //	  cout << " IHW        "; 
+	  pretty_print(*itr);
+	}
+      else if ( marker == WordTypeMarker::TDH)
+	{
+	  // mlp needs to decode this ..... BCO  pg 11
+	  //cout << " TDH        ";
+	  pretty_print(*itr);
+	}
+      else if ( marker == WordTypeMarker::TDT)
+	{
+	  //cout << " TDT        ";
+	  pretty_print(*itr);
+	}
+      else if ( marker == WordTypeMarker::DDW)
+	{
+	  //cout << " DDW        ";
+	  pretty_print(*itr);
+	}
+      else if ( marker == WordTypeMarker::CDW)
+	{
+	  //cout << " CDW        ";
+	  pretty_print(*itr);
+	}
+      else if ( marker >>5 == 0b101 )
+	{
+	  //cout << " IB DIAG DATA ";
+	  pretty_print(*itr);
+	}
+      else if ( marker >>5 == 0b001 )
+	{
+	  //cout << " IB data ";
+	  pretty_print(*itr);
+	  decode_chipdata (*itr);
+	}	
+      else if ( marker >>5 == 0b110 )
+	{
+	  //cout << " OB DIAG DATA ";
+	  pretty_print(*itr);
+	}
+      else if ( marker >>5 == 0b101 )
+	{
+	  //cout << " IB DIAG DATA ";
+	  pretty_print(*itr);
+	}
+      else if ( marker == 0xe4 )
+	{
+	  //cout << " DIAGNOSTIC DATA WORD (DDW) ";
+	  pretty_print(*itr);
+	}
+      else if ( marker == 0xF8)
+	{
+	  //cout << " CALIBRATION DATA WORD ";
+	  pretty_print(*itr);
+	}
+      else
+	{
+	  //cout << "  unknown data  ";
+	  pretty_print(*itr);
+	  //cout << "   " ;
+	}
+      // cout <<  endl;
+    }
+  
+  std::map<unsigned int, std::vector<unsigned char>>::iterator mitr;
+  for ( mitr = chipdata.begin(); mitr != chipdata.end(); ++mitr)
+  {
+
+    
+    //    cout << " lane: " << hex << mitr->first << "   ";
+    last_lane = mitr->first ;
+    
+    // for (unsigned int i = 0; i < mitr->second.size() ; i++)
+    //   {
+    // 	cout << (unsigned short ) mitr->second[i] << " ";
+    //   }
+    // cout << endl << endl;
+    
+    decode_lane (  mitr->second );
+
+  }
+
+  
+  return 0;
+}
+
+
+int oncsSub_idmvtxv3::iValue(const int n, const char *what)
+{
+
+  decode();
+  unsigned int i = n;
+  
+  if ( strcmp(what,"NR_HITS") == 0 )  // the number of datasets
+  {
+    return hit_vector.size();
+  }
+
+  if ( i >= hit_vector.size())
+    {
+      return 0;
+    }
+  
+  else if ( strcmp(what,"SOURCE_ID") == 0 )
+    {
+      return hit_vector[i]->source_id;
+    }
+
+  else if ( strcmp(what,"LANE") == 0 )
+    {
+      return hit_vector[i]->lane;
+    }
+
+  else if ( strcmp(what,"ENCODER_ID") == 0 )
+    {
+      return hit_vector[i]->encoder_id;
+    }
+
+  else if ( strcmp(what,"ADDR") == 0 )
+    {
+      return hit_vector[i]->addr;
+    }
 
   return 0;
 }
@@ -621,47 +494,42 @@ int oncsSub_idmvtxv3::decode()
 //_________________________________________________
 void oncsSub_idmvtxv3::dump(OSTREAM &os)
 {
-  identify(os);
+  //  identify(os);
   decode();
+
+  unsigned int n;
+
+  unsigned int nr_hits = iValue(0, "NR_HITS");
+
+  os << "Number of hits: " << nr_hits << endl;
+
+  os << " hit number   addr   enc.id   lane   src.id " << endl;  
+
+  for ( n = 0; n < nr_hits; n++)
+    {
+      os << setw(6) << n
+	 << "     " << setw(6) << iValue(n, "ADDR")
+	 << "  " << setw(6)  << iValue(n, "ENCOODER_ID")    
+	 << "  " << setw(6)  << iValue(n, "LANE")    
+	 << "  " << setw(6)  << iValue(n, "SOURCE_ID")
+	 << endl;
+    }
+
+  
   return;
 }
 
 //_________________________________________________
-void oncsSub_idmvtxv3::gdump(const int how, OSTREAM &out) const
+oncsSub_idmvtxv3::~oncsSub_idmvtxv3()
 {
-  identify(out);
 
-  packet_range_t start_end = get_packet_range();
-  //set ptr position to start bufffer
-  uint8_t *the_pos = start_end.first;
-
-  switch (how)
-  {
-    case (EVT_HEXADECIMAL):
-      while (the_pos < start_end.second)
-      {
-        //flxWord.copyFrom(reinterpret_cast<void *>(the_pos));
-        mvtx::FLXWord *flxWord = reinterpret_cast<mvtx::FLXWord *>(the_pos);
-        out << SETFILL(' ') << SETW(5) << (the_pos - start_end.first) << " |  ";
-        out << flxWord->asString() << " ";
-        out << ENDL;
-        the_pos += mvtx::FLXWordLength;
-      }
-      break;
-
-    case (EVT_DECIMAL):
-      out << ENDL
-      << "!!!!!!!!!!!!!!!!!!WARNING!!!!!!!!!!!!!!!!!!!!\n"
-      << "Not implemented...\n"
-      << "!!!!!!!!!!!!!!!!!!WARNING!!!!!!!!!!!!!!!!!!!!\n"
-      << ENDL;
-      break;
-
-    default:
-      break;
-  }
-
-  out << ENDL;
+  chipdata.clear();
+  
+  std::vector<mvtx_hit *>::iterator itr = hit_vector.begin();
+  for ( ; itr != hit_vector.end(); ++itr)
+    {
+      delete (*itr);
+    }
+  hit_vector.clear();
+  
 }
-
-#endif /* MVTX_DECODER */
