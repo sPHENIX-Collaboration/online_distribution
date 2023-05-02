@@ -67,8 +67,8 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 
   while ( (buffer[index] & 0xFF00 ) == 0xBA00  && (index < payload_length) )
     {
-      unsigned int fee_id = (buffer[index] >> 4) & 0xf;
-      unsigned int datalength = buffer[index] & 0xf;
+      unsigned int fee_id = buffer[index] & 0xff;
+      const unsigned int datalength = 0xf;
       //coutfl << " index = " << index << " fee_id = " << fee_id << " len = " << datalength << endl;
       index++;
       if ( fee_id < MAX_FEECOUNT)
