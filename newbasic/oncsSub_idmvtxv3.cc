@@ -35,7 +35,7 @@ int  oncsSub_idmvtxv3::decode_lane( const std::vector<uint8_t> v)
 {
 
   uint32_t pos = 0;
-  std::vector<uint8_t>::const_iterator itr = v.begin();
+  //std::vector<uint8_t>::const_iterator itr = v.begin();
 
   int ret = 0; // currently we just print stuff, but we will add stuff to our
                // structures and return a status later (that's why it's not a const function)
