@@ -125,7 +125,7 @@ int oncsSub_idinttv0::intt_decode ()
 	      
 	      // 0x 0301 0063     
 	      intt_hit * hit= new intt_hit;
-	      hit->ladder  = i;
+	      hit->fee  = i;
 	      hit->bco        = BCO;
 	      hit->channel_id = (x >> 16) & 0x7f;  // 7bits
 	      hit->chip_id    = (x >> 23) & 0x3f;  // 6
@@ -152,12 +152,16 @@ int oncsSub_idinttv0::intt_decode ()
 
 enum ITEM
 {
- F_ADC = 0,
- F_AMPLITUDE,
- F_BCO,
- F_CHIP_ID,
- F_CHANNEL_ID,
- F_FULL_FPHX,
+ F_BCO = 1,
+  F_FEE,
+  F_CHANNEL_ID,
+  F_CHIP_ID,
+  F_ADC,
+  F_FPHX_BCO,
+  F_FULL_FPHX,
+  F_FULL_ROC,
+  F_AMPLITUDE,
+  F_DATAWORD
 };
 
 
@@ -168,24 +172,40 @@ int oncsSub_idinttv0::iValue(const int hit, const int field)
 
   switch (field)
     {
-    case F_AMPLITUDE:
-      return intt_hits[hit]->amplitude;
+    case F_FEE:
+      return intt_hits[hit]->fee;
+      break;
+
+    case F_CHANNEL_ID:
+      return intt_hits[hit]->channel_id;
       break;
       
-    case F_FULL_FPHX:
-      return intt_hits[hit]->full_fphx;
+    case F_CHIP_ID:
+      return intt_hits[hit]->chip_id;
       break;
       
     case F_ADC:
       return intt_hits[hit]->adc;
       break;
       
-    case F_CHIP_ID:
-      return intt_hits[hit]->chip_id;
+    case F_FPHX_BCO:
+      return intt_hits[hit]->FPHX_BCO;
       break;
-
-    case F_CHANNEL_ID:
-      return intt_hits[hit]->channel_id;
+      
+    case F_FULL_FPHX:
+      return intt_hits[hit]->full_FPHX;
+      break;
+      
+    case F_FULL_ROC:
+      return intt_hits[hit]->full_ROC;
+      break;
+      
+    case F_AMPLITUDE:
+      return intt_hits[hit]->amplitude;
+      break;
+      
+    case F_DATAWORD:
+      return intt_hits[hit]->word;
       break;
 
     }
@@ -243,6 +263,31 @@ int oncsSub_idinttv0::iValue(const int hit, const char *what)
       return iValue(hit,F_FULL_FPHX);
     }
 
+  if ( strcmp(what,"FEE") == 0)
+    {
+      return iValue(hit,F_FEE);
+    }
+
+  if ( strcmp(what,"FPHX_BCO") == 0)
+    {
+      return iValue(hit,F_FPHX_BCO);
+    }
+
+  if ( strcmp(what,"FULL_FPHX") == 0)
+    {
+      return iValue(hit,F_FULL_FPHX);
+    }
+
+  if ( strcmp(what,"FULL_ROC") == 0)
+    {
+      return iValue(hit,F_FULL_ROC);
+    }
+
+  if ( strcmp(what,"DATAWORD") == 0)
+    {
+      return iValue(hit,F_DATAWORD);
+    }
+
   return 0;
 }
 
@@ -266,23 +311,22 @@ void  oncsSub_idinttv0::dump ( OSTREAM& os )
 
   std::vector<intt_hit*>::const_iterator hit_itr;
 
-  os << "   #  Ladder    BCO      chip_BCO  chip_id channel_id    ADC  full_phx full_ROC Ampl." << endl;
+  os << "   #    FEE    BCO      chip_BCO  chip_id channel_id    ADC  full_phx full_ROC Ampl." << endl;
 
-int count = 0;
-  for ( hit_itr = intt_hits.begin(); hit_itr != intt_hits.end(); ++hit_itr)
+  for ( int i = 0; i < iValue(0, "NR_HITS"); i++)
     {
-      os << setw(4) << count++ << " "
-	 << setw(5) <<                  (*hit_itr)->ladder     << " "
-	 <<  hex << "0x" <<  setw(11) <<  setfill('0') << (*hit_itr)->bco <<  setfill(' ') << dec << "   " 
-	 <<  hex << "0x" <<  setw(2)  << (*hit_itr)->FPHX_BCO  << dec  << "   " 
-	 << setw(5) <<                  (*hit_itr)->chip_id    << " " 
-	 << setw(9) <<                  (*hit_itr)->channel_id << "     "
-	 << setw(5) <<                  (*hit_itr)->adc        << " " 
-	 << setw(5) <<                  (*hit_itr)->full_FPHX
-	 << setw(9) <<                  (*hit_itr)->full_ROC
-	 << setw(8) <<                  (*hit_itr)->amplitude 
+      os << setw(4) << i << " "
+	 << setw(5) <<             iValue(i, F_FEE)     << " "
+	 <<  hex <<  setw(11) <<   lValue(i, F_BCO)  << dec << "   " 
+	 <<  hex <<  setw(2) << "0x" <<  iValue(i,F_FPHX_BCO)  << dec  << "   " 
+	 << setw(5) <<             iValue(i,F_CHIP_ID)    << " " 
+	 << setw(9) <<             iValue(i,F_CHANNEL_ID) << "     "
+	 << setw(5) <<             iValue(i,F_ADC)        << " " 
+	 << setw(5) <<             iValue(i,F_FULL_FPHX) << " "
+	 << setw(9) <<             iValue(i,F_FULL_ROC)
+	 << setw(8) <<             iValue(i,F_AMPLITUDE) 
 	 << "     " 
-	 << "0x" << setw(8) <<  hex << setfill('0') << (*hit_itr)->word 
+	 << "0x" << setw(8) <<  hex << setfill('0') << iValue(i,F_DATAWORD)
 	 <<  setfill(' ') << dec << endl;
       
     }

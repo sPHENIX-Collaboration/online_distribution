@@ -46,7 +46,7 @@ protected:
   struct intt_hit
   {
     uint64_t bco;
-    uint16_t ladder;
+    uint16_t fee;
     uint16_t channel_id;
     uint16_t chip_id;
     uint16_t adc;
