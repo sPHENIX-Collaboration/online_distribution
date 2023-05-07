@@ -34,17 +34,17 @@ int oncsSub_idinttv0::intt_decode ()
   if (_is_decoded ) return 0;
   _is_decoded = 1;
 
-  unsigned int payload_length = 2 * (getLength() - SEVTHEADERLENGTH)  - getPadding() ;
+  unsigned int payload_length = ( getLength() - SEVTHEADERLENGTH)  - getPadding() ;
   
   unsigned int index = 0;
   
 
-  unsigned short *buffer = ( unsigned short *)  &SubeventHdr->data;
+  unsigned int *buffer = ( unsigned int *)  &SubeventHdr->data;
 
   while ( index < payload_length)
     {
       // find the "ba" index
-      while ( (buffer[index] & 0xff00) !=  0xba00  )
+      while ( (buffer[index] & 0xff00ffff ) !=  0xf000caf0 )
 	{
 	  coutfl << "skipping  at " << index << " values " << hex << buffer[index] << dec << endl;
 	  index++;
@@ -55,72 +55,97 @@ int oncsSub_idinttv0::intt_decode ()
 	      return -1;
 	    }
 	}
+
       
-      uint16_t fee = ( buffer[index] >> 4 ) & 0xf;
-      uint16_t len = ( buffer[index] ) & 0xf;
-      coutfl << "found start at index " << index << " values " << hex << buffer[index] << dec << " fee: " << fee << " len: " << len << endl;
+      uint16_t fee = ( buffer[index] >> 20 ) & 0xf;
+      uint16_t len = ( (buffer[index] >> 16) & 0xf) >>1;
+      // coutfl << "found start at index " << index << " values " << hex << buffer[index] << dec << " fee: " << fee << " len: " << len << endl;
       index++;
+
       for ( int i = 0; i < len ; i++)
 	{
-	  //	  coutfl << "adding to ladder " << fee << "  " << hex << buffer[index] << dec << endl;
+	  //coutfl << "adding to ladder " << fee << "  " << hex << buffer[index] << dec << endl;
 	  fee_data[fee].push_back(buffer[index++]);
 	}
     }
 
-  std::vector<unsigned short>::const_iterator fee_data_iter[MAX_FEECOUNT];
-  
+  std::vector<unsigned int>::const_iterator fee_data_itr;
+
+  //  coutfl << " ---- digesting the fee data ---- "<< endl;
+
   for ( int i = 0 ; i < MAX_FEECOUNT ; i++)
     {
-      fee_data_iter[i] = fee_data[i].begin();
-      coutfl << "ladder " << i << "  number of words " << fee_data[i].size() << endl;
-      
-      while (fee_data_iter[i] != fee_data[i].end())
+
+      // cout << endl;
+      // for (  unsigned int j = 0;  j <  fee_data[i].size(); j++)
+      // 	{
+      // 	  coutfl << " fee " << i << "  word  " << j << "  "  << hex << fee_data[i][j] << dec << endl;
+      // 	}
+
+      int header_found = 0;
+      for (  unsigned int j = 0;  j <  fee_data[i].size(); j++)
 	{
-	  
-	  uint16_t c = 0;
-	  while ( (fee_data_iter[i] != fee_data[i].end()) && c != 0xfeed )
+	  //skip until we have found the first header
+	  if (! header_found && (fee_data[i][j] & 0xff00ffff )!= 0xad00cade )
 	    {
-	      c = *(fee_data_iter[i]);
-	      ++(fee_data_iter[i]);
+	      continue;
 	    }
-
-	  if ( fee_data_iter[i] == fee_data[i].end()) continue;
-
-	  c = *(fee_data_iter[i]);
-	  if ( c !=  0xc0de)
-	    {
-	      coutfl << " error with code " << hex << c << dec << endl;
-	      //continue;
-	    }
+	  header_found = 1;
+	  // coutfl << "fee " << i << " found code 0x" << hex << fee_data[i][j] << dec << endl;
 	  
-	  uint16_t x[2];
+	  unsigned long long BCO = 0;
+	  unsigned long long l = 0;
 	  
-	  ++(fee_data_iter[i]);
-	  if ( fee_data_iter[i] == fee_data[i].end()) continue;
-
-	  x[0] = *(fee_data_iter[i]);
-	  ++(fee_data_iter[i]);
-	  if ( fee_data_iter[i] == fee_data[i].end()) continue;
-	  x[1] = *(fee_data_iter[i]);
-
-	  if ( x[0] != 0xfeed && x[1] != 0xc0de )
+	  // 1st word  --- cade add9 87ea 0fe3 cade add9
+	  l = fee_data[i][j];
+	  // coutfl << "fee " << i << " BCO MSB " << hex << l << dec << endl;
+	  BCO |= ( ((l >> 16 ) & 0xff) << 32);
+	  
+	  j++;
+	  if ( j >= fee_data[i].size() ) continue;
+	  l = fee_data[i][j];
+	  
+	  // coutfl << "fee " << i << " BCO mid " << hex << l << dec << endl;
+	  BCO |= ( (l & 0xffff) << 16);
+	  BCO |= ( (l >> 16) & 0xffff);
+	  
+	  // coutfl << "BCO for fee " << setw(3) << i << " : " << hex << BCO << dec << endl;
+	  
+	  // ok, now let's go until we hit the end, or hit the next header
+	  while ( ++j < fee_data[i].size() )
 	    {
+	      if ( ( fee_data[i][j] & 0xff00ffff ) == 0xad00cade )
+		{
+		  header_found = 0;
+		  j--;
+		  break;
+		}
+	      
+	      uint32_t x = fee_data[i][j];
+	      
+	      // 0x 0301 0063     
 	      intt_hit * hit= new intt_hit;
 	      hit->ladder  = i;
-	      hit->full_fphx  = (x[0] >>  7) & 0x1;   // 1
-	      hit->bco        = (x[0]      ) & 0x7f;  // 7
-	      hit->adc        = (x[1] >> 13) & 0x7;   // 3
-	      hit->chip_id    = (x[1] >>  7) & 0x3f;  // 6
-	      hit->channel_id = (x[1]      ) & 0x7f;  // 7
-	      hit->word0      = x[0];
-	      hit->word1      = x[1];
-	 
+	      hit->bco        = BCO;
+	      hit->channel_id = (x >> 16) & 0x7f;  // 7bits
+	      hit->chip_id    = (x >> 23) & 0x3f;  // 6
+	      hit->adc        = (x >> 29) & 0x7;   // 3
+
+	      hit->FPHX_BCO   = x  & 0x7f;
+	      hit->full_FPHX  = (x >> 7) & 0x1;   // 1
+	      hit->full_ROC   = (x >> 8) & 0x1;   // 1
+	      hit->amplitude  = (x >> 9) & 0x3f;   // 1
+	      
+	      hit->word      = x;
+	      // coutfl <<  " pushing back fee " << i <<  "  " << hex << x << dec  << endl;
+	      
 	      intt_hits.push_back(hit);
 	      //coutfl << "list size: " << intt_hits.size() << endl;
+	      ++fee_data_itr;
 	    }
+	  
 	}
     }
-      
   return 0;
 }
 
@@ -233,28 +258,32 @@ long long  oncsSub_idinttv0::lValue(const int hit, const char *what)
 
 void  oncsSub_idinttv0::dump ( OSTREAM& os )
 {
-  os << "number_of_hits: " << iValue(0, "NR_HITS") << endl;
+  //  os << "number_of_hits: " << iValue(0, "NR_HITS") << endl;
   intt_decode();
   identify(os);
 
-  os << "number_of_hits: " << iValue(0, "NR_HITS") << endl;
+  os << "  Number of hits: " << iValue(0, "NR_HITS") << endl;
 
   std::vector<intt_hit*>::const_iterator hit_itr;
 
-  os << " Ladder    BCO    Amp   full_phx ADC  chip_id channel_id " << endl;
-  
+  os << "   #  Ladder    BCO      chip_BCO  chip_id channel_id    ADC  full_phx full_ROC Ampl." << endl;
+
+int count = 0;
   for ( hit_itr = intt_hits.begin(); hit_itr != intt_hits.end(); ++hit_itr)
     {
-      os  << setw(3) <<   (*hit_itr)->ladder     << " "
-	  << setw(9) <<   (*hit_itr)->bco        << " " 
-	  << setw(5) <<   (*hit_itr)->amplitude  << " " 
-	  << setw(5) <<   (*hit_itr)->full_fphx  << "     " 
-	  << setw(5) <<   (*hit_itr)->adc        << "   " 
-	  << setw(5) <<   (*hit_itr)->chip_id    << " " 
-	  << setw(5) <<   (*hit_itr)->channel_id << "         "
-	  << "0x" << setw(4) <<  hex << setfill('0') << (*hit_itr)->word0      << " "
-	  << "0x" << setw(4) << (*hit_itr)->word1	
-	  <<  setfill(' ') << dec << endl;
+      os << setw(4) << count++ << " "
+	 << setw(5) <<                  (*hit_itr)->ladder     << " "
+	 <<  hex << "0x" <<  setw(11) <<  setfill('0') << (*hit_itr)->bco <<  setfill(' ') << dec << "   " 
+	 <<  hex << "0x" <<  setw(2)  << (*hit_itr)->FPHX_BCO  << dec  << "   " 
+	 << setw(5) <<                  (*hit_itr)->chip_id    << " " 
+	 << setw(9) <<                  (*hit_itr)->channel_id << "     "
+	 << setw(5) <<                  (*hit_itr)->adc        << " " 
+	 << setw(5) <<                  (*hit_itr)->full_FPHX
+	 << setw(9) <<                  (*hit_itr)->full_ROC
+	 << setw(8) <<                  (*hit_itr)->amplitude 
+	 << "     " 
+	 << "0x" << setw(8) <<  hex << setfill('0') << (*hit_itr)->word 
+	 <<  setfill(' ') << dec << endl;
       
     }
   
