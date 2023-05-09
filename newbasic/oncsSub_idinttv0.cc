@@ -233,6 +233,8 @@ long long  oncsSub_idinttv0::lValue(const int hit, const int field)
 
 int oncsSub_idinttv0::iValue(const int hit, const char *what)
 {
+    intt_decode();
+
   if ( strcmp(what,"NR_HITS") == 0)
     {
       return intt_hits.size();
@@ -293,6 +295,8 @@ int oncsSub_idinttv0::iValue(const int hit, const char *what)
 
 long long  oncsSub_idinttv0::lValue(const int hit, const char *what)
 {
+  intt_decode();
+
   if ( strcmp(what,"BCO") == 0)
     {
       return lValue(hit,F_BCO);
