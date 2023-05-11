@@ -64,22 +64,37 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 
   unsigned short *buffer = ( unsigned short *)  &SubeventHdr->data;
 
+  // demultiplexer
+  while (index < payload_length)
+  {
+    // Length for the 256-bit wide Round Robin Multiplexer for the data stream
+    const unsigned int datalength = 0xf;
 
-  while ( (buffer[index] & 0xFF00 ) == 0xBA00  && (index < payload_length) )
+    if ((buffer[index] & 0xFF00) == 0xBA00 )
     {
+
       unsigned int fee_id = buffer[index] & 0xff;
-      const unsigned int datalength = 0xf;
-      //coutfl << " index = " << index << " fee_id = " << fee_id << " len = " << datalength << endl;
-      index++;
-      if ( fee_id < MAX_FEECOUNT)
-	{
-	  for ( unsigned int i = 0;  i < datalength ; i++)
-	    {
-	      fee_data[fee_id].push_back( buffer[index++]);
-	    }
-	}
-  
+      // coutfl << " index = " << index << " fee_id = " << fee_id << " len = " << datalength << endl;
+      ++index;
+      if (fee_id < MAX_FEECOUNT)
+      {
+        for (unsigned int i = 0; i < datalength; i++)
+        {
+          // watch out for any data corruption
+          if (index >= payload_length) break;
+
+          fee_data[fee_id].push_back(buffer[index++]);
+        }
+      }
+
+    } //     if ((buffer[index] & 0xFF00) == 0xBA00 )
+    else
+    {
+      // not FEE data, e.g. GTM data or other stream, to be decoded
+      index += datalength + 1;
     }
+
+  }
   //  coutfl << " done with tcp_decode index = " << index << endl;
 
   // std::vector<unsigned short>::const_iterator fee_data_itr;
