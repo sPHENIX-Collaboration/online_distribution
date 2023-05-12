@@ -63,12 +63,20 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
   
   struct mvtx_hit
   {
-    unsigned long long BCO;
-    unsigned int source_id;
+    unsigned long long RHICBCO;
+    unsigned long long LHCBC;
+    // take out    unsigned int source_id;
+
+    unsigned int chip_id;
+
     unsigned int fee_id;
     unsigned int lane;
     unsigned int encoder_id;
     unsigned int addr;
+    unsigned int source_id;
+    // unsigned int row_pos;
+    // unsigned int col_pos;
+    // unsigned int L1Trigger;
 
     // unsigned int chipid;
     // unsigned int region_id;

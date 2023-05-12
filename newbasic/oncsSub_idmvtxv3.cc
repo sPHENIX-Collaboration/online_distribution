@@ -115,11 +115,12 @@ int  oncsSub_idmvtxv3::decode_lane( const std::vector<uint8_t> v)
 	  h = new mvtx_hit;
 	  memset(h, 0, sizeof(*h));
 	  
-	  h->BCO = last_BCO;
+	  h->RHICBCO = last_BCO;
 	  h->source_id = last_source_id;
 	  h->fee_id = last_fee_id;
 	  h->lane = last_lane;
 	  h->addr  = addr;
+
 	  hit_vector.push_back(h);
 	}
 
@@ -137,7 +138,7 @@ int  oncsSub_idmvtxv3::decode_lane( const std::vector<uint8_t> v)
 	  h = new mvtx_hit;
 	  memset(h, 0, sizeof(*h));
 	  
-	  h->BCO = last_BCO;
+	  h->RHICBCO = last_BCO;
 	  h->source_id = last_source_id;
 	  h->fee_id = last_fee_id;
 	  h->lane = last_lane;
@@ -153,7 +154,7 @@ int  oncsSub_idmvtxv3::decode_lane( const std::vector<uint8_t> v)
 		  h = new mvtx_hit;
 		  memset(h, 0, sizeof(*h));
 		  
-		  h->BCO = last_BCO;
+		  h->RHICBCO = last_BCO;
 		  h->source_id = last_source_id;
 		  h->fee_id = last_fee_id;
 		  h->lane = last_lane;
@@ -198,7 +199,7 @@ int  oncsSub_idmvtxv3::decode_chipdata( const std::bitset<80> gbtword)
 
   // add a check if that lane matches the embedded lane
   
-  std::map<unsigned int, std::vector<uint8_t>>::iterator itr;
+  std::map<unsigned int, std::vector<uint8_t> >::iterator itr;
   itr = chipdata.find(laneidx);
   // if ( itr == chipdata.end())
   //   {
@@ -332,7 +333,7 @@ int oncsSub_idmvtxv3::decode()
 
   //  cout << __FILE__ << " " << __LINE__ << " number of GBT words " << gbtvector.size()  << endl;
   
-  vector<std::bitset<80>>::const_iterator itr = gbtvector.begin();
+  vector<std::bitset<80> >::const_iterator itr = gbtvector.begin();
 
 //  cout << "RDH Header *** " << endl;
 
@@ -371,7 +372,13 @@ int oncsSub_idmvtxv3::decode()
       else if ( marker == WordTypeMarker::TDH)
 	{
 	  // mlp needs to decode this ..... BCO  pg 11
-	  //cout << " TDH        ";
+	  cout << " TDH  " 
+	       << " RHICBCO " << get_GBT_value (*itr, 32,40)
+	       << " LCHBC " << get_GBT_value (*itr, 16,12)
+	       << " STOP " << get_GBT_value (*itr, 14,1)
+	       << " DATA " << get_GBT_value (*itr, 13,1)
+	       << endl;
+	  
 	  pretty_print(*itr);
 	}
       else if ( marker == WordTypeMarker::TDT)
@@ -515,7 +522,9 @@ void oncsSub_idmvtxv3::dump(OSTREAM &os)
 	 << endl;
     }
 
+// 0 0 0 0 0 0 1 0 0 0 0 0 
   
+//   iValue(x, "L1TriggerBCO")   
   return;
 }
 
