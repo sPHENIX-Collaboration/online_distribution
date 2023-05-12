@@ -329,7 +329,7 @@ void  oncsSub_idinttv0::dump ( OSTREAM& os )
 
   os << "  Number of hits: " << iValue(0, "NR_HITS") << endl;
 
-  std::vector<intt_hit*>::const_iterator hit_itr;
+//  std::vector<intt_hit*>::const_iterator hit_itr;
 
   os << "   #    FEE    BCO      chip_BCO  chip_id channel_id    ADC  full_phx full_ROC Ampl." << endl;
 
