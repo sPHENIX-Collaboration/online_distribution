@@ -19,12 +19,13 @@ public:
   oncsSub_idinttv0( subevtdata_ptr);
   ~oncsSub_idinttv0();
 
-  //  int    iValue(const int fee, const int ch, const int sample);
+  //int    iValue(const int fee, const int ch, const int sample);
   //  int    iValue(const int fee, const int ch, const int sample, const char *what);
   int    iValue(const int hit, const int field);
   long long    lValue(const int hit, const int field);
 
-  //  int    iValue(const int , const int, const char * what);
+  int    iValue(const int , const int, const char * what);
+
   int    iValue(const int hit,const char * what);
   long long    lValue(const int hit,const char * what);
 

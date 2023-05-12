@@ -25,6 +25,8 @@ oncsSub_idinttv0::~oncsSub_idinttv0()
     {
       delete (*hit_itr);
     }
+    intt_hits.clear();
+
 }
 
 
@@ -59,7 +61,7 @@ int oncsSub_idinttv0::intt_decode ()
       
       uint16_t fee = ( buffer[index] >> 20 ) & 0xf;
       uint16_t len = ( (buffer[index] >> 16) & 0xf) >>1;
-      // coutfl << "found start at index " << index << " values " << hex << buffer[index] << dec << " fee: " << fee << " len: " << len << endl;
+      //coutfl << "found start at index " << index << " values " << hex << buffer[index] << dec << " fee: " << fee << " len: " << len << endl;
       index++;
 
       for ( int i = 0; i < len ; i++)
@@ -69,7 +71,6 @@ int oncsSub_idinttv0::intt_decode ()
 	}
     }
 
-  std::vector<unsigned int>::const_iterator fee_data_itr;
 
   //  coutfl << " ---- digesting the fee data ---- "<< endl;
 
@@ -141,7 +142,6 @@ int oncsSub_idinttv0::intt_decode ()
 	      
 	      intt_hits.push_back(hit);
 	      //coutfl << "list size: " << intt_hits.size() << endl;
-	      ++fee_data_itr;
 	    }
 	  
 	}
@@ -213,8 +213,15 @@ int oncsSub_idinttv0::iValue(const int hit, const int field)
   return 0;
 }
 
+int  oncsSub_idinttv0::iValue(const int fee, const int index, const char * what)
+{
+  if ( fee < 0 || fee >= MAX_FEECOUNT) return 0;
 
-
+  if ( index < 0 || (unsigned int) index >= fee_data[fee].size() ) return 0;
+  intt_decode();
+  return fee_data[fee][index];
+}
+						     
 long long  oncsSub_idinttv0::lValue(const int hit, const int field)
 {
   intt_decode();
@@ -240,6 +247,15 @@ int oncsSub_idinttv0::iValue(const int hit, const char *what)
       return intt_hits.size();
     }
     
+  if ( strcmp(what,"FEE_LENGTH") == 0)
+    {
+      if ( hit < 0 || hit >= MAX_FEECOUNT) return 0;
+      return fee_data[hit].size();
+    }
+    
+
+
+
   else if ( strcmp(what,"ADC") == 0)
     {
       return iValue(hit,F_ADC);
