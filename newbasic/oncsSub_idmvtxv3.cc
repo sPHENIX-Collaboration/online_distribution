@@ -22,12 +22,12 @@ oncsSub_idmvtxv3::oncsSub_idmvtxv3(subevtdata_ptr data)
 void  oncsSub_idmvtxv3::pretty_print( const std::bitset<80> gbtword) const 
 {
 
-  //  cout  << std::setfill('0');
+  cout  << std::setfill('0');
   for ( int i = 0; i < 10; i++)
     {
-      //  cout << hex << setw(2) << get_GBT_value (gbtword, i * 8, 8) << " " << dec;
+        cout << hex << setw(2) << get_GBT_value (gbtword, i * 8, 8) << " " << dec;
     }
-  //cout  << std::setfill(' ');
+  cout  << std::setfill(' ');
 }
 
 //_________________________________________________
@@ -303,12 +303,15 @@ int oncsSub_idmvtxv3::decode()
   do
     {
       read_32( report[0], report[1], report[2], w0, w1);
-    }  while (w1 != 0xab);
+    }  while (w1 != 0xab && w0 != 0x01);
   // here we have found the "ab" unit
 
+  // for (int i = 0; i < 3; i++) pretty_print(report[i]);
+  // cout << hex << w0 << " " << w1 << dec << endl << endl;
+  
   unsigned int packet_cnt = get_GBT_value (report[2],flxhdr_word2::DMA_WRD_CTR_LSB,16);
   
-  //  cout << __FILE__ << " " << __LINE__ <<  " packet count " << packet_cnt << endl;
+  cout << __FILE__ << " " << __LINE__ <<  " packet count " << packet_cnt << endl;
 
   w0 = w1 = old_len = 0;
 
@@ -321,6 +324,10 @@ int oncsSub_idmvtxv3::decode()
 	  break;
 	}
       read_32( report[0], report[1], report[2], w0, w1);
+      for (int i = 0; i < 3; i++) pretty_print(report[i]);
+      cout << hex << w0 << " " << w1 << dec << endl << endl;
+
+  
 
       //calculate how many GBT words these 32 bytes contain
       unsigned short c = (w1 << 8 ) + w0  - old_len;
@@ -335,28 +342,33 @@ int oncsSub_idmvtxv3::decode()
   
   vector<std::bitset<80> >::const_iterator itr = gbtvector.begin();
 
-//  cout << "RDH Header *** " << endl;
+  cout << "RDH Header *** " << endl;
+  pretty_print(*itr);
 
   last_BCO = get_GBT_lvalue (b80, Rdh8ByteMapW1::BCO_SB0, 40);
   last_source_id = get_GBT_value (b80, Rdh8ByteMapW0::SOURCE_ID, 16);
   last_fee_id = get_GBT_value (b80, Rdh8ByteMapW0::FEEID_LSB, 16);
+
+  //  cout << " last_fee_id " << last_fee_id << endl;
+
   
   // decode the RDH
   b80 = *itr++; //  RDH Word 0
-  // cout << " h_ver    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::HDRVERSION, 8) << dec << endl;
-  // cout << " h_len    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::SIZE, 8) << dec << endl;
-  // cout << " feeid    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::FEEID_LSB, 16) << dec << endl;
-  // cout << " sourceid = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::SOURCE_ID, 16) << dec << endl;
-  // cout << " detfield = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::DET_FIELD_SB0, 32) << dec << endl;
+  cout << " h_ver    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::HDRVERSION, 8) << dec << endl;
+  cout << " h_len    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::SIZE, 8) << dec << endl;
+  cout << " feeid    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::FEEID_LSB, 16) << dec << endl;
+  cout << " sourceid = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::SOURCE_ID, 16) << dec << endl;
+  cout << " detfield = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::DET_FIELD_SB0, 32) << dec << endl;
 
   b80 = *itr++; //  RDH Word 1
-  // cout << " LHC BC   = 0x" << hex << (get_GBT_value (b80, Rdh8ByteMapW1::BC_LSB, 16) & 0xfff)  << dec << endl;
-  // cout << " BCO      = 0x" << hex << get_GBT_lvalue (b80, Rdh8ByteMapW1::BCO_SB0, 40)   << dec << endl;
+  cout << " LHC BC   = 0x" << hex << (get_GBT_value (b80, Rdh8ByteMapW1::BC_LSB, 16) & 0xfff)  << dec << endl;
+  cout << " BCO      = 0x" << hex << get_GBT_lvalue (b80, Rdh8ByteMapW1::BCO_SB0, 40)   << dec << endl;
   
   b80 = *itr++; //  RDH Word 2
-  // cout << " trg_type    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW2::TRG_TYPE_SB0, 32)  << dec << endl;
-  // cout << " pages_count = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW2::PAGE_CNT_LSB, 16)  << dec << endl;
-  // cout << " stop_bit    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW2::STOP_BIT, 8)  << dec << endl;
+  pretty_print(b80);
+  cout << " trg_type    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW2::TRG_TYPE_SB0, 32)  << dec << endl;
+  cout << " pages_count = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW2::PAGE_CNT_LSB, 16)  << dec << endl;
+  cout << " stop_bit    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW2::STOP_BIT, 8)  << dec << endl;
 
   //  cout << endl;
   
@@ -383,57 +395,57 @@ int oncsSub_idmvtxv3::decode()
 	}
       else if ( marker == WordTypeMarker::TDT)
 	{
-	  //cout << " TDT        ";
-	  pretty_print(*itr);
+	  cout << " TDT        ";
+	  //  pretty_print(*itr);
 	}
       else if ( marker == WordTypeMarker::DDW)
 	{
-	  //cout << " DDW        ";
-	  pretty_print(*itr);
+	  cout << " DDW        ";
+	  //pretty_print(*itr);
 	}
       else if ( marker == WordTypeMarker::CDW)
 	{
-	  //cout << " CDW        ";
-	  pretty_print(*itr);
+	  cout << " CDW        ";
+	  //pretty_print(*itr);
 	}
       else if ( marker >>5 == 0b101 )
 	{
-	  //cout << " IB DIAG DATA ";
-	  pretty_print(*itr);
+	  cout << " IB DIAG DATA ";
+	  //pretty_print(*itr);
 	}
       else if ( marker >>5 == 0b001 )
 	{
-	  //cout << " IB data ";
-	  pretty_print(*itr);
+	  cout << " IB data ";
+	  //pretty_print(*itr);
 	  decode_chipdata (*itr);
 	}	
       else if ( marker >>5 == 0b110 )
 	{
-	  //cout << " OB DIAG DATA ";
-	  pretty_print(*itr);
+	  cout << " OB DIAG DATA ";
+	  //pretty_print(*itr);
 	}
       else if ( marker >>5 == 0b101 )
 	{
-	  //cout << " IB DIAG DATA ";
-	  pretty_print(*itr);
+	  cout << " IB DIAG DATA ";
+	  //pretty_print(*itr);
 	}
       else if ( marker == 0xe4 )
 	{
-	  //cout << " DIAGNOSTIC DATA WORD (DDW) ";
-	  pretty_print(*itr);
+	  cout << " DIAGNOSTIC DATA WORD (DDW) ";
+	  //pretty_print(*itr);
 	}
       else if ( marker == 0xF8)
 	{
-	  //cout << " CALIBRATION DATA WORD ";
-	  pretty_print(*itr);
+	  cout << " CALIBRATION DATA WORD ";
+	  //pretty_print(*itr);
 	}
       else
 	{
-	  //cout << "  unknown data  ";
-	  pretty_print(*itr);
+	  cout << "  unknown data  ";
+	  //pretty_print(*itr);
 	  //cout << "   " ;
 	}
-      // cout <<  endl;
+      cout <<  endl;
     }
   
   std::map<unsigned int, std::vector<unsigned char>>::iterator mitr;
