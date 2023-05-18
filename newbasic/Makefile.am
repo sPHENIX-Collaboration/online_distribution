@@ -185,6 +185,7 @@ allheaders = \
   packet_id4evt.h \
   packet_id4scaler.h \
   packet_iddigitizerv2.h \
+  packet_idll1v1.h \
   packet_w124.h \
   packet_cdevpolarimeter.h \
   packet_cdevir.h \
@@ -281,6 +282,7 @@ allsources = \
   packet_id4evt.cc \
   packet_id4scaler.cc \
   packet_iddigitizerv2.cc \
+  packet_idll1v1.cc \
   packet_mnemonic.cc \
   packet_w124.cc \
   packet_cdevpolarimeter.cc \

@@ -651,6 +651,9 @@ Packet *A_Event::makePacket(PHDWORD *pp, const int hitFormat)
     case IDDIGITIZER_31S:
       return new Packet_iddigitizerv2(pp);
       break;
+    case IDLL1_20S:
+      return new Packet_idll1v1(pp);
+      break;
 
     case IDGL1P:
       return new Packet_gl1p(pp);
