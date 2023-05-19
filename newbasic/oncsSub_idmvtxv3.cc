@@ -498,6 +498,34 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
   return 0;
 }
 
+void * oncsSub_idmvtxv3::pValue(const int n, const char * what){
+  decode();
+
+  if ( strcmp(what,"DATA") == 0 ){
+    if(hit_vector.size() == 0){
+      return nullptr;
+    }
+    else{
+      mvtx_hit *hit = hit_vector.back();
+      hit_vector.pop_back();
+      //convert to human readable output  
+      mvtx_hit_decoded *h = new mvtx_hit_decoded;
+      memset(h, 0, sizeof(*h));
+
+      h->RHICBCO = hit->RHICBCO;
+      h->LHCBC = hit->LHCBC;
+      //decode real values
+      h->layer = 1;
+      h->stave = 2;
+      h->chip = 3;
+      h->col = 120;
+      h->row = 50;
+      return h;
+    }
+  }
+  return nullptr;
+}
+
 //_________________________________________________
 void oncsSub_idmvtxv3::dump(OSTREAM &os)
 {

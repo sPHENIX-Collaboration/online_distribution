@@ -19,6 +19,9 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
   ~oncsSub_idmvtxv3();
 
   int    iValue(const int ,const char * what);
+  
+  void * pValue(const int, const char * what);
+
 
 
   
@@ -82,6 +85,18 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
     // unsigned int region_id;
     // unsigned int readout_flags;
     // unsigned int bunchcounter;
+  };
+
+struct mvtx_hit_decoded
+  {
+    unsigned long long RHICBCO;
+    unsigned long long LHCBC;
+
+    unsigned int layer;
+    unsigned int stave;
+    unsigned int chip;
+    unsigned int col;
+    unsigned int row;
   };
     
   std::vector<mvtx_hit *> hit_vector;
