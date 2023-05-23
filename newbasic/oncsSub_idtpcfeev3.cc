@@ -49,7 +49,29 @@ int oncsSub_idtpcfeev3::cacheIterator(const int n)
   return 1;
 }
 
+int oncsSub_idtpcfeev3::decode_gtm_data(uint16_t dat[16])
+{
+    uint8_t *gtm = (uint8_t *)dat;
+    gtm_payload *payload = new gtm_payload;
 
+    payload->pkt_type = gtm[0] | (gtm[1] << 8);
+    if (payload->pkt_type != GTM_LVL1_ACCEPT_MAGIC_KEY && payload->pkt_type != GTM_ENDAT_MAGIC_KEY) {
+        return -1;
+    }
+
+    payload->is_lvl1 = payload->pkt_type == GTM_LVL1_ACCEPT_MAGIC_KEY;
+    payload->is_endat = payload->pkt_type == GTM_ENDAT_MAGIC_KEY;
+
+    payload->bco = (gtm[2] << 0) | (gtm[3] << 8) | (gtm[4] << 16) | (gtm[5] << 24) | ((uint64_t)gtm[6] << 32) | (((uint64_t)gtm[7]) << 40);
+    payload->lvl1_count = (gtm[8] << 0) | (gtm[9] << 8) | (gtm[10] << 16) | (gtm[11] << 24);
+    payload->endat_count = (gtm[12] << 0) | (gtm[13] << 8) | (gtm[14] << 16) | (gtm[15] << 24);
+    payload->last_bco = (gtm[16] << 0) | (gtm[17] << 8) | (gtm[18] << 16) | (gtm[19] << 24) | ((uint64_t)gtm[20] << 32) | (((uint64_t)gtm[21]) << 40);
+    payload->modebits = gtm[22];
+
+    this->gtm_data.push_back(payload);
+
+    return 0;
+}
 
 int oncsSub_idtpcfeev3::tpc_decode ()
 {
@@ -70,7 +92,7 @@ int oncsSub_idtpcfeev3::tpc_decode ()
     // Length for the 256-bit wide Round Robin Multiplexer for the data stream
     const unsigned int datalength = 0xf;
 
-    if ((buffer[index] & 0xFF00) == 0xBA00 )
+    if ((buffer[index] & 0xFF00) == FEE_MAGIC_KEY)
     {
 
       unsigned int fee_id = buffer[index] & 0xff;
@@ -86,8 +108,16 @@ int oncsSub_idtpcfeev3::tpc_decode ()
           fee_data[fee_id].push_back(buffer[index++]);
         }
       }
+    } else if ((buffer[index] & 0xFF00) == GTM_MAGIC_KEY) {
+        uint16_t buf[16];
 
-    } //     if ((buffer[index] & 0xFF00) == 0xBA00 )
+        // memcpy?
+        for (unsigned int i = 0; i < 16; i++) {
+            buf[i] = buffer[index++];
+        }
+
+        decode_gtm_data(buf);
+    }
     else
     {
       // not FEE data, e.g. GTM data or other stream, to be decoded
