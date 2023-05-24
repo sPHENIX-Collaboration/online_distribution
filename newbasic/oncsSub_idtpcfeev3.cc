@@ -21,14 +21,19 @@ oncsSub_idtpcfeev3::oncsSub_idtpcfeev3(subevtdata_ptr data)
 oncsSub_idtpcfeev3::~oncsSub_idtpcfeev3()
 {
 
-  waveform_set::iterator itr;
-
-  for ( itr = waveforms.begin() ; itr  != waveforms.end() ; ++itr)
+  for (auto itr = waveforms.begin() ; itr  != waveforms.end() ; ++itr)
     {
       delete (*itr);
     }
   waveforms.clear();
   
+
+  for (auto itr = gtm_data.begin() ; itr  != gtm_data.end() ; ++itr)
+    {
+      delete (*itr);
+    }
+  gtm_data.clear();
+
 }
 
 int oncsSub_idtpcfeev3::cacheIterator(const int n)
@@ -228,27 +233,6 @@ int oncsSub_idtpcfeev3::iValue(const int n, const int sample)
 
 
 
-int oncsSub_idtpcfeev3::iValue(const int fee, const int ch, const int sample)
-{
-  tpc_decode();
-  return 0;
-}
-
-int oncsSub_idtpcfeev3::iValue(const int fee, const int ch, const int sample, const char *what)
-{
-  tpc_decode();
-  return 0;
-}
-
-
-int oncsSub_idtpcfeev3::iValue(const int fee, const int ch, const char *what)
-{
-
-  tpc_decode();
-
-
-  return 0;
-}
   
 
 int oncsSub_idtpcfeev3::iValue(const int n, const char *what)

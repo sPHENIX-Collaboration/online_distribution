@@ -17,10 +17,7 @@ public:
   oncsSub_idtpcfeev3( subevtdata_ptr);
   ~oncsSub_idtpcfeev3();
 
-  int    iValue(const int fee, const int ch, const int sample);
-  int    iValue(const int fee, const int ch, const int sample, const char *what);
   int    iValue(const int ch, const int sample);
-  int    iValue(const int , const int, const char * what);
   int    iValue(const int ,const char * what);
 
   void  dump ( OSTREAM& os = COUT) ;
@@ -32,7 +29,7 @@ protected:
   static const unsigned short  MAGIC_KEY_0 = 0xfe;
   static const unsigned short  MAGIC_KEY_1 = 0x00;
 
-  static const uint16_t FEE_MAGIC_KEY = 0xfe00;
+  static const uint16_t FEE_MAGIC_KEY = 0xba00;
   static const uint16_t GTM_MAGIC_KEY = 0xbb00;
   static const uint16_t GTM_LVL1_ACCEPT_MAGIC_KEY = 0xbbf0;
   static const uint16_t GTM_ENDAT_MAGIC_KEY = 0xbbf1;
