@@ -17,8 +17,12 @@ public:
   oncsSub_idtpcfeev3( subevtdata_ptr);
   ~oncsSub_idtpcfeev3();
 
+  //! SAMPA waveform interfaces
   int    iValue(const int ch, const int sample);
   int    iValue(const int ,const char * what);
+
+  //! Expose the Level 1 trigger and endat taggers
+  long long  lValue(const int channel, const char *what) ;
 
   void  dump ( OSTREAM& os = COUT) ;
 

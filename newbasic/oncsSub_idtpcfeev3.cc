@@ -215,6 +215,83 @@ int oncsSub_idtpcfeev3::tpc_decode ()
   return 0;
 }
 
+long long oncsSub_idtpcfeev3::lValue(const int n, const char *what)
+{
+  tpc_decode();
+
+  const size_t i = n;
+
+  if (strcmp(what, "N_TAGGER") == 0)  // the number of datasets
+  {
+    return gtm_data.size();
+  }
+
+  else if (strcmp(what, "PACKET_TYPE") == 0 )
+  {
+    if (i < gtm_data.size())
+    {
+      return gtm_data[i]->pkt_type;
+    }
+  }
+
+  else if (strcmp(what, "IS_ENDAT") == 0 )
+  {
+    if (i < gtm_data.size())
+    {
+      return gtm_data[i]->is_endat;
+    }
+  }
+
+  else if (strcmp(what, "IS_LEVEL1_TRIGGER") == 0 )
+  {
+    if (i < gtm_data.size())
+    {
+      return gtm_data[i]->is_lvl1;
+    }
+  }
+
+  else if (strcmp(what, "BCO") == 0 )
+  {
+    if (i < gtm_data.size())
+    {
+      return gtm_data[i]->bco;
+    }
+  }
+
+  else if (strcmp(what, "LEVEL1_COUNT") == 0 )
+  {
+    if (i < gtm_data.size())
+    {
+      return gtm_data[i]->lvl1_count;
+    }
+  }
+
+  else if (strcmp(what, "ENDAT_COUNT") == 0 )
+  {
+    if (i < gtm_data.size())
+    {
+      return gtm_data[i]->endat_count;
+    }
+  }
+
+  else if (strcmp(what, "LAST_BCO") == 0 )
+  {
+    if (i < gtm_data.size())
+    {
+      return gtm_data[i]->last_bco;
+    }
+  }
+
+  else if (strcmp(what, "MODEBITS") == 0 )
+  {
+    if (i < gtm_data.size())
+    {
+      return gtm_data[i]->modebits;
+    }
+  }
+
+  return 0;
+}
 
 int oncsSub_idtpcfeev3::iValue(const int n, const int sample)
 {
