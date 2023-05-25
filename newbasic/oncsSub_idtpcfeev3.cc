@@ -465,7 +465,7 @@ void  oncsSub_idtpcfeev3::dump ( OSTREAM& os )
     os << "  No lvl1 and Endat taggers" << endl;
   else
   {
-    os << " TAGGER_TYPE     BCO         LEVEL1 CNT  ENDAT CNT     LAST_BCO     MODEBITS" << endl;
+    os << "  TAGGER_TYPE    BCO          LEVEL1 CNT  ENDAT CNT     LAST_BCO     MODEBITS" << endl;
 
     for (int i = 0; i < lValue(0, "N_TAGGER"); ++i)  // go through the datasets
     {
@@ -476,7 +476,7 @@ void  oncsSub_idtpcfeev3::dump ( OSTREAM& os )
          << setw(10) << lValue(i, "LEVEL1_COUNT") << " "
          << setw(10) << lValue(i, "ENDAT_COUNT") << " "
          << setw(12) << lValue(i, "LAST_BCO")
-         << "     0x" << setw(4) << hex << lValue(i, "MODEBITS") << dec
+         << "     0x" << std::setfill('0') << setw(2) << hex << lValue(i, "MODEBITS") << std::setfill(' ')<< dec
          << endl;
     }
 
