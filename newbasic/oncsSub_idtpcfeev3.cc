@@ -226,7 +226,7 @@ long long oncsSub_idtpcfeev3::lValue(const int n, const char *what)
     return gtm_data.size();
   }
 
-  else if (strcmp(what, "PACKET_TYPE") == 0 )
+  else if (strcmp(what, "TAGGER_TYPE") == 0 )
   {
     if (i < gtm_data.size())
     {
@@ -461,47 +461,27 @@ void  oncsSub_idtpcfeev3::dump ( OSTREAM& os )
   tpc_decode();
   identify(os);
 
-  //  std::vector<unsigned short>::const_iterator fee_data_iter[MAX_FEECOUNT];
+  if (lValue(0, "N_TAGGER") == 0)
+    os << "  No lvl1 and Endat taggers" << endl;
+  else
+  {
+    os << " TAGGER_TYPE     BCO         LEVEL1 CNT  ENDAT CNT     LAST_BCO     MODEBITS" << endl;
 
-  // for ( int i = 0 ; i < iValue(0,"MAX_FEECOUNT"); i++)
-  //   {
-  //     os << setw(4) << i << " " << fee_data[i].size()  << endl;
-  //   }
-  // os << endl;
+    for (int i = 0; i < lValue(0, "N_TAGGER"); ++i)  // go through the datasets
+    {
+      os << "  0x" << setw(4) << hex << lValue(i, "TAGGER_TYPE") << dec
+         << " (" << (lValue(i, "IS_ENDAT") ? "ENDAT" : "") << (lValue(i, "IS_LEVEL1_TRIGGER") ? "LVL1 " : "")
+         << ") "
+         << setw(12) << lValue(i, "BCO") << " "
+         << setw(10) << lValue(i, "LEVEL1_COUNT") << " "
+         << setw(10) << lValue(i, "ENDAT_COUNT") << " "
+         << setw(12) << lValue(i, "LAST_BCO")
+         << "     0x" << setw(4) << hex << lValue(i, "MODEBITS") << dec
+         << endl;
+    }
 
-  // os << "        ";
-
-  // for ( int i = 0 ; i < iValue(0,"MAX_FEECOUNT"); i++)
-  //   {
-  //     fee_data_iter[i] = fee_data[i].begin();
-  //     os << setw(8) << i;
-  //   }
-  // os << endl;
-  // os << "-----------------------------------------------" << endl;
-
-  // int still_data = 1;
-  // int count = 0;
-
-  // while (still_data)
-  //   {
-  //     os << setw(5) << count++ << " | ";
-  //     still_data = 0;
-  //     for ( int i = 0 ; i < iValue(0,"MAX_FEECOUNT"); i++)
-  // 	{
-  // 	  if (fee_data_iter[i] != fee_data[i].end())
-  // 	    {
-  // 	      os << setw(5) << hex << *(fee_data_iter[i]);
-  // 	      still_data = 1;
-  // 	      ++(fee_data_iter[i]);
-  // 	    }
-  // 	  else
-  // 	    {
-  // 	      os << setw(5) << " x ";
-  // 	    }
-  // 	}
-  //     os << dec << endl;
-  //   }
-  
+    os << endl;
+  }
   waveform_set::const_iterator wf_iter;
 
   for ( int i = 0; i < iValue(0, "NR_WF") ; i++) // go through the datasets
