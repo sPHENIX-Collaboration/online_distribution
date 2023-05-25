@@ -59,7 +59,7 @@ int oncsSub_idtpcfeev3::decode_gtm_data(uint16_t dat[16])
     uint8_t *gtm = (uint8_t *)dat;
     gtm_payload *payload = new gtm_payload;
 
-    payload->pkt_type = gtm[0] | (gtm[1] << 8);
+    payload->pkt_type = gtm[0] | ((uint16_t)gtm[1] << 8);
     if (payload->pkt_type != GTM_LVL1_ACCEPT_MAGIC_KEY && payload->pkt_type != GTM_ENDAT_MAGIC_KEY) {
         return -1;
     }
@@ -67,10 +67,10 @@ int oncsSub_idtpcfeev3::decode_gtm_data(uint16_t dat[16])
     payload->is_lvl1 = payload->pkt_type == GTM_LVL1_ACCEPT_MAGIC_KEY;
     payload->is_endat = payload->pkt_type == GTM_ENDAT_MAGIC_KEY;
 
-    payload->bco = (gtm[2] << 0) | (gtm[3] << 8) | (gtm[4] << 16) | (gtm[5] << 24) | ((uint64_t)gtm[6] << 32) | (((uint64_t)gtm[7]) << 40);
-    payload->lvl1_count = (gtm[8] << 0) | (gtm[9] << 8) | (gtm[10] << 16) | (gtm[11] << 24);
-    payload->endat_count = (gtm[12] << 0) | (gtm[13] << 8) | (gtm[14] << 16) | (gtm[15] << 24);
-    payload->last_bco = (gtm[16] << 0) | (gtm[17] << 8) | (gtm[18] << 16) | (gtm[19] << 24) | ((uint64_t)gtm[20] << 32) | (((uint64_t)gtm[21]) << 40);
+    payload->bco = ((uint64_t)gtm[2] << 0) | ((uint64_t)gtm[3] << 8) | ((uint64_t)gtm[4] << 16) | ((uint64_t)gtm[5] << 24) | ((uint64_t)gtm[6] << 32) | (((uint64_t)gtm[7]) << 40);
+    payload->lvl1_count = ((uint32_t)gtm[8] << 0) | ((uint32_t)gtm[9] << 8) | ((uint32_t)gtm[10] << 16) | ((uint32_t)gtm[11] << 24);
+    payload->endat_count = ((uint32_t)gtm[12] << 0) | ((uint32_t)gtm[13] << 8) | ((uint32_t)gtm[14] << 16) | ((uint32_t)gtm[15] << 24);
+    payload->last_bco = ((uint64_t)gtm[16] << 0) | ((uint64_t)gtm[17] << 8) | ((uint64_t)gtm[18] << 16) | ((uint64_t)gtm[19] << 24) | ((uint64_t)gtm[20] << 32) | (((uint64_t)gtm[21]) << 40);
     payload->modebits = gtm[22];
 
     this->gtm_data.push_back(payload);
