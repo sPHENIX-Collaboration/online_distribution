@@ -61,7 +61,8 @@ int oncsSub_idtpcfeev3::decode_gtm_data(uint16_t dat[16])
 
     payload->pkt_type = gtm[0] | ((uint16_t)gtm[1] << 8);
     if (payload->pkt_type != GTM_LVL1_ACCEPT_MAGIC_KEY && payload->pkt_type != GTM_ENDAT_MAGIC_KEY) {
-        return -1;
+      delete payload;
+      return -1;
     }
 
     payload->is_lvl1 = payload->pkt_type == GTM_LVL1_ACCEPT_MAGIC_KEY;
