@@ -17,11 +17,12 @@ public:
   oncsSub_idtpcfeev3( subevtdata_ptr);
   ~oncsSub_idtpcfeev3();
 
-  int    iValue(const int fee, const int ch, const int sample);
-  int    iValue(const int fee, const int ch, const int sample, const char *what);
+  //! SAMPA waveform interfaces
   int    iValue(const int ch, const int sample);
-  int    iValue(const int , const int, const char * what);
   int    iValue(const int ,const char * what);
+
+  //! Expose the Level 1 trigger and endat taggers
+  long long  lValue(const int channel, const char *what) ;
 
   void  dump ( OSTREAM& os = COUT) ;
 
@@ -32,6 +33,11 @@ protected:
   static const unsigned short  MAGIC_KEY_0 = 0xfe;
   static const unsigned short  MAGIC_KEY_1 = 0x00;
 
+  static const uint16_t FEE_MAGIC_KEY = 0xba00;
+  static const uint16_t GTM_MAGIC_KEY = 0xbb00;
+  static const uint16_t GTM_LVL1_ACCEPT_MAGIC_KEY = 0xbbf0;
+  static const uint16_t GTM_ENDAT_MAGIC_KEY = 0xbbf1;
+
   static const unsigned short  MAX_FEECOUNT = 26;   // that many FEEs
   static const unsigned short  MAX_CHANNELS   = 8*32; // that many channels per FEE
   static const unsigned short  HEADER_LENGTH  = 7;
@@ -41,7 +47,7 @@ protected:
 
   //  int find_header ( std::vector<unsigned short>::const_iterator &itr,  const std::vector<unsigned short> &orig);
   int find_header ( const unsigned int xx,  const std::vector<unsigned short> &orig);
-  
+  int decode_gtm_data(uint16_t gtm[16]);
   
   int _broken;
   
@@ -58,6 +64,17 @@ protected:
     uint16_t adc_length;
     uint16_t checksum;
     bool     valid;
+  };
+
+  struct gtm_payload {
+      uint16_t pkt_type;
+      bool is_endat;
+      bool is_lvl1;
+      uint64_t bco;
+      uint32_t lvl1_count;
+      uint32_t endat_count;
+      uint64_t last_bco;
+      uint8_t modebits;
   };
   
   // once vector per possible channel 16 cards * 256 channels
@@ -87,6 +104,7 @@ struct bco_compare {
   
   std::vector<unsigned short> fee_data[MAX_FEECOUNT];
 
+  std::vector<gtm_payload *> gtm_data;
 
 };
 

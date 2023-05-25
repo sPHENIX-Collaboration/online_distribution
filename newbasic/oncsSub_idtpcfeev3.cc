@@ -21,14 +21,19 @@ oncsSub_idtpcfeev3::oncsSub_idtpcfeev3(subevtdata_ptr data)
 oncsSub_idtpcfeev3::~oncsSub_idtpcfeev3()
 {
 
-  waveform_set::iterator itr;
-
-  for ( itr = waveforms.begin() ; itr  != waveforms.end() ; ++itr)
+  for (auto itr = waveforms.begin() ; itr  != waveforms.end() ; ++itr)
     {
       delete (*itr);
     }
   waveforms.clear();
   
+
+  for (auto itr = gtm_data.begin() ; itr  != gtm_data.end() ; ++itr)
+    {
+      delete (*itr);
+    }
+  gtm_data.clear();
+
 }
 
 int oncsSub_idtpcfeev3::cacheIterator(const int n)
@@ -49,7 +54,29 @@ int oncsSub_idtpcfeev3::cacheIterator(const int n)
   return 1;
 }
 
+int oncsSub_idtpcfeev3::decode_gtm_data(uint16_t dat[16])
+{
+    uint8_t *gtm = (uint8_t *)dat;
+    gtm_payload *payload = new gtm_payload;
 
+    payload->pkt_type = gtm[0] | ((uint16_t)gtm[1] << 8);
+    if (payload->pkt_type != GTM_LVL1_ACCEPT_MAGIC_KEY && payload->pkt_type != GTM_ENDAT_MAGIC_KEY) {
+        return -1;
+    }
+
+    payload->is_lvl1 = payload->pkt_type == GTM_LVL1_ACCEPT_MAGIC_KEY;
+    payload->is_endat = payload->pkt_type == GTM_ENDAT_MAGIC_KEY;
+
+    payload->bco = ((uint64_t)gtm[2] << 0) | ((uint64_t)gtm[3] << 8) | ((uint64_t)gtm[4] << 16) | ((uint64_t)gtm[5] << 24) | ((uint64_t)gtm[6] << 32) | (((uint64_t)gtm[7]) << 40);
+    payload->lvl1_count = ((uint32_t)gtm[8] << 0) | ((uint32_t)gtm[9] << 8) | ((uint32_t)gtm[10] << 16) | ((uint32_t)gtm[11] << 24);
+    payload->endat_count = ((uint32_t)gtm[12] << 0) | ((uint32_t)gtm[13] << 8) | ((uint32_t)gtm[14] << 16) | ((uint32_t)gtm[15] << 24);
+    payload->last_bco = ((uint64_t)gtm[16] << 0) | ((uint64_t)gtm[17] << 8) | ((uint64_t)gtm[18] << 16) | ((uint64_t)gtm[19] << 24) | ((uint64_t)gtm[20] << 32) | (((uint64_t)gtm[21]) << 40);
+    payload->modebits = gtm[22];
+
+    this->gtm_data.push_back(payload);
+
+    return 0;
+}
 
 int oncsSub_idtpcfeev3::tpc_decode ()
 {
@@ -70,7 +97,7 @@ int oncsSub_idtpcfeev3::tpc_decode ()
     // Length for the 256-bit wide Round Robin Multiplexer for the data stream
     const unsigned int datalength = 0xf;
 
-    if ((buffer[index] & 0xFF00) == 0xBA00 )
+    if ((buffer[index] & 0xFF00) == FEE_MAGIC_KEY)
     {
 
       unsigned int fee_id = buffer[index] & 0xff;
@@ -86,8 +113,16 @@ int oncsSub_idtpcfeev3::tpc_decode ()
           fee_data[fee_id].push_back(buffer[index++]);
         }
       }
+    } else if ((buffer[index] & 0xFF00) == GTM_MAGIC_KEY) {
+        uint16_t buf[16];
 
-    } //     if ((buffer[index] & 0xFF00) == 0xBA00 )
+        // memcpy?
+        for (unsigned int i = 0; i < 16; i++) {
+            buf[i] = buffer[index++];
+        }
+
+        decode_gtm_data(buf);
+    }
     else
     {
       // not FEE data, e.g. GTM data or other stream, to be decoded
@@ -180,6 +215,83 @@ int oncsSub_idtpcfeev3::tpc_decode ()
   return 0;
 }
 
+long long oncsSub_idtpcfeev3::lValue(const int n, const char *what)
+{
+  tpc_decode();
+
+  const size_t i = n;
+
+  if (strcmp(what, "N_TAGGER") == 0)  // the number of datasets
+  {
+    return gtm_data.size();
+  }
+
+  else if (strcmp(what, "TAGGER_TYPE") == 0 )
+  {
+    if (i < gtm_data.size())
+    {
+      return gtm_data[i]->pkt_type;
+    }
+  }
+
+  else if (strcmp(what, "IS_ENDAT") == 0 )
+  {
+    if (i < gtm_data.size())
+    {
+      return gtm_data[i]->is_endat;
+    }
+  }
+
+  else if (strcmp(what, "IS_LEVEL1_TRIGGER") == 0 )
+  {
+    if (i < gtm_data.size())
+    {
+      return gtm_data[i]->is_lvl1;
+    }
+  }
+
+  else if (strcmp(what, "BCO") == 0 )
+  {
+    if (i < gtm_data.size())
+    {
+      return gtm_data[i]->bco;
+    }
+  }
+
+  else if (strcmp(what, "LEVEL1_COUNT") == 0 )
+  {
+    if (i < gtm_data.size())
+    {
+      return gtm_data[i]->lvl1_count;
+    }
+  }
+
+  else if (strcmp(what, "ENDAT_COUNT") == 0 )
+  {
+    if (i < gtm_data.size())
+    {
+      return gtm_data[i]->endat_count;
+    }
+  }
+
+  else if (strcmp(what, "LAST_BCO") == 0 )
+  {
+    if (i < gtm_data.size())
+    {
+      return gtm_data[i]->last_bco;
+    }
+  }
+
+  else if (strcmp(what, "MODEBITS") == 0 )
+  {
+    if (i < gtm_data.size())
+    {
+      return gtm_data[i]->modebits;
+    }
+  }
+
+  return 0;
+}
 
 int oncsSub_idtpcfeev3::iValue(const int n, const int sample)
 {
@@ -198,27 +310,6 @@ int oncsSub_idtpcfeev3::iValue(const int n, const int sample)
 
 
 
-int oncsSub_idtpcfeev3::iValue(const int fee, const int ch, const int sample)
-{
-  tpc_decode();
-  return 0;
-}
-
-int oncsSub_idtpcfeev3::iValue(const int fee, const int ch, const int sample, const char *what)
-{
-  tpc_decode();
-  return 0;
-}
-
-
-int oncsSub_idtpcfeev3::iValue(const int fee, const int ch, const char *what)
-{
-
-  tpc_decode();
-
-
-  return 0;
-}
   
 
 int oncsSub_idtpcfeev3::iValue(const int n, const char *what)
@@ -370,47 +461,27 @@ void  oncsSub_idtpcfeev3::dump ( OSTREAM& os )
   tpc_decode();
   identify(os);
 
-  //  std::vector<unsigned short>::const_iterator fee_data_iter[MAX_FEECOUNT];
+  if (lValue(0, "N_TAGGER") == 0)
+    os << "  No lvl1 and Endat taggers" << endl;
+  else
+  {
+    os << "  TAGGER_TYPE    BCO          LEVEL1 CNT  ENDAT CNT     LAST_BCO     MODEBITS" << endl;
 
-  // for ( int i = 0 ; i < iValue(0,"MAX_FEECOUNT"); i++)
-  //   {
-  //     os << setw(4) << i << " " << fee_data[i].size()  << endl;
-  //   }
-  // os << endl;
+    for (int i = 0; i < lValue(0, "N_TAGGER"); ++i)  // go through the datasets
+    {
+      os << "  0x" << setw(4) << hex << lValue(i, "TAGGER_TYPE") << dec
+         << " (" << (lValue(i, "IS_ENDAT") ? "ENDAT" : "") << (lValue(i, "IS_LEVEL1_TRIGGER") ? "LVL1 " : "")
+         << ") "
+         << setw(12) << lValue(i, "BCO") << " "
+         << setw(10) << lValue(i, "LEVEL1_COUNT") << " "
+         << setw(10) << lValue(i, "ENDAT_COUNT") << " "
+         << setw(12) << lValue(i, "LAST_BCO")
+         << "     0x" << std::setfill('0') << setw(2) << hex << lValue(i, "MODEBITS") << std::setfill(' ')<< dec
+         << endl;
+    }
 
-  // os << "        ";
-
-  // for ( int i = 0 ; i < iValue(0,"MAX_FEECOUNT"); i++)
-  //   {
-  //     fee_data_iter[i] = fee_data[i].begin();
-  //     os << setw(8) << i;
-  //   }
-  // os << endl;
-  // os << "-----------------------------------------------" << endl;
-
-  // int still_data = 1;
-  // int count = 0;
-
-  // while (still_data)
-  //   {
-  //     os << setw(5) << count++ << " | ";
-  //     still_data = 0;
-  //     for ( int i = 0 ; i < iValue(0,"MAX_FEECOUNT"); i++)
-  // 	{
-  // 	  if (fee_data_iter[i] != fee_data[i].end())
-  // 	    {
-  // 	      os << setw(5) << hex << *(fee_data_iter[i]);
-  // 	      still_data = 1;
-  // 	      ++(fee_data_iter[i]);
-  // 	    }
-  // 	  else
-  // 	    {
-  // 	      os << setw(5) << " x ";
-  // 	    }
-  // 	}
-  //     os << dec << endl;
-  //   }
-  
+    os << endl;
+  }
   waveform_set::const_iterator wf_iter;
 
   for ( int i = 0; i < iValue(0, "NR_WF") ; i++) // go through the datasets
