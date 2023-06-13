@@ -116,6 +116,7 @@ int  oncsSub_idmvtxv3::decode_lane( const std::vector<uint8_t> v)
 	  memset(h, 0, sizeof(*h));
 	  
 	  h->RHICBCO = last_BCO;
+	  h->LHCBC = last_LHCBC;
 	  h->source_id = last_source_id;
 	  h->fee_id = last_fee_id;
 	  h->lane = last_lane;
@@ -139,6 +140,7 @@ int  oncsSub_idmvtxv3::decode_lane( const std::vector<uint8_t> v)
 	  memset(h, 0, sizeof(*h));
 	  
 	  h->RHICBCO = last_BCO;
+	  h->LHCBC = last_LHCBC;
 	  h->source_id = last_source_id;
 	  h->fee_id = last_fee_id;
 	  h->lane = last_lane;
@@ -155,6 +157,7 @@ int  oncsSub_idmvtxv3::decode_lane( const std::vector<uint8_t> v)
 		  memset(h, 0, sizeof(*h));
 		  
 		  h->RHICBCO = last_BCO;
+		  h->LHCBC = last_LHCBC;
 		  h->source_id = last_source_id;
 		  h->fee_id = last_fee_id;
 		  h->lane = last_lane;
@@ -358,9 +361,6 @@ int oncsSub_idmvtxv3::decode()
   //cout << "RDH Header *** " << endl;
   //pretty_print(*itr);
 
-  last_BCO = get_GBT_lvalue (b80, Rdh8ByteMapW1::BCO_SB0, 40);
-  last_source_id = get_GBT_value (b80, Rdh8ByteMapW0::SOURCE_ID, 16);
-  last_fee_id = get_GBT_value (b80, Rdh8ByteMapW0::FEEID_LSB, 16);
 
   //  cout << " last_fee_id " << last_fee_id << endl;
 
@@ -372,10 +372,15 @@ int oncsSub_idmvtxv3::decode()
   // cout << " feeid    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::FEEID_LSB, 16) << dec << endl;
   // cout << " sourceid = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::SOURCE_ID, 16) << dec << endl;
   // cout << " detfield = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::DET_FIELD_SB0, 32) << dec << endl;
+  last_source_id = get_GBT_value (b80, Rdh8ByteMapW0::SOURCE_ID, 16);
+  last_fee_id = get_GBT_value (b80, Rdh8ByteMapW0::FEEID_LSB, 16);
 
+  
   b80 = *itr++; //  RDH Word 1
   // cout << " LHC BC   = 0x" << hex << (get_GBT_value (b80, Rdh8ByteMapW1::BC_LSB, 16) & 0xfff)  << dec << endl;
   // cout << " BCO      = 0x" << hex << get_GBT_lvalue (b80, Rdh8ByteMapW1::BCO_SB0, 40)   << dec << endl;
+  last_BCO = get_GBT_lvalue (b80, Rdh8ByteMapW1::BCO_SB0, 40);
+  last_LHCBC = get_GBT_value (b80, Rdh8ByteMapW1::BC_LSB, 16) & 0xfff;
   
   b80 = *itr++; //  RDH Word 2
   //pretty_print(b80);
@@ -523,6 +528,31 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
   return 0;
 }
 
+
+long long oncsSub_idmvtxv3::lValue(const int n, const char *what)
+{
+
+  decode();
+  unsigned int i = n;
+  
+  if ( i >= hit_vector.size())
+    {
+      return 0;
+    }
+  
+  if ( strcmp(what,"RHICBCO") == 0 )
+    {
+      return hit_vector[i]->RHICBCO;
+    }
+
+  else if ( strcmp(what,"LHCBC") == 0 )
+    {
+      return hit_vector[i]->LHCBC;
+    }
+
+  return 0;
+}
+
 //_________________________________________________
 void oncsSub_idmvtxv3::dump(OSTREAM &os)
 {
@@ -535,7 +565,7 @@ void oncsSub_idmvtxv3::dump(OSTREAM &os)
 
   os << "Number of hits: " << nr_hits << endl;
 
-  os << " hit number   addr   enc.id   lane   src.id " << endl;  
+  os << " hit number   addr   enc.id   lane   src.id      BCO         LHC BC  "  << endl;  
 
   for ( n = 0; n < nr_hits; n++)
     {
@@ -544,6 +574,8 @@ void oncsSub_idmvtxv3::dump(OSTREAM &os)
 	 << "  " << setw(6)  << iValue(n, "ENCOODER_ID")    
 	 << "  " << setw(6)  << iValue(n, "LANE")    
 	 << "  " << setw(6)  << iValue(n, "SOURCE_ID")
+	 << "  " << setw(6)  << "0x" << lValue(n, "RHICBCO")
+	 << "  " << setw(6)  << "0x" << lValue(n, "LHCBC")
 	 << endl;
     }
 

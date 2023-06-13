@@ -19,6 +19,7 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
   ~oncsSub_idmvtxv3();
 
   int    iValue(const int ,const char * what);
+  long long    lValue(const int ,const char * what);
 
 
   
@@ -56,6 +57,7 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
 
   
   unsigned long long last_BCO;
+  unsigned long long last_LHCBC;
   unsigned short last_source_id;
   unsigned short last_fee_id;
   unsigned short last_lane;
