@@ -39,6 +39,7 @@ protected:
   
   unsigned short reverseBits(const unsigned short x) const;
   unsigned short crc16(const unsigned int fee, const unsigned int index, const int  l) const;
+  int intt_decode_hitlist (std::vector<unsigned int> &hitlist , const int fee);
 
   int _broken;
   
@@ -56,6 +57,7 @@ protected:
     uint16_t full_ROC;
     uint16_t amplitude;
     uint16_t full_fphx;
+    uint32_t event_counter;
     uint32_t word;
   };
 
