@@ -30,6 +30,56 @@ oncsSub_idinttv0::~oncsSub_idinttv0()
 }
 
 
+int oncsSub_idinttv0::intt_decode_hitlist (std::vector<unsigned int> &hitlist , const int fee)
+{
+  
+  //  coutfl << " next hitlist, size " << hitlist.size() << " :" << endl;
+  
+  // for ( unsigned int i = 0; i < hitlist.size(); i++)
+  //   {
+  //     coutfl << i << " " << hex << hitlist[i] << dec << endl;
+  //   }
+  // cout << endl;
+
+  if ( hitlist.size() < 3)
+    {
+      //      coutfl << "hitlist too short " << endl;
+      return 1;
+    }
+	
+  unsigned long long BCO = 0;
+  unsigned long long l = 0;
+  
+  l = hitlist[0];
+  BCO |= ( ((l >> 16 ) & 0xff) << 32);
+  l = hitlist[1];
+  BCO |= ( (l & 0xffff) << 16);
+  BCO |= ( (l >> 16) & 0xffff);
+  unsigned int event_counter =hitlist[2];
+
+  for  (unsigned int i = 3; i < hitlist.size(); i++)
+    {
+      unsigned int x = hitlist[i];
+      intt_hit * hit= new intt_hit;
+      hit->event_counter = event_counter;
+      hit->fee        = fee;
+      hit->bco        = BCO;
+      hit->channel_id = (x >> 16) & 0x7f;  // 7bits
+      hit->chip_id    = (x >> 23) & 0x3f;  // 6
+      hit->adc        = (x >> 29) & 0x7;   // 3
+      
+      hit->FPHX_BCO   = x  & 0x7f;
+      hit->full_FPHX  = (x >> 7) & 0x1;   // 1
+      hit->full_ROC   = (x >> 8) & 0x1;   // 1
+      hit->amplitude  = (x >> 9) & 0x3f;   // 1
+      hit->word      = x;
+
+      intt_hits.push_back(hit);
+    }	  
+
+  return 0;
+}
+  
 int oncsSub_idinttv0::intt_decode ()
 {
 
@@ -66,89 +116,86 @@ int oncsSub_idinttv0::intt_decode ()
 
       for ( int i = 0; i < len ; i++)
 	{
-	  //coutfl << "adding to ladder " << fee << "  " << hex << buffer[index] << dec << endl;
+	  // coutfl << "adding to ladder " << fee << "  " << hex << buffer[index] << dec << endl;
 	  fee_data[fee].push_back(buffer[index++]);
 	}
     }
 
 
-  //  coutfl << " ---- digesting the fee data ---- "<< endl;
-
-  for ( int i = 0 ; i < MAX_FEECOUNT ; i++)
+  for ( int fee = 0 ; fee < MAX_FEECOUNT ; fee++)
     {
 
-      // cout << endl;
-      // for (  unsigned int j = 0;  j <  fee_data[i].size(); j++)
+      unsigned int j;
+
+      // for ( j = 0;  j <  fee_data[fee].size(); j++)
       // 	{
-      // 	  coutfl << " fee " << i << "  word  " << j << "  "  << hex << fee_data[i][j] << dec << endl;
+      // 	  coutfl << "fee " << fee << "  " << j << " found code 0x" << hex << fee_data[fee][j] << dec << endl;
       // 	}
 
+
+      //      int go_on = 0;
       int header_found = 0;
-      for (  unsigned int j = 0;  j <  fee_data[i].size(); j++)
+      
+      std::vector<unsigned int> hitlist;
+      j = 0;
+      
+      while ( j < fee_data[fee].size() )
 	{
+	  
 	  //skip until we have found the first header
-	  if (! header_found && (fee_data[i][j] & 0xff00ffff )!= 0xad00cade )
+	  if (! header_found &&  (fee_data[fee][j] & 0xff00ffff )!= 0xad00cade )
 	    {
+	      j++;
 	      continue;
 	    }
 	  header_found = 1;
-	  // coutfl << "fee " << i << " found code 0x" << hex << fee_data[i][j] << dec << endl;
+
+	  // here j points to a "cade" word
+
+	  // push back the cdae word, the BCO, and event counter
+	  for ( int k = 0; k < 3; k++) hitlist.push_back(fee_data[fee][j++]);
 	  
-	  unsigned long long BCO = 0;
-	  unsigned long long l = 0;
-	  
-	  // 1st word  --- cade add9 87ea 0fe3 cade add9
-	  l = fee_data[i][j];
-	  // coutfl << "fee " << i << " BCO MSB " << hex << l << dec << endl;
-	  BCO |= ( ((l >> 16 ) & 0xff) << 32);
-	  
-	  j++;
-	  if ( j >= fee_data[i].size() ) continue;
-	  l = fee_data[i][j];
-	  
-	  // coutfl << "fee " << i << " BCO mid " << hex << l << dec << endl;
-	  BCO |= ( (l & 0xffff) << 16);
-	  BCO |= ( (l >> 16) & 0xffff);
-	  
-	  // coutfl << "BCO for fee " << setw(3) << i << " : " << hex << BCO << dec << endl;
-	  
-	  // ok, now let's go until we hit the end, or hit the next header
-	  while ( ++j < fee_data[i].size() )
+
+	  // ok, now let's go until we hit the end, or hit the next header, or a footer
+	  while ( j < fee_data[fee].size() )
 	    {
-	      if ( ( fee_data[i][j] & 0xff00ffff ) == 0xad00cade )
+	      
+	      // we break here if find the next header or a footer
+	      if ( ( fee_data[fee][j] & 0xff00ffff ) == 0xad00cade )
 		{
-		  header_found = 0;
+		  header_found  = 0;
 		  j--;
+		  // we have a full hitlist in the vector here
+		  coutfl << "calling decode with size " << hitlist.size() << endl;
+		  intt_decode_hitlist (hitlist, fee);
+		  hitlist.clear();
 		  break;
 		}
 	      
-	      uint32_t x = fee_data[i][j];
 	      
-	      // 0x 0301 0063     
-	      intt_hit * hit= new intt_hit;
-	      hit->fee  = i;
-	      hit->bco        = BCO;
-	      hit->channel_id = (x >> 16) & 0x7f;  // 7bits
-	      hit->chip_id    = (x >> 23) & 0x3f;  // 6
-	      hit->adc        = (x >> 29) & 0x7;   // 3
+	      if ( fee_data[fee][j] == 0xcafeff80 )
+		{
+		  // we have a full hitlist in the vector here
+		  //		  coutfl << "calling decode with size " << hitlist.size() << endl;
+		  intt_decode_hitlist (hitlist, fee);
+		  hitlist.clear();
+		  j++;
+		  break;
+		}
+	      
+	      hitlist.push_back(fee_data[fee][j]);
 
-	      hit->FPHX_BCO   = x  & 0x7f;
-	      hit->full_FPHX  = (x >> 7) & 0x1;   // 1
-	      hit->full_ROC   = (x >> 8) & 0x1;   // 1
-	      hit->amplitude  = (x >> 9) & 0x3f;   // 1
-	      
-	      hit->word      = x;
-	      // coutfl <<  " pushing back fee " << i <<  "  " << hex << x << dec  << endl;
-	      
-	      intt_hits.push_back(hit);
-	      //coutfl << "list size: " << intt_hits.size() << endl;
+	      j++;
 	    }
-	  
 	}
+
+      //      coutfl << "calling decode with size " << hitlist.size() << endl;
+      intt_decode_hitlist (hitlist, fee);
+      hitlist.clear();
+    
     }
   return 0;
 }
-
 
 enum ITEM
 {
