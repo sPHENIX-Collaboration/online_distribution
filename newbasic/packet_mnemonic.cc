@@ -28,6 +28,7 @@ const char *get_mnemonic (const int structure, const int format)
     case(IDDCFEM): return "IDDCFEM";
     case(IDMIZNHC): return "IDMIZNHC";
     case(IDLL1_20S): return "IDLL1_20S";
+    case(IDLL1v2_20S): return "IDLL1v2_20S";
 
     case(IDBBC_DCM0): return "IDBBC_DCM0";
     case(IDMVD_DCM0): return "IDMVD_DCM0";

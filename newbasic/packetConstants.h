@@ -304,6 +304,8 @@
 #define IDDIGITIZER_16S     95
 
 #define IDLL1_20S           141
+#define IDLL1v2_20S           142
+
 #define IDDIGITIZER_CTRL     2099
 
 
