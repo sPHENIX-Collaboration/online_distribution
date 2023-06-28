@@ -36,9 +36,11 @@ int *Packet_idcstr::decode ( int *nwout)
 
   int dlength = getDataLength();
 
-  //   std::cout << __FILE__ << "  " << __LINE__ << " datalength: " 
-  //	      << getDataLength() << " padding " << getPadding() << std::endl;
+  // std::cout << __FILE__ << "  " << __LINE__ << " datalength: " 
+  // 	    << getDataLength() << " padding " << getPadding() << std::endl;
 
+  if ( dlength <=0) dlength =1; // need at least an array of 1
+   
   unsigned char *SubeventData = ( unsigned char * ) findPacketDataStart(packet);
   sarray = new unsigned char[dlength+1];
   memcpy ( sarray, SubeventData,dlength); 
