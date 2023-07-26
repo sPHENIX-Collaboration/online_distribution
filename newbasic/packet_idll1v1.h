@@ -30,6 +30,8 @@ protected:
 
   int _nsamples;
 
+  int _hitbits;
+
   int _even_checksum;
   int _odd_checksum;
 

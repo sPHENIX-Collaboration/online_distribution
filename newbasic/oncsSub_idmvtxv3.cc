@@ -23,11 +23,11 @@ void  oncsSub_idmvtxv3::pretty_print( const std::bitset<80> gbtword) const
 {
 
   cout  << std::setfill('0');
-  for ( int i = 0; i < 10; i++)
+  for ( int i = 0; i < 10 ; i++)
     {
         cout << hex << setw(2) << get_GBT_value (gbtword, i * 8, 8) << " " << dec;
     }
-  cout  << std::setfill(' ');
+  cout  << std::setfill(' ') << " ";
 }
 
 //_________________________________________________
@@ -116,6 +116,7 @@ int  oncsSub_idmvtxv3::decode_lane( const std::vector<uint8_t> v)
 	  memset(h, 0, sizeof(*h));
 	  
 	  h->RHICBCO = last_BCO;
+	  h->LHCBC = last_LHCBC;
 	  h->source_id = last_source_id;
 	  h->fee_id = last_fee_id;
 	  h->lane = last_lane;
@@ -139,6 +140,7 @@ int  oncsSub_idmvtxv3::decode_lane( const std::vector<uint8_t> v)
 	  memset(h, 0, sizeof(*h));
 	  
 	  h->RHICBCO = last_BCO;
+	  h->LHCBC = last_LHCBC;
 	  h->source_id = last_source_id;
 	  h->fee_id = last_fee_id;
 	  h->lane = last_lane;
@@ -155,6 +157,7 @@ int  oncsSub_idmvtxv3::decode_lane( const std::vector<uint8_t> v)
 		  memset(h, 0, sizeof(*h));
 		  
 		  h->RHICBCO = last_BCO;
+		  h->LHCBC = last_LHCBC;
 		  h->source_id = last_source_id;
 		  h->fee_id = last_fee_id;
 		  h->lane = last_lane;
@@ -300,75 +303,90 @@ int oncsSub_idmvtxv3::decode()
   unsigned short w0,  w1, old_len;
   w1 = 0;
   
-  do
-    {
-      read_32( report[0], report[1], report[2], w0, w1);
-    }  while (w1 != 0xab && w0 != 0x01);
-  // here we have found the "ab" unit
 
   // for (int i = 0; i < 3; i++) pretty_print(report[i]);
-  // cout << hex << w0 << " " << w1 << dec << endl << endl;
-  
-  unsigned int packet_cnt = get_GBT_value (report[2],flxhdr_word2::DMA_WRD_CTR_LSB,16);
-  
-  cout << __FILE__ << " " << __LINE__ <<  " packet count " << packet_cnt << endl;
 
-  w0 = w1 = old_len = 0;
-
-  for ( unsigned int i = 0 ; i < packet_cnt; i++)
+  while ( payload_position < dlength)
     {
-      // do we still have 32 bytes to read?
-      if (payload_position >  dlength - 32 )
+      do
 	{
-	  cerr <<  __FILE__ << " " << __LINE__ <<  " unexpected end of data at pos " << payload_position << " length = " << dlength << endl;
-	  break;
-	}
-      read_32( report[0], report[1], report[2], w0, w1);
-      for (int i = 0; i < 3; i++) pretty_print(report[i]);
-      cout << hex << w0 << " " << w1 << dec << endl << endl;
+	  read_32( report[0], report[1], report[2], w0, w1);
+	}  while (w1 != 0xab && w0 != 0x01);
+      // here we have found the "ab" unit
 
+      // cout << setw(8) << payload_position -32 << ": ";
+      // for (int i = 0; i < 3; i++)  pretty_print(report[i]);
+      // cout << hex << std::setfill('0') << setw(2) << w0 << " " << setw(2) << w1 << dec << std::setfill(' ') << endl;
+
+
+      // uncomment this to match the decoder.py output
+      // cout << "FELIX header found: Version " <<  w0
+      // 	   << " FLXID " << get_GBT_value (report[2], flxhdr_word2::FLXID, 8)
+      // 	   << " GBT_ID " << get_GBT_value (report[2], flxhdr_word2::GBT_ID, 8) << endl;
   
-
-      //calculate how many GBT words these 32 bytes contain
-      unsigned short c = (w1 << 8 ) + w0  - old_len;
-      old_len = (w1 << 8 ) + w0;
-
-      //  cout << __FILE__ << " " << __LINE__ << " found "<< c << " GBT words w0 = " << hex << w0 << " "  << w1 << dec << endl;
+      unsigned int packet_cnt = get_GBT_value (report[2],flxhdr_word2::DMA_WRD_CTR_LSB,16);
       
-      for ( int i = 0; i < c; i++) gbtvector.push_back(report[i]);
-  }   
-
+      //  cout << __FILE__ << " " << __LINE__ <<  " packet count " << packet_cnt << endl;
+      
+      w0 = w1 = old_len = 0;
+      
+      for ( unsigned int i = 0 ; i < packet_cnt; i++)
+	{
+	  // do we still have 32 bytes to read?
+	  if (payload_position >  dlength - 32 )
+	    {
+	      cerr <<  __FILE__ << " " << __LINE__ <<  " unexpected end of data at pos " << payload_position << " length = " << dlength << endl;
+	      break;
+	    }
+	  read_32( report[0], report[1], report[2], w0, w1);
+	  //for (int i = 0; i < 3; i++) pretty_print(report[i]);
+	  //cout << hex << w0 << " " << w1 << dec << endl << endl;
+	  
+	  
+	  
+	  //calculate how many GBT words these 32 bytes contain
+	  unsigned short c = (w1 << 8 ) + w0  - old_len;
+	  old_len = (w1 << 8 ) + w0;
+	  
+	  //  cout << __FILE__ << " " << __LINE__ << " found "<< c << " GBT words w0 = " << hex << w0 << " "  << w1 << dec << endl;
+	  
+	  for ( int i = 0; i < c; i++) gbtvector.push_back(report[i]);
+	}   
+    }
+  
   //  cout << __FILE__ << " " << __LINE__ << " number of GBT words " << gbtvector.size()  << endl;
   
   vector<std::bitset<80> >::const_iterator itr = gbtvector.begin();
 
-  cout << "RDH Header *** " << endl;
-  pretty_print(*itr);
+  //cout << "RDH Header *** " << endl;
+  //pretty_print(*itr);
 
-  last_BCO = get_GBT_lvalue (b80, Rdh8ByteMapW1::BCO_SB0, 40);
-  last_source_id = get_GBT_value (b80, Rdh8ByteMapW0::SOURCE_ID, 16);
-  last_fee_id = get_GBT_value (b80, Rdh8ByteMapW0::FEEID_LSB, 16);
 
   //  cout << " last_fee_id " << last_fee_id << endl;
 
   
   // decode the RDH
   b80 = *itr++; //  RDH Word 0
-  cout << " h_ver    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::HDRVERSION, 8) << dec << endl;
-  cout << " h_len    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::SIZE, 8) << dec << endl;
-  cout << " feeid    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::FEEID_LSB, 16) << dec << endl;
-  cout << " sourceid = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::SOURCE_ID, 16) << dec << endl;
-  cout << " detfield = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::DET_FIELD_SB0, 32) << dec << endl;
+  // cout << " h_ver    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::HDRVERSION, 8) << dec << endl;
+  // cout << " h_len    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::SIZE, 8) << dec << endl;
+  // cout << " feeid    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::FEEID_LSB, 16) << dec << endl;
+  // cout << " sourceid = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::SOURCE_ID, 16) << dec << endl;
+  // cout << " detfield = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::DET_FIELD_SB0, 32) << dec << endl;
+  last_source_id = get_GBT_value (b80, Rdh8ByteMapW0::SOURCE_ID, 16);
+  last_fee_id = get_GBT_value (b80, Rdh8ByteMapW0::FEEID_LSB, 16);
 
+  
   b80 = *itr++; //  RDH Word 1
-  cout << " LHC BC   = 0x" << hex << (get_GBT_value (b80, Rdh8ByteMapW1::BC_LSB, 16) & 0xfff)  << dec << endl;
-  cout << " BCO      = 0x" << hex << get_GBT_lvalue (b80, Rdh8ByteMapW1::BCO_SB0, 40)   << dec << endl;
+  // cout << " LHC BC   = 0x" << hex << (get_GBT_value (b80, Rdh8ByteMapW1::BC_LSB, 16) & 0xfff)  << dec << endl;
+  // cout << " BCO      = 0x" << hex << get_GBT_lvalue (b80, Rdh8ByteMapW1::BCO_SB0, 40)   << dec << endl;
+  last_BCO = get_GBT_lvalue (b80, Rdh8ByteMapW1::BCO_SB0, 40);
+  last_LHCBC = get_GBT_value (b80, Rdh8ByteMapW1::BC_LSB, 16) & 0xfff;
   
   b80 = *itr++; //  RDH Word 2
-  pretty_print(b80);
-  cout << " trg_type    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW2::TRG_TYPE_SB0, 32)  << dec << endl;
-  cout << " pages_count = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW2::PAGE_CNT_LSB, 16)  << dec << endl;
-  cout << " stop_bit    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW2::STOP_BIT, 8)  << dec << endl;
+  //pretty_print(b80);
+  // cout << " trg_type    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW2::TRG_TYPE_SB0, 32)  << dec << endl;
+  // cout << " pages_count = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW2::PAGE_CNT_LSB, 16)  << dec << endl;
+  // cout << " stop_bit    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW2::STOP_BIT, 8)  << dec << endl;
 
   //  cout << endl;
   
@@ -379,49 +397,49 @@ int oncsSub_idmvtxv3::decode()
       if ( marker == WordTypeMarker::IHW)
 	{
 	  //	  cout << " IHW        "; 
-	  pretty_print(*itr);
+	  //pretty_print(*itr);
 	}
       else if ( marker == WordTypeMarker::TDH)
 	{
 	  // mlp needs to decode this ..... BCO  pg 11
-	  cout << " TDH  " 
-	       << " RHICBCO " << get_GBT_value (*itr, 32,40)
-	       << " LCHBC " << get_GBT_value (*itr, 16,12)
-	       << " STOP " << get_GBT_value (*itr, 14,1)
-	       << " DATA " << get_GBT_value (*itr, 13,1)
-	       << endl;
+	  // cout << " TDH  " 
+	  //      << " RHICBCO " << get_GBT_value (*itr, 32,40)
+	  //      << " LCHBC " << get_GBT_value (*itr, 16,12)
+	  //      << " STOP " << get_GBT_value (*itr, 14,1)
+	  //      << " DATA " << get_GBT_value (*itr, 13,1)
+	  //      << endl;
 	  
-	  pretty_print(*itr);
+	  //pretty_print(*itr);
 	}
       else if ( marker == WordTypeMarker::TDT)
 	{
-	  cout << " TDT        ";
+	  //cout << " TDT        ";
 	  //  pretty_print(*itr);
 	}
       else if ( marker == WordTypeMarker::DDW)
 	{
-	  cout << " DDW        ";
+	  //cout << " DDW        ";
 	  //pretty_print(*itr);
 	}
       else if ( marker == WordTypeMarker::CDW)
 	{
-	  cout << " CDW        ";
+	  //cout << " CDW        ";
 	  //pretty_print(*itr);
 	}
       else if ( marker >>5 == 0b101 )
 	{
-	  cout << " IB DIAG DATA ";
+	  //cout << " IB DIAG DATA ";
 	  //pretty_print(*itr);
 	}
       else if ( marker >>5 == 0b001 )
 	{
-	  cout << " IB data ";
+	  //cout << " IB data ";
 	  //pretty_print(*itr);
 	  decode_chipdata (*itr);
 	}	
       else if ( marker >>5 == 0b110 )
 	{
-	  cout << " OB DIAG DATA ";
+	  //cout << " OB DIAG DATA ";
 	  //pretty_print(*itr);
 	}
       else if ( marker >>5 == 0b101 )
@@ -431,21 +449,21 @@ int oncsSub_idmvtxv3::decode()
 	}
       else if ( marker == 0xe4 )
 	{
-	  cout << " DIAGNOSTIC DATA WORD (DDW) ";
+	  //cout << " DIAGNOSTIC DATA WORD (DDW) ";
 	  //pretty_print(*itr);
 	}
       else if ( marker == 0xF8)
 	{
-	  cout << " CALIBRATION DATA WORD ";
+	  //cout << " CALIBRATION DATA WORD ";
 	  //pretty_print(*itr);
 	}
       else
 	{
-	  cout << "  unknown data  ";
+	  //cout << "  unknown data  ";
 	  //pretty_print(*itr);
 	  //cout << "   " ;
 	}
-      cout <<  endl;
+      //cout <<  endl;
     }
   
   std::map<unsigned int, std::vector<unsigned char>>::iterator mitr;
@@ -510,6 +528,31 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
   return 0;
 }
 
+
+long long oncsSub_idmvtxv3::lValue(const int n, const char *what)
+{
+
+  decode();
+  unsigned int i = n;
+  
+  if ( i >= hit_vector.size())
+    {
+      return 0;
+    }
+  
+  if ( strcmp(what,"RHICBCO") == 0 )
+    {
+      return hit_vector[i]->RHICBCO;
+    }
+
+  else if ( strcmp(what,"LHCBC") == 0 )
+    {
+      return hit_vector[i]->LHCBC;
+    }
+
+  return 0;
+}
+
 //_________________________________________________
 void oncsSub_idmvtxv3::dump(OSTREAM &os)
 {
@@ -522,7 +565,7 @@ void oncsSub_idmvtxv3::dump(OSTREAM &os)
 
   os << "Number of hits: " << nr_hits << endl;
 
-  os << " hit number   addr   enc.id   lane   src.id " << endl;  
+  os << " hit number   addr   enc.id   lane   src.id      BCO         LHC BC  "  << endl;  
 
   for ( n = 0; n < nr_hits; n++)
     {
@@ -531,6 +574,8 @@ void oncsSub_idmvtxv3::dump(OSTREAM &os)
 	 << "  " << setw(6)  << iValue(n, "ENCOODER_ID")    
 	 << "  " << setw(6)  << iValue(n, "LANE")    
 	 << "  " << setw(6)  << iValue(n, "SOURCE_ID")
+	 << "  " << setw(6)  << "0x" << lValue(n, "RHICBCO")
+	 << "  " << setw(6)  << "0x" << lValue(n, "LHCBC")
 	 << endl;
     }
 

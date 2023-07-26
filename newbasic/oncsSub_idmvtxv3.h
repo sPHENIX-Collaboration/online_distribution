@@ -19,6 +19,7 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
   ~oncsSub_idmvtxv3();
 
   int    iValue(const int ,const char * what);
+  long long    lValue(const int ,const char * what);
 
 
   
@@ -56,6 +57,7 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
 
   
   unsigned long long last_BCO;
+  unsigned long long last_LHCBC;
   unsigned short last_source_id;
   unsigned short last_fee_id;
   unsigned short last_lane;
@@ -140,7 +142,37 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
     };
   
      
-  enum flxhdr_word2
+  enum flxhdr_word0
+    {
+     RESERVED_0_SB0 = 0 *8,
+     RESERVED_0_SB1 = 1 *8,
+     RESERVED_0_SB2 = 2 *8,
+     RESERVED_0_SB3 = 3 *8,
+     RESERVED_0_SB4 = 4 *8,
+     RESERVED_0_SB5 = 5 *8,
+     RESERVED_0_SB6 = 6 *8,
+     RESERVED_0_SB7 = 7 *8,
+     RESERVED_0_SB8 = 8 *8,
+     RESERVED_0_SB9 = 9 *8
+    };
+  
+
+  enum flxhdr_word1
+    {
+     RESERVED_0_SB10 = 0 * 8,
+     RESERVED_0_SB11 = 1 * 8,
+     RESERVED_0_SB12 = 2 * 8,
+     RESERVED_0_SB13 = 3 * 8,
+     RESERVED_0_SB14 = 4 * 8,
+     RESERVED_0_SB15 = 5 * 8,
+     RESERVED_0_SB16 = 6 * 8,
+     RESERVED_0_SB17 = 7 * 8,
+     RESERVED_0_SB18 = 8 * 8,
+     RESERVED_0_SB19 = 9 * 8
+
+    };
+
+     enum flxhdr_word2
     {
      RESERVED_0_SB20  = 0 * 8,
      RESERVED_0_SB21  = 1 * 8,

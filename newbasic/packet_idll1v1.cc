@@ -45,6 +45,7 @@ const int offset=2;
 int Packet_idll1v1::decode ()
 {
 
+
   if (_is_decoded ) return 0;
   _is_decoded = 1;
 
@@ -59,15 +60,29 @@ int Packet_idll1v1::decode ()
   switch ( getHitFormat() )
     {
     case IDLL1_20S:
-      _nsamples    = 20;
+      _nsamples   = 20;
+      _hitbits    = 6;
       break;
-
+    case IDLL1v2_20S:
+      _nsamples   = 20;
+      _hitbits    = 7;
     default:
-      _nsamples    = 30;
+      _nsamples   = 20;
+      _hitbits    = 7;
       break;
     }
 
- 
+  int upperbits[10] = { 15, 
+			15,
+			_hitbits,
+			_hitbits,
+			_hitbits, 
+			_hitbits,
+			9,
+			10,
+			16,
+			25};
+
   _slot_nr           =  (SubeventData[0]  & 0xffff) / 2;
   _card_nr           =  (SubeventData[0]  & 0xffff) % 2;
 
@@ -82,8 +97,9 @@ int Packet_idll1v1::decode ()
   k = &SubeventData[offset];
 
   int is;
-  int ia, ijk;
-  
+
+  int ia, ib, iw, ijk, iturn;
+  int count;  
   for (is=0; is< _nsamples; is++ ) {
 
     for (ia = 0; ia < 20; ia++)
@@ -110,15 +126,44 @@ int Packet_idll1v1::decode ()
       itrig_time[ia][2][is] = ((array[ijk+6][is] & 0xff00) >>8) + ((array[ijk+7][is] & 0xf)<<8) ;  //115- 104
       itrig_time[ia][3][is] = (array[ijk+7][is] & 0xfff0)>>4;                                      //127-116
     }
-    triggerwords[0][is] = array[32][is] & 0x7fff;
-    triggerwords[1][is] = ((array[32][is] & 0x8000)>>15)+((array[33][is] & 0x3fff) <<1);
-    triggerwords[2][is] = ((array[33][is] & 0xc000)>>14)+((array[34][is] & 0xf) <<2);
-    triggerwords[3][is] = ((array[34][is] & 0x03f0)>>4);
-    triggerwords[4][is] = ((array[34][is] & 0xfc00)>>10);
-    triggerwords[5][is] = (array[35][is] & 0x3f);
-    triggerwords[6][is] = ((array[35][is] & 0x7fc0)>>6);
-    triggerwords[7][is] = ((array[35][is] & 0x8000)>>15)+((array[36][is] & 0x1ff) <<1);
-	
+
+    ijk = 32;
+    ib = 0;
+    iturn = 0;
+    count = 0;
+    for (ia = 0; ia < 8; ia++)
+      {
+	triggerwords[ia][is] = 0;
+	for (iw = 0 ; iw < upperbits[ia] ; iw++)
+	  {
+	    if (iw+ib == 16)
+	      {
+		ib = iw;
+		ijk++;
+		iturn = 1 - iturn;
+		
+	      }
+
+	    if (!iturn) triggerwords[ia][is] += ((array[ijk][is] & (0x1 << (ib+iw))) >> ib);
+	    else triggerwords[ia][is] += ((array[ijk][is] & (0x1 << (iw - ib))) << ib);
+
+	    //	    if (is == 8 || is == 9 ) cout << dec<< count << "= ia: "<<ia<<" , sample "<<is<<", iw/ib/turn: "<<iw<<"/"<<ib<<"/"<<iturn<<" --> "<< hex<<triggerwords[ia][is]<<endl;
+
+	    count++;
+	  }
+	ib = (iturn? iw-ib: iw+ib);
+	iturn = 0;
+      }
+    
+    // triggerwords[0][is] = array[32][is] & 0x7fff;
+    // triggerwords[1][is] = ((array[32][is] & 0x8000)>>15)+((array[33][is] & 0x3fff) <<1);
+    // triggerwords[2][is] = ((array[33][is] & 0xc000)>>14)+((array[34][is] & 0xf) <<2);
+    // triggerwords[3][is] = ((array[34][is] & 0x03f0)>>4);
+    // triggerwords[4][is] = ((array[34][is] & 0xfc00)>>10);
+    // triggerwords[5][is] = (array[35][is] & 0x3f);
+    // triggerwords[6][is] = ((array[35][is] & 0x7fc0)>>6);
+    // triggerwords[7][is] = ((array[35][is] & 0x8000)>>15)+((array[36][is] & 0x1ff) <<1);
+
   }
 
   for ( index = 5; index < getDataLength()-3; index+=2)  // -3 to spare the CS fields out
