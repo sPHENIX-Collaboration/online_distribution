@@ -31,7 +31,7 @@ int oncsSub_idgl1v0::decode ()
   
   // from here on out we have 64bit values
   
-  
+  // the BCO
   int i = 3;  // 3,4,5,6 are the BCO
   BCO = 0;
   for ( int j = 0; j < 3; j++)
@@ -41,10 +41,80 @@ int oncsSub_idgl1v0::decode ()
     }
   BCO |= buffer[i+3];
 
+  // 7,8,9,10 are the bunch number
+  BunchNumber = 0;
+  i = 7;
+  for ( int j = 0; j < 3; j++)
+    {
+      BunchNumber |= buffer[i+j];
+      BunchNumber<<=16;
+    }
+  BunchNumber |= buffer[i+3];
+  BunchNumber &= 0x7f;
+  
+  //cout << "bunch number " << BunchNumber << endl;
+
+  unsigned long long tag = 0;
+
+  // 11,12,13,14 are 0x12345678ab - let's check
+  i = 11;
+  for ( int j = 0; j < 3; j++)
+    {
+      tag |= buffer[i+j];
+      tag<<=16;
+    }
+  tag |= buffer[i+3];
+  
+  if ( tag != 0x123456789abcdef)
+    {
+      cout << " wrong tag " << hex << "0x" << tag << dec << endl;
+    }
+
+
+  TriggerInput = 0;
+  TriggerVector = 0;
+
+  // 15,16,17,18 are the trigger input 
+  i = 15;
+  for ( int j = 0; j < 3; j++)
+    {
+      TriggerInput |= buffer[i+j];
+      TriggerInput<<=16;
+    }
+  TriggerInput |= buffer[i+3];
+  
+  // 19,20,21,22 are the trigger vector
+  i = 19;
+  for ( int j = 0; j < 3; j++)
+    {
+      TriggerVector |= buffer[i+j];
+      TriggerVector<<=16;
+    }
+  TriggerVector |= buffer[i+3];
+  
+  //  cout << "TriggerInput " << hex << "0x" << TriggerInput << dec << endl;
+  //  cout << "TriggerVector " << hex << "0x" << TriggerVector << dec << endl;
+
+  // 23,24,25,26 are 0xdeadbeefbas5eba11 - let's check
+  i = 23;
+  tag = 0;
+  for ( int j = 0; j < 3; j++)
+    {
+      tag |= buffer[i+j];
+      tag<<=16;
+    }
+  tag |= buffer[i+3];
+
+  if ( tag != 0xdeadbeefba5eba11)
+    {
+      cout << " wrong tag " << hex << "0x" << tag << dec << endl;
+    }
+  
+  
   int index = 0;
   unsigned long long s;
   // here start the scalers
-  for ( i = 7 ; i < 7+3*4*64; i+=4)
+  for ( i = 27 ; i < 27+3*4*64; i+=4)
     {
       s = 0;
       for ( int j = 0; j < 3; j++)
@@ -86,6 +156,21 @@ long long oncsSub_idgl1v0::lValue(const int i, const char *what)
       return BCO;
     }
   
+  if ( strcmp(what,"TriggerVector") == 0)
+    {
+      return TriggerVector;
+    }
+
+  if ( strcmp(what,"TriggerInput") == 0)
+    {
+      return TriggerInput;
+    }
+  
+  if ( strcmp(what,"BunchNumber") == 0)
+    {
+      return BunchNumber;
+    }
+  
   if ( i < 0 || i >=64) return 0;
 
   if ( strcmp(what,"TRIGGERRAW") == 0)
@@ -111,9 +196,12 @@ long long oncsSub_idgl1v0::lValue(const int i, const char *what)
 void oncsSub_idgl1v0::dump(std::ostream &os)
 {
 
-  os << "packet nr:   " << iValue(0) << endl;
-  os << "Beam Clock:  " << lValue(0, "BCO") << endl << endl;
-  os << "Trg #                  raw             scaled               live" << endl;
+  os << "packet nr:       " << iValue(0) << endl;
+  os << "Beam Clock:      " << lValue(0, "BCO") << endl;
+  os << "Trigger Input:   " << lValue(0, "TriggerInput") << endl;
+  os << "Trigger Vector:  " << lValue(0, "TriggerVector") << endl;
+  os << "Bunch Number:    " << lValue(0, "BunchNumber") << endl << endl;
+  os << "Trg #                  raw              live              scaled" << endl;
   os << "----------------------------------------------------------------" << endl;
 
   int i;

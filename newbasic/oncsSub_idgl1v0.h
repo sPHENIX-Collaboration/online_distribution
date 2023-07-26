@@ -28,6 +28,9 @@ protected:
   int is_decoded;
   
   unsigned long long BCO;
+  unsigned long long BunchNumber;
+  unsigned long long TriggerInput;
+  unsigned long long TriggerVector;
       
   unsigned int packet_nr;
 
