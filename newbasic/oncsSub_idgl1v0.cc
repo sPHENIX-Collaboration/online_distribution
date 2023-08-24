@@ -197,9 +197,9 @@ void oncsSub_idgl1v0::dump(std::ostream &os)
 {
 
   os << "packet nr:       " << iValue(0) << endl;
-  os << "Beam Clock:      " << lValue(0, "BCO") << endl;
-  os << "Trigger Input:   " << lValue(0, "TriggerInput") << endl;
-  os << "Trigger Vector:  " << lValue(0, "TriggerVector") << endl;
+  os << "Beam Clock:      " << "0x" << hex << lValue(0, "BCO") << dec  << "   "  << lValue(0, "BCO") << endl;
+  os << "Trigger Input:   " << "0x" << hex <<  lValue(0, "TriggerInput")  << dec << "   " << lValue(0, "TriggerInput") << endl;
+  os << "Trigger Vector:  " << "0x" << hex <<  lValue(0, "TriggerVector") << dec << "   " << lValue(0, "TriggerVector") << endl;
   os << "Bunch Number:    " << lValue(0, "BunchNumber") << endl << endl;
   os << "Trg #                  raw              live              scaled" << endl;
   os << "----------------------------------------------------------------" << endl;
