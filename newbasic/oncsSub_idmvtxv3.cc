@@ -557,26 +557,18 @@ void oncsSub_idmvtxv3::setupLinks(mvtx::PayLoadCont& buf)
   do
   {
     // Skip FLX padding
-    bool padding_found = false;
-    while ( (*(reinterpret_cast<uint16_t*>(&payload[payload_position] + 30)) == 0xFFFF) &&\
-           payload_position < dlength)
+    if ( (*(reinterpret_cast<uint16_t*>(&payload[payload_position] + 30)) == 0xFFFF) )
     {
-      padding_found  = true;
-      payload_position += mvtx::FLXWordLength;
-    }
-    if ( padding_found )
-    {
-      padding_found = false;
+      while ( (*(reinterpret_cast<uint16_t*>(&payload[payload_position] + 30)) == 0xFFFF) &&\
+             payload_position < dlength)
+      {
+        payload_position += mvtx::FLXWordLength;
+      }
 //        ASSERT(! ((decoder->nbytesread + decoder->ptr_pos()) & 0xFF), decoder,
 //               "FLX header is not properly aligned in byte %lu of current chunk, previous packet %ld",
 //                decoder->ptr_pos(), decoder->ptr_pos(decoder->prev_packet_ptr));
-      if ( payload_position >= dlength )
-      {
-        break;
-      }
     }
-
-    if ( *(reinterpret_cast<uint16_t*>(&payload[payload_position] + 30)) == 0xAB01 )
+    else if ( *(reinterpret_cast<uint16_t*>(&payload[payload_position] + 30)) == 0xAB01 )
     {
       rdh.decode(&payload[payload_position]);
       const size_t pageSizeInBytes = (rdh.pageSize + 1) * mvtx::FLXWordLength;
@@ -591,9 +583,9 @@ void oncsSub_idmvtxv3::setupLinks(mvtx::PayLoadCont& buf)
     }
     else
     {
-      COUT <<"ERROR" << ENDL;
+      // skip raw data without a initial FLX header
+      // (YCM)TODO: OK for OM but error otherwise
       payload_position += mvtx::FLXWordLength;
-      // send error in case no felix header found
     }
   } while (payload_position < dlength);
 
