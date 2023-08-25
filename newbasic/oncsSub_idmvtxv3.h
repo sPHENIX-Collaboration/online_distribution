@@ -3,10 +3,14 @@
 
 #include "oncsSubevent.h"
 
+#include "mvtx_decoder/PayLoadCont.h"
+#include "mvtx_decoder/GBTLink.h"
+
 #include <map>
 #include <vector>
 #include <bitset>
 #include <stdint.h>
+#include <unordered_map>
 
 #ifndef __CINT__
 class WINDOWSEXPORT oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
@@ -22,21 +26,30 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
   long long    lValue(const int ,const char * what);
 
 
-  
   void dump(OSTREAM &os = COUT);
-
 
  protected:
 
   int decode();
-  int read_32( std::bitset<80> &gbtword0
-	       , std::bitset<80> &gbtword1
-	       , std::bitset<80> &gbtword2
-	       , unsigned short &w0
-	       , unsigned short &w1 );
+  int read_32( std::bitset<80>* gbtwords
+               , uint16_t &w16 );
 
-  
   bool m_is_decoded;
+
+
+  struct BufferEntry
+  {
+    int      entry = -1;
+  };
+
+  void loadInput(BufferEntry& bufEntry);
+  void setupLinks(mvtx::PayLoadCont&);
+
+  static size_t mEventId;
+  static std::unordered_map<uint32_t, BufferEntry> mSubId2Buffers; // link sub_id to data buffer in the pool mapping
+  static std::vector< mvtx::PayLoadCont > mBuffers;
+  static std::unordered_map<uint16_t, BufferEntry> mFeeId2GBTLink; // link fee_id to GBTLinks
+  static std::vector<mvtx::GBTLink> mGBTLinks;
 
   unsigned long get_GBT_value( const std::bitset<80> gbtword, const int pos, const int size) const;
   unsigned long long get_GBT_lvalue( const std::bitset<80> gbtword, const int pos, const int size) const;
@@ -50,19 +63,18 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
   unsigned int payload_position;
 
   // the per-lane keeper of the chip data
-  // lane, vector 
+  // lane, vector
   std::map<unsigned int, std::vector<unsigned char> > chipdata;
-  
-  std::vector<std::bitset<80> > gbtvector;
 
-  
+  std::vector< std::vector<std::bitset<80> > > gbtvector;
+
   unsigned long long last_BCO;
   unsigned long long last_LHCBC;
   unsigned short last_source_id;
   unsigned short last_fee_id;
   unsigned short last_lane;
-  
-  
+
+
   struct mvtx_hit
   {
     unsigned long long RHICBCO;
@@ -85,10 +97,18 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
     // unsigned int readout_flags;
     // unsigned int bunchcounter;
   };
-    
+
   std::vector<mvtx_hit *> hit_vector;
 
-  
+};
+
+namespace mvtx_utils
+{
+
+#define clean_errno() (errno == 0 ? "None" : strerror(errno))
+#define log_error(M, ...) fprintf(stderr, "[ERROR] (%s:%d: errno: %s) " M "\n", __FILE__, __LINE__, clean_errno(), ##__VA_ARGS__)
+#define ASSERT(A, D, M,...) if(!(A)) { log_error(M, ##__VA_ARGS__); assert(A); }
+
   enum WordTypeMarker
     {
      IHW = 0xe0,
@@ -97,98 +117,54 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
      DDW = 0x40,
      CDW = 0xf8
     };
-     
-  
-  enum Rdh8ByteMapW0
+
+  struct RdhExt_t
+  {
+    // FLX header
+    uint8_t flxId;    // [23]
+    uint16_t pageSize; // [25]
+    uint16_t gbtLink;
+    uint16_t flxHdrSize;
+    uint16_t flxHdrVersion;
+    // RU header
+    uint8_t rdhVersion;
+    uint8_t rdhSize;
+    uint16_t feeId;
+    uint8_t sourceId;
+    uint32_t detectorField;
+    uint16_t bc;
+    uint64_t orbit;
+    uint32_t trgType;
+    uint16_t packetCounter;
+    uint8_t  stopBit;
+    uint8_t  priority;
+    uint16_t rdhGBTcounter; // 10 bits
+
+    RdhExt_t() = default;
+    ~RdhExt_t() = default;
+
+    void decode(uint8_t* rdh_ptr)
     {
-     HDRVERSION     = 0 *8,
-     SIZE           = 1 *8,
-     FEEID_LSB      = 2 *8,
-     FEEID_MSB      = 3 *8,
-     SOURCE_ID      = 4 *8,
-     DET_FIELD_SB0  = 5 *8,
-     DET_FIELD_SB1  = 6 *8,
-     DET_FIELD_SB2  = 7 *8,
-     DET_FIELD_SB3  = 8 *8,
-     RESERVED_0_LSB = 9 *8
-    };
-  
-  enum Rdh8ByteMapW1
-    {
-     BC_LSB         = 0 *8,
-     BC_MSB         = 1 *8,
-     RESERVED_1_LSB = 2 *8,
-     RESERVED_1_MSB = 3 *8,
-     BCO_SB0        = 4 *8,
-     BCO_SB1        = 5 *8,
-     BCO_SB2        = 6 *8,
-     BCO_SB3        = 7 *8,
-     BCO_SB4        = 8 *8,
-     RESERVED_2_SB0 = 9 *8
-    };
-
-  enum Rdh8ByteMapW2
-    {
-     TRG_TYPE_SB0    = 0 * 8,
-     TRG_TYPE_SB1    = 1 * 8,
-     TRG_TYPE_SB2    = 2 * 8,
-     TRG_TYPE_SB3    = 3 * 8,
-     PAGE_CNT_LSB    = 4 * 8,
-     PAGE_CNT_MSB    = 5 * 8,
-     STOP_BIT        = 6 * 8,
-     PRIORITY        = 7 * 8,
-     RESERVED_3_SB0  = 8 * 8,
-     RESERVED_3_SB1  = 9 * 8
-    };
-  
-     
-  enum flxhdr_word0
-    {
-     RESERVED_0_SB0 = 0 *8,
-     RESERVED_0_SB1 = 1 *8,
-     RESERVED_0_SB2 = 2 *8,
-     RESERVED_0_SB3 = 3 *8,
-     RESERVED_0_SB4 = 4 *8,
-     RESERVED_0_SB5 = 5 *8,
-     RESERVED_0_SB6 = 6 *8,
-     RESERVED_0_SB7 = 7 *8,
-     RESERVED_0_SB8 = 8 *8,
-     RESERVED_0_SB9 = 9 *8
-    };
-  
-
-  enum flxhdr_word1
-    {
-     RESERVED_0_SB10 = 0 * 8,
-     RESERVED_0_SB11 = 1 * 8,
-     RESERVED_0_SB12 = 2 * 8,
-     RESERVED_0_SB13 = 3 * 8,
-     RESERVED_0_SB14 = 4 * 8,
-     RESERVED_0_SB15 = 5 * 8,
-     RESERVED_0_SB16 = 6 * 8,
-     RESERVED_0_SB17 = 7 * 8,
-     RESERVED_0_SB18 = 8 * 8,
-     RESERVED_0_SB19 = 9 * 8
-
-    };
-
-     enum flxhdr_word2
-    {
-     RESERVED_0_SB20  = 0 * 8,
-     RESERVED_0_SB21  = 1 * 8,
-     RESERVED_0_SB22  = 2 * 8,
-     FLXID            = 3 * 8,
-     RESERVED_1       = 4 * 8,
-     DMA_WRD_CTR_LSB  = 5 * 8,
-     DMA_WRD_CTR_MSB  = 6 * 8,
-     RESERVED_2       = 7 * 8,
-     GBT_ID           = 8 * 8,
-     RESERVED_3       = 9 * 8
-    };
-    
-
-
-  
-};
-
+     // FELIX header
+      flxId         = *(reinterpret_cast<uint8_t*>(rdh_ptr +  23) ) & 0xFF;
+      pageSize      = *(reinterpret_cast<uint16_t*>(rdh_ptr + 25) ) & 0x7FF;
+      gbtLink       = *(reinterpret_cast<uint16_t*>(rdh_ptr + 28) ) & 0x7FF;
+      flxHdrSize    = *(reinterpret_cast<uint16_t*>(rdh_ptr + 29) ) & 0x7FF;
+      flxHdrVersion = *(reinterpret_cast<uint16_t*>(rdh_ptr + 30) ) & 0xFFFF;
+      // RU header
+      rdhVersion    = *(reinterpret_cast<uint8_t*>(rdh_ptr + 32) ) & 0xFF;
+      rdhSize       = *(reinterpret_cast<uint8_t*>(rdh_ptr + 33) ) & 0xFF;
+      feeId         = *(reinterpret_cast<uint16_t*>(rdh_ptr + 34) ) & 0xFFFF;
+      sourceId      = *(reinterpret_cast<uint8_t*>(rdh_ptr + 36) ) & 0xFF;
+      detectorField = *(reinterpret_cast<uint32_t*>(rdh_ptr + 37) ) & 0xFFFFFFFF;
+      bc            = *(reinterpret_cast<uint16_t*>(rdh_ptr + 42) ) & 0xFFF;
+      orbit         = *(reinterpret_cast<uint64_t*>(rdh_ptr + 46) ) & 0xFFFFFFFFFF;
+      trgType       = *(reinterpret_cast<uint32_t*>(rdh_ptr + 52) ) & 0xFFFFFFFF;
+      packetCounter = *(reinterpret_cast<uint16_t*>(rdh_ptr + 56) ) & 0xFFFF;
+      stopBit       = *(reinterpret_cast<uint8_t*>(rdh_ptr + 58) ) & 0xFF;
+      priority      = *(reinterpret_cast<uint8_t*>(rdh_ptr + 59) ) & 0xFF;
+      rdhGBTcounter = *(reinterpret_cast<uint16_t*>(rdh_ptr + 62) ) & 0xFFFF;
+    }
+  };
+}
 #endif /* __ONCSSUB_IDMVTXV3_H__ */
