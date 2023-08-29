@@ -19,11 +19,13 @@
 
 #define _RAW_READER_ERROR_CHECKS_ // comment this to disable error checking
 
+#include "mvtx_decoder/mvtx_utils.h"
 #include "mvtx_decoder/PayLoadCont.h"
 #include "mvtx_decoder/PayLoadSG.h"
+#include "mvtx_decoder/DecodingStat.h"
+
 //#include "MVTXDecoder/GBTWord.h"
 //#include "MVTXDecoder/RUDecodeData.h"
-//#include "MVTXDecoder/DecodingStat.h"
 //#include "MVTXDecoder/RUInfo.h"
 //#include "MVTXDecoder/RAWDataHeader.h"
 //#include "MVTXDecoder/RDHUtils.h"
@@ -89,6 +91,11 @@ struct GBTLink
 //  uint32_t lanes = 0;     // lanes served by this link
 //  uint32_t subSpec = 0;   // link subspec
 
+
+  uint32_t prev_pck_cnt = 0;
+  uint8_t* hb_start = nullptr;
+  size_t   hb_length = 0;
+
   PayLoadCont data; // data buffer for single feeeid
 
 //  // transient data filled from current RDH
@@ -96,23 +103,15 @@ struct GBTLink
 //  uint32_t lanesStatus = 0;  // lanes received timeout
 //  uint32_t lanesWithData = 0; // lanes with data transmitted
 //  int32_t packetCounter = -1; // current packet counter from RDH (RDH.packetCounter)
-//<<<<<<< Updated upstream
 //  uint32_t trigger = 0;       // trigger word
 //  std::vector<uint32_t> triggerVec;
 //  uint32_t errorBits = 0;     // bits of the error code of last frame decoding (if any)
 //  uint32_t hbfEntry = 0;      // entry of the current HBF page in the rawData SG list
-//  const RDH* lastRDH = nullptr;
+  const mvtx_utils::RdhExt_t* lastRDH = nullptr;
 //  mvtx::InteractionRecord ir;       // interaction record of the ROF
 //  std::vector<mvtx::InteractionRecord> irVec;
-//=======
-////  uint32_t trigger = 0;       // trigger word
-//  uint32_t errorBits = 0;     // bits of the error code of last frame decoding (if any)
-//  uint32_t hbfEntry = 0;      // entry of the current HBF page in the rawData SG list
-//  const RDH* lastRDH = nullptr;
-////  mvtx::InteractionRecord ir;       // interaction record of the ROF
-//>>>>>>> Stashed changes
 //  mvtx::InteractionRecord irHBF;    // interaction record of the HBF
-//  GBTLinkDecodingStat statistics; // link decoding statistics
+  GBTLinkDecodingStat statistics; // link decoding statistics
 //  ChipStat chipStat;              // chip decoding statistics
 //  RUDecodeData* ruPtr = nullptr;  // pointer on the parent RU
 
@@ -129,16 +128,16 @@ struct GBTLink
   GBTLink() = default;
   GBTLink(uint16_t _flx, uint16_t _fee);
 //  std::string describe() const;
-//  void clear(bool resetStat = true, bool resetTFRaw = false);
-//
+  void clear(bool resetStat = true, bool resetTFRaw = false);
+
 //  template <class Mapping>
 //  CollectedDataStatus collectROFCableData(const Mapping& chmap);
-//
-//  void cacheData(const void* ptr, size_t sz)
-//  {
-//    rawData.add(reinterpret_cast<const PayLoadSG::DataType*>(ptr), sz);
-//  }
-//
+
+  void cacheData(const void* ptr, size_t sz)
+  {
+    rawData.add(reinterpret_cast<const PayLoadSG::DataType*>(ptr), sz);
+  }
+
 //  mvtx::InteractionRecord getIR(size_t ind) const
 //  {
 //    return ( ind < trgVec.size() ) ? trgVec[ind].ir : mvtx::InteractionRecord();
@@ -225,13 +224,9 @@ struct GBTLink
 //  auto* currRawPiece = rawData.currentPiece();
 //  uint8_t errRes = uint8_t(GBTLink::NoError);
 //  bool expectPacketDone = false;
-//<<<<<<< Updated upstream
 //  irVec.clear();
 //  triggerVec.clear();
 //  ir.clear();
-//=======
-////  ir.clear();
-//>>>>>>> Stashed changes
 //  while (currRawPiece) { // we may loop over multiple CRU page
 //    if (dataOffset >= currRawPiece->size) {
 //      dataOffset = 0;                              // start of the RDH
@@ -296,7 +291,6 @@ struct GBTLink
 //          printTrigger(gbtTrgTmp, dataOffset);
 //        }
 //        getNextGbtWord(currRawPiece);
-//<<<<<<< Updated upstream
 //        if (gbtTrgTmp->noData == 0 || gbtTrgTmp->internal) {
 //          gbtTrg = gbtTrgTmp; // this is a trigger describing the following data
 //         // LOG(info)<<"internal trigger  bc:" <<uint16_t(gbtTrgTmp->bc)<<" orbit: "<< gbtTrgTmp->orbit<<" ttype: "<< uint64_t(gbtTrgTmp->triggerType);
@@ -306,9 +300,6 @@ struct GBTLink
 //            extTrigVec->emplace_back(PhysTrigger{mvtx::InteractionRecord(uint16_t(gbtTrgTmp->bc),gbtTrgTmp->orbit), uint64_t(gbtTrgTmp->triggerType)});
 //          }
 //        }
-//=======
-//        gbtTrg = gbtTrgTmp;
-//>>>>>>> Stashed changes
 //        continue;
 //      }
 //      auto gbtC = reinterpret_cast<const mvtx::GBTCalibration*>(currGbtIt);
@@ -325,7 +316,6 @@ struct GBTLink
 //    }
 //
 //    if (gbtTrg) {
-//<<<<<<< Updated upstream
 //      //LOGF(info, "GBTTrigger: %s", gbtTrg->asString());
 //      if (!gbtTrg->continuation) { // this is a continuation from the previous CRU page
 //        statistics.nTriggers++;
@@ -338,8 +328,6 @@ struct GBTLink
 //        triggerVec.push_back(trigger);
 //        LOG(info)<<"internal IR  bc:" <<uint16_t(ir.bc)<<" orbit: "<< ir.orbit<<" ttype: "<< uint64_t(trigger);
 //      }
-//=======
-//>>>>>>> Stashed changes
 //      if (gbtTrg->noData) {
 //        if (verbosity >= VerboseHeaders) {
 //          LOGP(info, "Offs {} Returning with status {} for {}", dataOffset, int(status), describe());
@@ -378,17 +366,9 @@ struct GBTLink
 //        GBTLINK_DECODE_ERRORCHECK(errRes, checkErrorsCableID(gbtD, cableSW));
 //        if (errRes != uint8_t(GBTLink::Skip)) {
 //          GBTLINK_DECODE_ERRORCHECK(errRes, checkErrorsGBTData(cableHW));
-//<<<<<<< Updated upstream
 //          //LOG(info)<<"cablehw: "<<cableHW<<" cablesw: "<<cableSW;
 //          //LOG(info)<<"cable SW "<<cableSW;
 //          ruPtr->cableData[cableSW].add(gbtD->getW8(), 9);
-//=======
-//          if ( ruPtr->cableData[cableSW].size() != trgVec.size() )
-//          {
-//            ruPtr->cableData[cableSW].push_back(PayLoadCont());
-//          }
-//          ruPtr->cableData[cableSW].back().add(gbtD->getW8(), 9);
-//>>>>>>> Stashed changes
 //          ruPtr->cableHWID[cableSW] = cableHW;
 //          ruPtr->cableLinkID[cableSW] = idInRU;
 //          ruPtr->cableLinkPtr[cableSW] = this;

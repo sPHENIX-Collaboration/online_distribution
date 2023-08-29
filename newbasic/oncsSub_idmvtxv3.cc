@@ -11,9 +11,12 @@ namespace mvtx
   constexpr uint8_t FLXWordLength = 32;
 }
 
+// define static references
 size_t oncsSub_idmvtxv3::mEventId = 0;
-std::unordered_map<uint32_t, oncsSub_idmvtxv3::BufferEntry> oncsSub_idmvtxv3::mSubId2Buffers = {};
+std::unordered_map<uint32_t, oncsSub_idmvtxv3::dumpEntry> oncsSub_idmvtxv3::mSubId2Buffers = {};
 std::vector< mvtx::PayLoadCont> oncsSub_idmvtxv3::mBuffers = {};
+std::unordered_map<uint16_t, oncsSub_idmvtxv3::dumpEntry> oncsSub_idmvtxv3::mFeeId2LinkID = {};
+std::vector< mvtx::GBTLink> oncsSub_idmvtxv3::mGBTLinks = {};
 
 oncsSub_idmvtxv3::oncsSub_idmvtxv3(subevtdata_ptr data)
   : oncsSubevent_w4(data)
@@ -283,42 +286,37 @@ int oncsSub_idmvtxv3::decode()
   }
   m_is_decoded = true;
 
-  short pck_id = getIdentifier();
-
-  auto& bufEntry = mSubId2Buffers[pck_id];
-  if ( bufEntry.entry == -1 )
+  for (auto& link : mGBTLinks)
   {
-    bufEntry.entry = mBuffers.size();
-    mBuffers.push_back( {} );
+    link.lastRDH = nullptr;  // pointers will be invalid
+    link.clear(false, true); // clear data but not the statistics
   }
 
-  loadInput(bufEntry);
+  short pck_id = getIdentifier();
 
+  auto& bufref = mSubId2Buffers[pck_id];
+  if ( bufref.entry == -1 )
+  {
+    bufref.entry = mBuffers.size();
+    mBuffers.push_back( {} );
+  }
+  auto& buffer = mBuffers[bufref.entry];
+  loadInput(buffer);
+  setupLinks(buffer);
 
-  //  mTimerTFStart.Start(false);
-//  for (auto& link : mGBTLinks)
-//  {
-//    link.lastRDH = nullptr;  // pointers will be invalid
-//    link.clear(false, true); // clear data but not the statistics
-//  }
-//  for (auto& ru : mRUDecodeVec) {
-//    ru.clear();
-//    // ru.chipErrorsTF.clear(); // will be cleared in the collectDecodingErrors
-//    ru.linkHBFToDump.clear();
-//    ru.nLinksDone = 0;
-//  }
-//  setupLinks(/*inputs*/);
-//  mNLinksDone = 0;
-//  mExtTriggers.clear();
+  buffer.setPtr(payload + payload_position);
 
+  if ( buffer.isEmpty() )
+  {
+    buffer.clear();
+  }
+  else
+  {
+    buffer.moveUnusedToHead();
+  }
 
-//  if ( ! bufEntry.missing_flx_words )
-//  {
-//    mBuffers[bufEntry.entry].clear();
-//  }
 
 /*
-      auto& lnkref = mFeeID2LinkID[rdh.feeId];
       if ( lnkref.entry == -1 )
       { // new link needs to be added
         lnkref.entry = gbtvector.size();
@@ -500,12 +498,13 @@ int oncsSub_idmvtxv3::decode()
     decode_lane (  mitr->second );
   }
 */
+
   ++mEventId;
   return 0;
 }
 
 
-void oncsSub_idmvtxv3::loadInput(BufferEntry& bufEntry)
+void oncsSub_idmvtxv3::loadInput(mvtx::PayLoadCont& buffer)
 {
   uint8_t* payload_start = (uint8_t *) &SubeventHdr->data;  // here begins the payload
   unsigned int dlength = getDataLength() - getPadding(); //padding is supposed to be in units of dwords, this assumes dwords
@@ -524,22 +523,9 @@ void oncsSub_idmvtxv3::loadInput(BufferEntry& bufEntry)
       << ENDL;
   }
 
-  auto& buffer = mBuffers[bufEntry.entry];
   buffer.add(payload_start, dlength);
   payload = buffer.getPtr();
   payload_position = 0;
-
-  setupLinks(buffer);
-
-  buffer.setPtr(payload + payload_position);
-  if ( buffer.isEmpty() )
-  {
-    buffer.clear();
-  }
-  else
-  {
-    buffer.moveUnusedToHead();
-  }
 
   return;
 }
@@ -568,24 +554,60 @@ void oncsSub_idmvtxv3::setupLinks(mvtx::PayLoadCont& buf)
 //               "FLX header is not properly aligned in byte %lu of current chunk, previous packet %ld",
 //                decoder->ptr_pos(), decoder->ptr_pos(decoder->prev_packet_ptr));
     }
-    else if ( *(reinterpret_cast<uint16_t*>(&payload[payload_position] + 30)) == 0xAB01 )
+    else if ( (dlength - payload_position) >= 2 * mvtx::FLXWordLength ) // at least FLX header and RDH
     {
-      rdh.decode(&payload[payload_position]);
-      const size_t pageSizeInBytes = (rdh.pageSize + 1) * mvtx::FLXWordLength;
-      if ( pageSizeInBytes > (dlength - payload_position) )
+      if ( *(reinterpret_cast<uint16_t*>(&payload[payload_position] + 30)) == 0xAB01 )
       {
-        break; // skip felix_header
+        rdh.decode(&payload[payload_position]);
+        const size_t pageSizeInBytes = (rdh.pageSize + 1) * mvtx::FLXWordLength;
+        if ( pageSizeInBytes > (dlength - payload_position) )
+        {
+          break; // skip incomplete felix packet
+        }
+        else
+        {
+          auto& lnkref = mFeeId2LinkID[rdh.feeId];
+          if ( lnkref.entry == -1 )
+          {
+            lnkref.entry = mGBTLinks.size();
+            mGBTLinks.emplace_back( rdh.flxId, rdh.feeId);
+          }
+          auto& gbtLink = mGBTLinks[lnkref.entry];
+          auto lnkPtr = gbtLink.data.getPtr();
+
+          gbtLink.data.add((payload + payload_position), pageSizeInBytes);
+
+          if ( ! rdh.packetCounter ) // start HB
+          {
+            gbtLink.hb_start = lnkPtr;
+            gbtLink.hb_length = pageSizeInBytes;
+          }
+          else
+          {
+            gbtLink.hb_length += pageSizeInBytes;
+          }
+
+          if ( rdh.stopBit ) // found HB end
+          {
+            gbtLink.cacheData(gbtLink.hb_start, gbtLink.hb_length);
+          }
+//          ASSERT(((! rdh.packetCounter) || (rdh.packetCounter == gbtLink.prev_pck_cnt + 1)),
+//           "Incorrect pages count %d in byte %ld of current chunk", rdh.packetCounter,
+//           decoder->ptr_pos());
+          gbtLink.prev_pck_cnt = rdh.packetCounter;
+          payload_position += pageSizeInBytes;
+        }
       }
       else
       {
-        payload_position += pageSizeInBytes;
+        // skip raw data without a initial FLX header
+        // (YCM)TODO: OK for OM but error otherwise
+        payload_position += mvtx::FLXWordLength;
       }
     }
     else
     {
-      // skip raw data without a initial FLX header
-      // (YCM)TODO: OK for OM but error otherwise
-      payload_position += mvtx::FLXWordLength;
+      break; // skip incomplete flx_header
     }
   } while (payload_position < dlength);
 
@@ -663,6 +685,14 @@ void oncsSub_idmvtxv3::dump(OSTREAM &os)
   //  identify(os);
   decode();
 
+  // Debug HB pooling
+  os << "Number of feeid: " << mFeeId2LinkID.size() << endl;
+  for ( auto& lnkref : mFeeId2LinkID )
+  {
+    os << "Link: " << lnkref.first << " has " << mGBTLinks[lnkref.second.entry].rawData.getNPieces();
+    os << " HBs." << endl;
+  }
+
 //  unsigned int n;
 /*
   unsigned int nr_hits = iValue(0, "NR_HITS");
@@ -674,8 +704,8 @@ void oncsSub_idmvtxv3::dump(OSTREAM &os)
   for ( n = 0; n < nr_hits; n++)
     {
       os << setw(6) << n
+      << "  " << setw(6)  << iValue(n, "ENCOODER_ID")
 	 << "     " << setw(6) << iValue(n, "ADDR")
-	 << "  " << setw(6)  << iValue(n, "ENCOODER_ID")
 	 << "  " << setw(6)  << iValue(n, "LANE")
 	 << "  " << setw(6)  << iValue(n, "SOURCE_ID")
 	 << "  " << setw(6)  << "0x" << lValue(n, "RHICBCO")
@@ -692,6 +722,17 @@ void oncsSub_idmvtxv3::dump(OSTREAM &os)
 //_________________________________________________
 oncsSub_idmvtxv3::~oncsSub_idmvtxv3()
 {
+
+  for ( auto& buffer : mBuffers )
+  {
+    buffer.clear();
+  }
+
+  for ( auto& lnk : mGBTLinks )
+  {
+    lnk.clear(true, true);
+    lnk.data.clear();
+  }
 
   chipdata.clear();
 

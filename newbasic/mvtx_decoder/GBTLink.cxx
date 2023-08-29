@@ -45,12 +45,20 @@ GBTLink::GBTLink(uint16_t _flx, uint16_t _fee) : flxID(_flx), feeID(_fee)
 //  }
 //  return ss;
 //}
-//
-/////_________________________________________________________________
-///// reset link
-//void GBTLink::clear(bool resetStat, bool resetTFRaw)
-//{
-//  data.clear();
+
+///_________________________________________________________________
+/// reset link
+void GBTLink::clear(bool resetStat, bool resetTFRaw)
+{
+  if ( data.isEmpty() )
+  {
+    data.clear();
+  }
+  else
+  {
+    data.moveUnusedToHead();
+  }
+
 //  lastPageSize = 0;
 //  nTrigger = 0;
 //  lanes = 0;
@@ -58,22 +66,24 @@ GBTLink::GBTLink(uint16_t _flx, uint16_t _fee) : flxID(_flx), feeID(_fee)
 //  packetCounter = -1;
 //  errorBits = 0;
 //  irHBF.clear();
-//  if (resetTFRaw) {
-//    rawData.clear();
+  if (resetTFRaw)
+  {
+    rawData.clear();
 //    dataOffset = 0;
 //    gbtErrStatUpadated = false;
 //    rofJumpWasSeen = false;
 //    statusInTF = None;
 //    ir.clear();
-//  }
+  }
 //  //  lastRDH = nullptr;
-//  if (resetStat) {
-//    statistics.clear();
-//  }
+  if (resetStat)
+  {
+    statistics.clear();
+  }
 //  hbfEntry = 0;
 //  extTrigVect = nullptr;
 //  status = None;
-//}
+}
 //
 /////_________________________________________________________________
 //void GBTLink::printTrigger(const GBTTrigger* gbtTrg, int offs)

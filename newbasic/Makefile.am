@@ -303,6 +303,8 @@ allsources = \
   packet_cdevdvm.cc \
   caen_correction.cc \
 	mvtx_decoder/PayLoadCont.cxx \
+	mvtx_decoder/PixelData.cxx \
+	mvtx_decoder/DecodingStat.cxx \
 	mvtx_decoder/GBTLink.cxx
 
 AM_LDFLAGS = -L$(libdir) -L$(ONLINE_MAIN)/lib -L$(OPT_SPHENIX)/lib
