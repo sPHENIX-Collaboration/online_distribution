@@ -68,10 +68,10 @@ int oncsSub_idtpcfeev3::decode_gtm_data(unsigned short dat[16])
     payload->is_lvl1 = payload->pkt_type == GTM_LVL1_ACCEPT_MAGIC_KEY;
     payload->is_endat = payload->pkt_type == GTM_ENDAT_MAGIC_KEY;
 
-    payload->bco = ((uint64_t)gtm[2] << 0) | ((uint64_t)gtm[3] << 8) | ((uint64_t)gtm[4] << 16) | ((uint64_t)gtm[5] << 24) | ((uint64_t)gtm[6] << 32) | (((uint64_t)gtm[7]) << 40);
+    payload->bco = ((unsigned long long)gtm[2] << 0) | ((unsigned long long)gtm[3] << 8) | ((unsigned long long)gtm[4] << 16) | ((unsigned long long)gtm[5] << 24) | ((unsigned long long)gtm[6] << 32) | (((unsigned long long)gtm[7]) << 40);
     payload->lvl1_count = ((unsigned int)gtm[8] << 0) | ((unsigned int)gtm[9] << 8) | ((unsigned int)gtm[10] << 16) | ((unsigned int)gtm[11] << 24);
     payload->endat_count = ((unsigned int)gtm[12] << 0) | ((unsigned int)gtm[13] << 8) | ((unsigned int)gtm[14] << 16) | ((unsigned int)gtm[15] << 24);
-    payload->last_bco = ((uint64_t)gtm[16] << 0) | ((uint64_t)gtm[17] << 8) | ((uint64_t)gtm[18] << 16) | ((uint64_t)gtm[19] << 24) | ((uint64_t)gtm[20] << 32) | (((uint64_t)gtm[21]) << 40);
+    payload->last_bco = ((unsigned long long)gtm[16] << 0) | ((unsigned long long)gtm[17] << 8) | ((unsigned long long)gtm[18] << 16) | ((unsigned long long)gtm[19] << 24) | ((unsigned long long)gtm[20] << 32) | (((unsigned long long)gtm[21]) << 40);
     payload->modebits = gtm[22];
 
     this->gtm_data.push_back(payload);

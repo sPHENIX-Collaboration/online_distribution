@@ -70,10 +70,10 @@ protected:
       unsigned short pkt_type;
       bool is_endat;
       bool is_lvl1;
-      uint64_t bco;
+      unsigned long long bco;
       unsigned int lvl1_count;
       unsigned int endat_count;
-      uint64_t last_bco;
+      unsigned long long last_bco;
       unsigned char modebits;
   };
   

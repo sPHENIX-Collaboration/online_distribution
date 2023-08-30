@@ -47,7 +47,7 @@ protected:
 
   struct intt_hit
   {
-    uint64_t bco;
+    unsigned long long bco;
     unsigned short fee;
     unsigned short channel_id;
     unsigned short chip_id;
