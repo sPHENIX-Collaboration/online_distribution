@@ -33,10 +33,10 @@ protected:
   static const unsigned short  MAGIC_KEY_0 = 0xfe;
   static const unsigned short  MAGIC_KEY_1 = 0x00;
 
-  static const uint16_t FEE_MAGIC_KEY = 0xba00;
-  static const uint16_t GTM_MAGIC_KEY = 0xbb00;
-  static const uint16_t GTM_LVL1_ACCEPT_MAGIC_KEY = 0xbbf0;
-  static const uint16_t GTM_ENDAT_MAGIC_KEY = 0xbbf1;
+  static const unsigned short FEE_MAGIC_KEY = 0xba00;
+  static const unsigned short GTM_MAGIC_KEY = 0xbb00;
+  static const unsigned short GTM_LVL1_ACCEPT_MAGIC_KEY = 0xbbf0;
+  static const unsigned short GTM_ENDAT_MAGIC_KEY = 0xbbf1;
 
   static const unsigned short  MAX_FEECOUNT = 26;   // that many FEEs
   static const unsigned short  MAX_CHANNELS   = 8*32; // that many channels per FEE
@@ -47,34 +47,34 @@ protected:
 
   //  int find_header ( std::vector<unsigned short>::const_iterator &itr,  const std::vector<unsigned short> &orig);
   int find_header ( const unsigned int xx,  const std::vector<unsigned short> &orig);
-  int decode_gtm_data(uint16_t gtm[16]);
+  int decode_gtm_data(unsigned short gtm[16]);
   
   int _broken;
   
   int _is_decoded;
 
   struct sampa_waveform {
-    uint16_t fee;
-    uint16_t pkt_length;
-    uint16_t channel;
-    uint16_t sampa_channel;
-    uint16_t sampa_address;
-    uint32_t bx_timestamp;
-    std::vector<uint16_t> waveform;
-    uint16_t adc_length;
-    uint16_t checksum;
+    unsigned short fee;
+    unsigned short pkt_length;
+    unsigned short channel;
+    unsigned short sampa_channel;
+    unsigned short sampa_address;
+    unsigned int bx_timestamp;
+    std::vector<unsigned short> waveform;
+    unsigned short adc_length;
+    unsigned short checksum;
     bool     valid;
   };
 
   struct gtm_payload {
-      uint16_t pkt_type;
+      unsigned short pkt_type;
       bool is_endat;
       bool is_lvl1;
       uint64_t bco;
-      uint32_t lvl1_count;
-      uint32_t endat_count;
+      unsigned int lvl1_count;
+      unsigned int endat_count;
       uint64_t last_bco;
-      uint8_t modebits;
+      unsigned char modebits;
   };
   
   // once vector per possible channel 16 cards * 256 channels

@@ -109,8 +109,8 @@ int oncsSub_idinttv0::intt_decode ()
 	}
 
       
-      uint16_t fee = ( buffer[index] >> 20 ) & 0xf;
-      uint16_t len = ( (buffer[index] >> 16) & 0xf) >>1;
+      unsigned short fee = ( buffer[index] >> 20 ) & 0xf;
+      unsigned short len = ( (buffer[index] >> 16) & 0xf) >>1;
       //coutfl << "found start at index " << index << " values " << hex << buffer[index] << dec << " fee: " << fee << " len: " << len << endl;
       index++;
 
@@ -166,7 +166,7 @@ int oncsSub_idinttv0::intt_decode ()
 		  header_found  = 0;
 		  j--;
 		  // we have a full hitlist in the vector here
-		  coutfl << "calling decode with size " << hitlist.size() << endl;
+		  //coutfl << "calling decode with size " << hitlist.size() << endl;
 		  intt_decode_hitlist (hitlist, fee);
 		  hitlist.clear();
 		  break;
