@@ -57,12 +57,12 @@ struct GBTLink
 //                            DUMP_HBF,  // dump HBF for FEEID with error
 //                            DUMP_TF,   // dump whole TF at error
 //                            DUMP_NTYPES };
-//
-//  enum CollectedDataStatus : int8_t { None,
-//                                      AbortedOnError,
-//                                      StoppedOnEndOfData,
-//                                      DataSeen }; // None is set before starting collectROFCableData
-//
+
+  enum CollectedDataStatus : int8_t { None,
+                                      AbortedOnError,
+                                      StoppedOnEndOfData,
+                                      DataSeen }; // None is set before starting collectROFCableData
+
 //  enum ErrorType : uint8_t { NoError = 0x0,
 //                             Warning = 0x1,
 //                             Skip = 0x2,
@@ -76,12 +76,12 @@ struct GBTLink
 //
 //  using RDH = mvtx::RDHAny;
 //  using RDHUtils = mvtx::RDHUtils;
-//
-//  CollectedDataStatus status = None;
+
+  CollectedDataStatus status = None;
 //  Verbosity verbosity = VerboseErrors;
-//
+
 //  std::vector<PhysTrigger> trgVec;
-//
+
 //  uint8_t idInRU = 0;     // link ID within the RU
 //  uint8_t idInCRU = 0;    // link ID within the CRU
 //  bool gbtErrStatUpadated = false;
@@ -131,7 +131,7 @@ struct GBTLink
   void clear(bool resetStat = true, bool resetTFRaw = false);
 
 //  template <class Mapping>
-//  CollectedDataStatus collectROFCableData(const Mapping& chmap);
+  CollectedDataStatus collectROFCableData(/*const Mapping& chmap*/);
 
   void cacheData(const void* ptr, size_t sz)
   {
@@ -211,13 +211,13 @@ struct GBTLink
 
 //  ClassDefNV(GBTLink, 1);
 };
-//
-/////_________________________________________________________________
-///// collect cables data for single ROF, return number of real payload words seen,
-///// -1 in case of critical error
+
+///_________________________________________________________________
+/// collect cables data for single ROF, return number of real payload words seen,
+/// -1 in case of critical error
 //template <class Mapping>
-//GBTLink::CollectedDataStatus GBTLink::collectROFCableData(const Mapping& chmap)
-//{
+inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping& chmap*/)
+{
 //  status = None;
 //  //verbosity = VerboseHeaders;
 //  //LOG(info)<<"entering collectROFCableData";
@@ -402,8 +402,8 @@ struct GBTLink
 //    GBTLINK_DECODE_ERRORCHECK(errRes, checkErrorsPacketDoneMissing(nullptr, false));
 //    return (status = DataSeen);
 //  }
-//  return (status = StoppedOnEndOfData);
-//}
+  return  (status = StoppedOnEndOfData);
+}
 
 } // namespace mvtx
 

@@ -315,15 +315,12 @@ int oncsSub_idmvtxv3::decode()
     buffer.moveUnusedToHead();
   }
 
+  for ( auto& link : mGBTLinks )
+  {
+    link.collectROFCableData();
+  }
 
 /*
-      if ( lnkref.entry == -1 )
-      { // new link needs to be added
-        lnkref.entry = gbtvector.size();
-        gbtvector.push_back(std::vector< std::bitset<80> >());
-      }
-      auto& link_vector = gbtvector[lnkref.entry];
-
       // uncomment this to match the decoder.py output
 //      cout << "FELIX header found: Version 0x" << hex << rdh.flxHdrVersion << dec
 //           << " FLXID " << (int)rdh.flxId
@@ -363,7 +360,8 @@ int oncsSub_idmvtxv3::decode()
           link_vector[last_rdh_pos+2].reset(64+i);
         }
       }
-    }*/
+    }
+*/
 
  // cout << __FILE__ << " " << __LINE__ << " number of Links " << gbtvector.size()  << endl;
 /*
