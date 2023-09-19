@@ -33,6 +33,8 @@ namespace mvtx_utils
      CDW = 0xf8
     };
 
+  constexpr uint8_t FLXWordLength = 32;
+
   struct RdhExt_t
   {
     // FLX header
@@ -58,27 +60,27 @@ namespace mvtx_utils
     RdhExt_t() = default;
     ~RdhExt_t() = default;
 
-    void decode(uint8_t* rdh_ptr)
+    void decode(const uint8_t* rdh_ptr)
     {
      // FELIX header
-      flxId         = *(reinterpret_cast<uint8_t*>(rdh_ptr +  23) ) & 0xFF;
-      pageSize      = *(reinterpret_cast<uint16_t*>(rdh_ptr + 25) ) & 0x7FF;
-      gbtLink       = *(reinterpret_cast<uint16_t*>(rdh_ptr + 28) ) & 0x7FF;
-      flxHdrSize    = *(reinterpret_cast<uint16_t*>(rdh_ptr + 29) ) & 0x7FF;
-      flxHdrVersion = *(reinterpret_cast<uint16_t*>(rdh_ptr + 30) ) & 0xFFFF;
+      flxId         = *(reinterpret_cast<const uint8_t*>(rdh_ptr +  23) ) & 0xFF;
+      pageSize      = *(reinterpret_cast<const uint16_t*>(rdh_ptr + 25) ) & 0x7FF;
+      gbtLink       = *(reinterpret_cast<const uint16_t*>(rdh_ptr + 28) ) & 0x7FF;
+      flxHdrSize    = *(reinterpret_cast<const uint16_t*>(rdh_ptr + 29) ) & 0x7FF;
+      flxHdrVersion = *(reinterpret_cast<const uint16_t*>(rdh_ptr + 30) ) & 0xFFFF;
       // RU header
-      rdhVersion    = *(reinterpret_cast<uint8_t*>(rdh_ptr + 32) ) & 0xFF;
-      rdhSize       = *(reinterpret_cast<uint8_t*>(rdh_ptr + 33) ) & 0xFF;
-      feeId         = *(reinterpret_cast<uint16_t*>(rdh_ptr + 34) ) & 0xFFFF;
-      sourceId      = *(reinterpret_cast<uint8_t*>(rdh_ptr + 36) ) & 0xFF;
-      detectorField = *(reinterpret_cast<uint32_t*>(rdh_ptr + 37) ) & 0xFFFFFFFF;
-      bc            = *(reinterpret_cast<uint16_t*>(rdh_ptr + 42) ) & 0xFFF;
-      orbit         = *(reinterpret_cast<uint64_t*>(rdh_ptr + 46) ) & 0xFFFFFFFFFF;
-      trgType       = *(reinterpret_cast<uint32_t*>(rdh_ptr + 52) ) & 0xFFFFFFFF;
-      packetCounter = *(reinterpret_cast<uint16_t*>(rdh_ptr + 56) ) & 0xFFFF;
-      stopBit       = *(reinterpret_cast<uint8_t*>(rdh_ptr + 58) ) & 0xFF;
-      priority      = *(reinterpret_cast<uint8_t*>(rdh_ptr + 59) ) & 0xFF;
-      rdhGBTcounter = *(reinterpret_cast<uint16_t*>(rdh_ptr + 62) ) & 0xFFFF;
+      rdhVersion    = *(reinterpret_cast<const uint8_t*>(rdh_ptr + 32) ) & 0xFF;
+      rdhSize       = *(reinterpret_cast<const uint8_t*>(rdh_ptr + 33) ) & 0xFF;
+      feeId         = *(reinterpret_cast<const uint16_t*>(rdh_ptr + 34) ) & 0xFFFF;
+      sourceId      = *(reinterpret_cast<const uint8_t*>(rdh_ptr + 36) ) & 0xFF;
+      detectorField = *(reinterpret_cast<const uint32_t*>(rdh_ptr + 37) ) & 0xFFFFFFFF;
+      bc            = *(reinterpret_cast<const uint16_t*>(rdh_ptr + 42) ) & 0xFFF;
+      orbit         = *(reinterpret_cast<const uint64_t*>(rdh_ptr + 46) ) & 0xFFFFFFFFFF;
+      trgType       = *(reinterpret_cast<const uint32_t*>(rdh_ptr + 52) ) & 0xFFFFFFFF;
+      packetCounter = *(reinterpret_cast<const uint16_t*>(rdh_ptr + 56) ) & 0xFFFF;
+      stopBit       = *(reinterpret_cast<const uint8_t*>(rdh_ptr + 58) ) & 0xFF;
+      priority      = *(reinterpret_cast<const uint8_t*>(rdh_ptr + 59) ) & 0xFF;
+      rdhGBTcounter = *(reinterpret_cast<const uint16_t*>(rdh_ptr + 62) ) & 0xFFFF;
     }
   };
 }

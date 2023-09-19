@@ -6,11 +6,6 @@
 
 using namespace std;
 
-namespace mvtx
-{
-  constexpr uint8_t FLXWordLength = 32;
-}
-
 // define static references
 size_t oncsSub_idmvtxv3::mEventId = 0;
 std::unordered_map<uint32_t, oncsSub_idmvtxv3::dumpEntry> oncsSub_idmvtxv3::mSubId2Buffers = {};
@@ -508,14 +503,14 @@ void oncsSub_idmvtxv3::loadInput(mvtx::PayLoadCont& buffer)
   unsigned int dlength = getDataLength() - getPadding(); //padding is supposed to be in units of dwords, this assumes dwords
   dlength *= 4;
 
-  if ( dlength % mvtx::FLXWordLength )
+  if ( dlength % mvtx_utils::FLXWordLength )
   {
-    dlength -= dlength % mvtx::FLXWordLength;
+    dlength -= dlength % mvtx_utils::FLXWordLength;
     COUT
       << ENDL
       << "!!!!!!!!!!!!!!!!!!WARNING!!!!!!!!!!!!!!!!!!!! \n"
       << "DMA packet has incomplete FLX words, only "
-      << dlength << " bytes(" << (dlength / mvtx::FLXWordLength)
+      << dlength << " bytes(" << (dlength / mvtx_utils::FLXWordLength)
       << " FLX words), will be decoded. \n"
       << "!!!!!!!!!!!!!!!!!!WARNING!!!!!!!!!!!!!!!!!!!! \n"
       << ENDL;
@@ -546,18 +541,18 @@ void oncsSub_idmvtxv3::setupLinks(mvtx::PayLoadCont& buf)
       while ( (*(reinterpret_cast<uint16_t*>(&payload[payload_position] + 30)) == 0xFFFF) &&\
              payload_position < dlength)
       {
-        payload_position += mvtx::FLXWordLength;
+        payload_position += mvtx_utils::FLXWordLength;
       }
 //        ASSERT(! ((decoder->nbytesread + decoder->ptr_pos()) & 0xFF), decoder,
 //               "FLX header is not properly aligned in byte %lu of current chunk, previous packet %ld",
 //                decoder->ptr_pos(), decoder->ptr_pos(decoder->prev_packet_ptr));
     }
-    else if ( (dlength - payload_position) >= 2 * mvtx::FLXWordLength ) // at least FLX header and RDH
+    else if ( (dlength - payload_position) >= 2 * mvtx_utils::FLXWordLength ) // at least FLX header and RDH
     {
       if ( *(reinterpret_cast<uint16_t*>(&payload[payload_position] + 30)) == 0xAB01 )
       {
         rdh.decode(&payload[payload_position]);
-        const size_t pageSizeInBytes = (rdh.pageSize + 1) * mvtx::FLXWordLength;
+        const size_t pageSizeInBytes = (rdh.pageSize + 1) * mvtx_utils::FLXWordLength;
         if ( pageSizeInBytes > (dlength - payload_position) )
         {
           break; // skip incomplete felix packet
@@ -600,7 +595,7 @@ void oncsSub_idmvtxv3::setupLinks(mvtx::PayLoadCont& buf)
       {
         // skip raw data without a initial FLX header
         // (YCM)TODO: OK for OM but error otherwise
-        payload_position += mvtx::FLXWordLength;
+        payload_position += mvtx_utils::FLXWordLength;
       }
     }
     else
