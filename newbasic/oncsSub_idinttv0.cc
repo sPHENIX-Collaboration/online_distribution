@@ -121,6 +121,16 @@ int oncsSub_idinttv0::intt_decode ()
 	}
     }
 
+  // for ( int fee = 0; fee < MAX_FEECOUNT; fee++)
+  //   {
+  //     for ( unsigned int i = 0; i < fee_data[fee].size(); i++)
+  // 	{
+  // 	  cout << setw(3) << fee << "  " << hex << fee_data[fee][i] << dec << endl;
+  // 	}
+  //     cout << endl;
+  //   }
+  
+
 
   for ( int fee = 0 ; fee < MAX_FEECOUNT ; fee++)
     {
@@ -153,7 +163,14 @@ int oncsSub_idinttv0::intt_decode ()
 	  // here j points to a "cade" word
 
 	  // push back the cdae word, the BCO, and event counter
-	  for ( int k = 0; k < 3; k++) hitlist.push_back(fee_data[fee][j++]);
+	  if ( fee_data[fee].size() >=3 )
+	    {
+	      for ( int k = 0; k < 3; k++) hitlist.push_back(fee_data[fee][j++]);
+	    }
+	  else
+	    {
+	      coutfl << " Warning - size is " << fee_data[fee].size() << endl;
+	    }
 	  
 
 	  // ok, now let's go until we hit the end, or hit the next header, or a footer
