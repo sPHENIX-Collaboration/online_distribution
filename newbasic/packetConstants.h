@@ -303,13 +303,32 @@
 #define IDDIGITIZER_12S     94
 #define IDDIGITIZER_16S     95
 
-#define IDLL1_20S           141
+#define IDDIGITIZERV3_2S      162
+#define IDDIGITIZERV3_4S      164
+#define IDDIGITIZERV3_6S      166
+#define IDDIGITIZERV3_8S      168
+#define IDDIGITIZERV3_10S     170
+#define IDDIGITIZERV3_12S     172
+#define IDDIGITIZERV3_14S     174
+#define IDDIGITIZERV3_16S     176
+#define IDDIGITIZERV3_18S     178
+#define IDDIGITIZERV3_20S     180
+#define IDDIGITIZERV3_22S     182
+#define IDDIGITIZERV3_24S     184
+#define IDDIGITIZERV3_26S     186
+#define IDDIGITIZERV3_28S     188
+#define IDDIGITIZERV3_30S     190
+
+#define IDLL1_20S             141
 #define IDLL1v2_20S           142
+
 
 #define IDDIGITIZER_CTRL     2099
 
+// LL1 
 
-
+#define IDLL1_20S 141
+#define IDLL1v2_20S 142
 
 // EMC data header and trailer length
 
