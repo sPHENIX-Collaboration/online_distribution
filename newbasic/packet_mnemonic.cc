@@ -20,9 +20,30 @@ const char *get_mnemonic (const int structure, const int format)
     case(ID4EVT): return "ID4EVT";
     case(ID2SUP): return "ID2SUP";
     case(ID4SCALER): return "ID4SCALER";
+
     case(IDDIGITIZER_12S): return "IDDIGITIZER_12S";
     case(IDDIGITIZER_16S): return "IDDIGITIZER_16S";
     case(IDDIGITIZER_31S): return "IDDIGITIZER_31S";
+      
+    case(IDDIGITIZERV3_2S): return "IDDIGITIZERV3_2S";
+    case(IDDIGITIZERV3_4S): return "IDDIGITIZERV3_4S";
+    case(IDDIGITIZERV3_6S): return "IDDIGITIZERV3_6S";
+    case(IDDIGITIZERV3_8S): return "IDDIGITIZERV3_8S";
+
+    case(IDDIGITIZERV3_10S): return "IDDIGITIZERV3_10S";
+    case(IDDIGITIZERV3_12S): return "IDDIGITIZERV3_12S";
+    case(IDDIGITIZERV3_14S): return "IDDIGITIZERV3_14S";
+    case(IDDIGITIZERV3_16S): return "IDDIGITIZERV3_16S";
+    case(IDDIGITIZERV3_18S): return "IDDIGITIZERV3_18S";
+
+    case(IDDIGITIZERV3_20S): return "IDDIGITIZERV3_20S";
+    case(IDDIGITIZERV3_22S): return "IDDIGITIZERV3_22S";
+    case(IDDIGITIZERV3_24S): return "IDDIGITIZERV3_24S";
+    case(IDDIGITIZERV3_26S): return "IDDIGITIZERV3_26S";
+    case(IDDIGITIZERV3_28S): return "IDDIGITIZERV3_28S";
+
+    case(IDDIGITIZERV3_30S): return "IDDIGITIZERV3_30S";
+
     case(IDHAMMOND): return "IDHAMMOND";
     case(IDSAM): return "IDSAM";
     case(IDDCFEM): return "IDDCFEM";

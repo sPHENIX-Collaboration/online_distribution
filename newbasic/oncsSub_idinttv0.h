@@ -47,18 +47,18 @@ protected:
 
   struct intt_hit
   {
-    uint64_t bco;
-    uint16_t fee;
-    uint16_t channel_id;
-    uint16_t chip_id;
-    uint16_t adc;
-    uint16_t FPHX_BCO;
-    uint16_t full_FPHX;
-    uint16_t full_ROC;
-    uint16_t amplitude;
-    uint16_t full_fphx;
-    uint32_t event_counter;
-    uint32_t word;
+    unsigned long long bco;
+    unsigned short fee;
+    unsigned short channel_id;
+    unsigned short chip_id;
+    unsigned short adc;
+    unsigned short FPHX_BCO;
+    unsigned short full_FPHX;
+    unsigned short full_ROC;
+    unsigned short amplitude;
+    unsigned short full_fphx;
+    unsigned int event_counter;
+    unsigned int word;
   };
 
     

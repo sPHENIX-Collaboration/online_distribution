@@ -54,12 +54,12 @@ int oncsSub_idtpcfeev3::cacheIterator(const int n)
   return 1;
 }
 
-int oncsSub_idtpcfeev3::decode_gtm_data(uint16_t dat[16])
+int oncsSub_idtpcfeev3::decode_gtm_data(unsigned short dat[16])
 {
-    uint8_t *gtm = (uint8_t *)dat;
+    unsigned char *gtm = (unsigned char *)dat;
     gtm_payload *payload = new gtm_payload;
 
-    payload->pkt_type = gtm[0] | ((uint16_t)gtm[1] << 8);
+    payload->pkt_type = gtm[0] | ((unsigned short)gtm[1] << 8);
     if (payload->pkt_type != GTM_LVL1_ACCEPT_MAGIC_KEY && payload->pkt_type != GTM_ENDAT_MAGIC_KEY) {
       delete payload;
       return -1;
@@ -68,10 +68,10 @@ int oncsSub_idtpcfeev3::decode_gtm_data(uint16_t dat[16])
     payload->is_lvl1 = payload->pkt_type == GTM_LVL1_ACCEPT_MAGIC_KEY;
     payload->is_endat = payload->pkt_type == GTM_ENDAT_MAGIC_KEY;
 
-    payload->bco = ((uint64_t)gtm[2] << 0) | ((uint64_t)gtm[3] << 8) | ((uint64_t)gtm[4] << 16) | ((uint64_t)gtm[5] << 24) | ((uint64_t)gtm[6] << 32) | (((uint64_t)gtm[7]) << 40);
-    payload->lvl1_count = ((uint32_t)gtm[8] << 0) | ((uint32_t)gtm[9] << 8) | ((uint32_t)gtm[10] << 16) | ((uint32_t)gtm[11] << 24);
-    payload->endat_count = ((uint32_t)gtm[12] << 0) | ((uint32_t)gtm[13] << 8) | ((uint32_t)gtm[14] << 16) | ((uint32_t)gtm[15] << 24);
-    payload->last_bco = ((uint64_t)gtm[16] << 0) | ((uint64_t)gtm[17] << 8) | ((uint64_t)gtm[18] << 16) | ((uint64_t)gtm[19] << 24) | ((uint64_t)gtm[20] << 32) | (((uint64_t)gtm[21]) << 40);
+    payload->bco = ((unsigned long long)gtm[2] << 0) | ((unsigned long long)gtm[3] << 8) | ((unsigned long long)gtm[4] << 16) | ((unsigned long long)gtm[5] << 24) | ((unsigned long long)gtm[6] << 32) | (((unsigned long long)gtm[7]) << 40);
+    payload->lvl1_count = ((unsigned int)gtm[8] << 0) | ((unsigned int)gtm[9] << 8) | ((unsigned int)gtm[10] << 16) | ((unsigned int)gtm[11] << 24);
+    payload->endat_count = ((unsigned int)gtm[12] << 0) | ((unsigned int)gtm[13] << 8) | ((unsigned int)gtm[14] << 16) | ((unsigned int)gtm[15] << 24);
+    payload->last_bco = ((unsigned long long)gtm[16] << 0) | ((unsigned long long)gtm[17] << 8) | ((unsigned long long)gtm[18] << 16) | ((unsigned long long)gtm[19] << 24) | ((unsigned long long)gtm[20] << 32) | (((unsigned long long)gtm[21]) << 40);
     payload->modebits = gtm[22];
 
     this->gtm_data.push_back(payload);
@@ -115,7 +115,7 @@ int oncsSub_idtpcfeev3::tpc_decode ()
         }
       }
     } else if ((buffer[index] & 0xFF00) == GTM_MAGIC_KEY) {
-        uint16_t buf[16];
+        unsigned short buf[16];
 
         // memcpy?
         for (unsigned int i = 0; i < 16; i++) {
@@ -166,7 +166,7 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 	  else
 	    {
 	      // capture the header so we can easier get the bit shift stuff
-	      uint16_t header[HEADER_LENGTH];
+	      unsigned short header[HEADER_LENGTH];
 	      for ( int i = 0; i < HEADER_LENGTH; i++ ) header[i] = (fee_data[ifee][pos++]) ;
 
 	      sampa_waveform *sw = new sampa_waveform;
@@ -182,7 +182,7 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 		| (header[1] >> 9);	  
 
 	      // now we add the actual waveform
-	      uint16_t data_size = header[5] -1 ;
+	      unsigned short data_size = header[5] -1 ;
 
 	     //  coutfl << " Fee: " << ifee << " Sampa " << sw->sampa_address
 	     //  	 << " sampa channel: " << sw->sampa_channel
@@ -195,7 +195,7 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 		}
 	      
 	      // we calculate the checksum here because "pos" is at the right place
-	      uint16_t crc = crc16(ifee, startpos, header[0]-1);
+	      unsigned short crc = crc16(ifee, startpos, header[0]-1);
 	      // coutfl << "fee " << setw(3) << sw->fee
 	      // 	     << " sampla channel " << setw(3) <<  sw->channel
 	      // 	     << " crc and value " << hex << setw(5) << crc << " " << setw(5) << fee_data[ifee][pos] << dec;

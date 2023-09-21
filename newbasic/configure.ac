@@ -9,6 +9,8 @@ AM_CONDITIONAL(NEWIO, false)
 AC_CANONICAL_HOST
 AC_CONFIG_AUX_DIR([.])
 
+#CXXFLAGS="-O0 -g"
+
 dnl search for C++ compiler and set default flags
 AC_PROG_CXX(cxx CC g++)
 

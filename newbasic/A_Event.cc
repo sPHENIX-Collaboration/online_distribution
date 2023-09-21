@@ -652,6 +652,23 @@ Packet *A_Event::makePacket(PHDWORD *pp, const int hitFormat)
       return new Packet_iddigitizerv2(pp);
       break;
 
+    case  IDDIGITIZERV3_2S:
+    case  IDDIGITIZERV3_4S:
+    case  IDDIGITIZERV3_6S:
+    case  IDDIGITIZERV3_8S:
+    case  IDDIGITIZERV3_12S:
+    case  IDDIGITIZERV3_14S:
+    case  IDDIGITIZERV3_18S:
+    case  IDDIGITIZERV3_20S:
+    case  IDDIGITIZERV3_22S:
+    case  IDDIGITIZERV3_24S:
+    case  IDDIGITIZERV3_26S:
+    case  IDDIGITIZERV3_28S:
+    case  IDDIGITIZERV3_30S:
+
+      return new Packet_iddigitizerv3(pp);
+      break;
+
     case IDLL1_20S:
     case IDLL1v2_20S:
       return new Packet_idll1v1(pp);

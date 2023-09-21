@@ -109,8 +109,8 @@ int oncsSub_idinttv0::intt_decode ()
 	}
 
       
-      uint16_t fee = ( buffer[index] >> 20 ) & 0xf;
-      uint16_t len = ( (buffer[index] >> 16) & 0xf) >>1;
+      unsigned short fee = ( buffer[index] >> 20 ) & 0xf;
+      unsigned short len = ( (buffer[index] >> 16) & 0xf) >>1;
       //coutfl << "found start at index " << index << " values " << hex << buffer[index] << dec << " fee: " << fee << " len: " << len << endl;
       index++;
 
@@ -120,6 +120,16 @@ int oncsSub_idinttv0::intt_decode ()
 	  fee_data[fee].push_back(buffer[index++]);
 	}
     }
+
+  // for ( int fee = 0; fee < MAX_FEECOUNT; fee++)
+  //   {
+  //     for ( unsigned int i = 0; i < fee_data[fee].size(); i++)
+  // 	{
+  // 	  cout << setw(3) << fee << "  " << hex << fee_data[fee][i] << dec << endl;
+  // 	}
+  //     cout << endl;
+  //   }
+  
 
 
   for ( int fee = 0 ; fee < MAX_FEECOUNT ; fee++)
@@ -153,7 +163,14 @@ int oncsSub_idinttv0::intt_decode ()
 	  // here j points to a "cade" word
 
 	  // push back the cdae word, the BCO, and event counter
-	  for ( int k = 0; k < 3; k++) hitlist.push_back(fee_data[fee][j++]);
+	  if ( fee_data[fee].size() >=3 )
+	    {
+	      for ( int k = 0; k < 3; k++) hitlist.push_back(fee_data[fee][j++]);
+	    }
+	  else
+	    {
+	      coutfl << " Warning - size is " << fee_data[fee].size() << endl;
+	    }
 	  
 
 	  // ok, now let's go until we hit the end, or hit the next header, or a footer
@@ -166,7 +183,7 @@ int oncsSub_idinttv0::intt_decode ()
 		  header_found  = 0;
 		  j--;
 		  // we have a full hitlist in the vector here
-		  coutfl << "calling decode with size " << hitlist.size() << endl;
+		  //coutfl << "calling decode with size " << hitlist.size() << endl;
 		  intt_decode_hitlist (hitlist, fee);
 		  hitlist.clear();
 		  break;
