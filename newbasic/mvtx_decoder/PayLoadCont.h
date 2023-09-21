@@ -217,6 +217,7 @@ class PayLoadCont
   /// direct write access
   uint8_t* getPtr() { return mPtr; }
   void setPtr(uint8_t* ptr) { mPtr = ptr; }
+  void movePtr(size_t step) { mPtr += step; }
 
   uint8_t* getEnd() { return mEnd; }
   void setEnd(uint8_t* ptr) { mEnd = ptr; }

@@ -31,59 +31,11 @@ class PixelData
 
  public:
   PixelData(uint16_t r = 0, uint16_t c = 0) : mRow(r), mCol(c) {}
-  uint16_t getRow() const { return mRow & RowMask; }
+  uint16_t getRow() const { return mRow; }
   uint16_t getCol() const { return mCol; }
-  bool isMasked() const { return mRow & MaskBit; }
-  void setMask() { mRow |= MaskBit; }
-  void unsetMask() { mRow &= RowMask; }
-
-  ///< for faster access when the pixel is guaranteed to not be masked
-  uint16_t getRowDirect() const { return mRow; }
-
-  bool operator==(const PixelData& dt) const
-  {
-    ///< check if one pixel is equal to another
-    return (getCol() == dt.getCol()) && (getRow() == dt.getRow());
-  }
-
-  bool operator>(const PixelData& dt) const
-  {
-    ///< check if one pixel is greater than another (first column then row)
-    if (getCol() == dt.getCol()) {
-      return getRow() > dt.getRow();
-    }
-    return getCol() > dt.getCol();
-  }
-
-  bool operator<(const PixelData& dt) const
-  {
-    ///< check if one pixel is lesser than another (first column then row)
-    if (getCol() == dt.getCol()) {
-      return getRow() < dt.getRow();
-    }
-    return getCol() < dt.getCol();
-  }
-
-  bool isNeighbour(const PixelData& dt, int maxDist) const
-  {
-    ///< check if one pixel is in proximity of another
-    return (std::abs(static_cast<int>(getCol()) - static_cast<int>(dt.getCol())) <= maxDist &&
-            std::abs(static_cast<int>(getRow()) - static_cast<int>(dt.getRow())) <= maxDist);
-  }
-
-  int compare(const PixelData& dt) const
-  {
-    ///< compare to pixels (first column then row)
-    return operator==(dt) ? 0 : (operator>(dt) ? 1 : -1);
-  }
-
-  static constexpr uint32_t DummyROF = 0xffffffff;
-  static constexpr uint32_t DummyChipID = 0xffff;
 
  private:
   void sanityCheck() const;
-  static constexpr int RowMask = 0x7FFF; ///< 32768 rows are supported
-  static constexpr int MaskBit = 0x8000; ///< 16-th bit is used to flag masked pixel
   uint16_t mRow = 0;                    ///< pixel row
   uint16_t mCol = 0;                    ///< pixel column
 
@@ -100,23 +52,15 @@ class ChipPixelData
   static constexpr size_t MAXDATAERRBYTES = 16, MAXDATAERRBYTES_AFTER = 2;
   ChipPixelData() = default;
   ~ChipPixelData() = default;
-  uint8_t getROFlags() const { return mROFlags; }
+//  uint8_t getROFlags() const { return mROFlags; }
   uint16_t getChipID() const { return mChipID; }
-  uint32_t getROFrame() const { return mROFrame; }
-  uint32_t getStartID() const { return mStartID; }
-  uint32_t getFirstUnmasked() const { return mFirstUnmasked; }
-  uint32_t getTrigger() const { return mTrigger; }
-//  const mvtx::InteractionRecord& getInteractionRecord() const { return mInteractionRecord; }
-//  void setInteractionRecord(const mvtx::InteractionRecord& r) { mInteractionRecord = r; }
+//  uint32_t getROFrame() const { return mROFrame; }
   const std::vector<PixelData>& getData() const { return mPixels; }
   std::vector<PixelData>& getData() { return (std::vector<PixelData>&)mPixels; }
 
-  void setROFlags(uint8_t f = 0) { mROFlags = f; }
+//  void setROFlags(uint8_t f = 0) { mROFlags = f; }
   void setChipID(uint16_t id) { mChipID = id; }
-  void setROFrame(uint32_t r) { mROFrame = r; }
-  void setStartID(uint32_t id) { mStartID = id; }
-  void setFirstUnmasked(uint32_t n) { mFirstUnmasked = n; }
-  void setTrigger(uint32_t t) { mTrigger = t; }
+//  void setROFrame(uint32_t r) { mROFrame = r; }
 
   void setError(ChipStat::DecErrors i) { mErrors |= 0x1 << i; }
   void addErrorInfo(uint64_t b) { mErrorInfo |= b; }
@@ -140,126 +84,34 @@ class ChipPixelData
   {
     resetChipID();
     mPixels.clear();
-    mROFlags = 0;
-    mFirstUnmasked = 0;
+//    mROFlags = 0;
     mErrors = 0;
     mErrorInfo = 0;
-    mPixIds.clear();
-    mPixelsOrder.clear();
   }
 
   void swap(ChipPixelData& other)
   {
     // swap content of two objects
-    std::swap(mROFlags, other.mROFlags);
+//    std::swap(mROFlags, other.mROFlags);
     std::swap(mChipID, other.mChipID);
-    std::swap(mROFrame, other.mROFrame);
-    std::swap(mFirstUnmasked, other.mFirstUnmasked); // strictly speaking, not needed
-    std::swap(mStartID, other.mStartID);             // strictly speaking, not needed
-    std::swap(mTrigger, other.mTrigger);
+//    std::swap(mROFrame, other.mROFrame);
     std::swap(mErrors, other.mErrors);
-//    std::swap(mInteractionRecord, other.mInteractionRecord);
     mPixels.swap(other.mPixels);
   }
 
-  void maskFiredInSample(const ChipPixelData& sample)
-  {
-    ///< mask in the current data pixels fired in provided sample
-    const auto& pixelsS = sample.getData();
-    uint32_t nC = mPixels.size();
-    if (!nC) {
-      return;
-    }
-    uint32_t nS = pixelsS.size();
-    if (!nS) {
-      return;
-    }
-    uint32_t itC = 0, itS = 0;
-    while (itC < nC && itS < nS) {
-      auto& pix0 = mPixels[itC];
-      const auto& pixC = pixelsS[itS];
-      if (pix0 == pixC) { // same
-        pix0.setMask();
-        if (mFirstUnmasked == itC++) { // mFirstUnmasked should flag 1st unmasked pixel entry
-          mFirstUnmasked = itC;
-        }
-        itS++;
-      } else if (pix0 < pixC) {
-        itC++;
-      } else {
-        itS++;
-      }
-    }
-  }
-
-  void maskFiredInSample(const ChipPixelData& sample, int maxDist)
-  {
-    ///< mask in the current data pixels (or their neighbours) fired in provided sample
-    const auto& pixelsS = sample.getData();
-    int nC = mPixels.size();
-    if (!nC) {
-      return;
-    }
-    int nS = pixelsS.size();
-    if (!nS) {
-      return;
-    }
-    for (int itC = 0, itS = 0; itC < nC; itC++) {
-      auto& pix0 = mPixels[itC];
-
-      // seek to itS which is inferior than itC - maxDist
-      auto mincol = pix0.getCol() > maxDist ? pix0.getCol() - maxDist : 0;
-      auto minrow = pix0.getRowDirect() > maxDist ? pix0.getRowDirect() - maxDist : 0;
-      if (itS == nS) { // in case itS lool below reached the end
-        itS--;
-      }
-      while ((pixelsS[itS].getCol() > mincol || pixelsS[itS].getRow() > minrow) && itS > 0) {
-        itS--;
-      }
-      for (; itS < nS; itS++) {
-        const auto& pixC = pixelsS[itS];
-
-        auto drow = static_cast<int>(pixC.getRow()) - static_cast<int>(pix0.getRowDirect());
-        auto dcol = static_cast<int>(pixC.getCol()) - static_cast<int>(pix0.getCol());
-
-        if (dcol > maxDist || (dcol == maxDist && drow > maxDist)) {
-          break; // all higher itS will not match to this itC also
-        }
-        if (dcol < -maxDist || (drow > maxDist || drow < -maxDist)) {
-          continue;
-        } else {
-          pix0.setMask();
-          if (int(mFirstUnmasked) == itC) { // mFirstUnmasked should flag 1st unmasked pixel entry
-            mFirstUnmasked = itC + 1;
-          }
-          break;
-        }
-      }
-    }
-  }
-
   void print() const;
-  std::vector<uint32_t>& getPixIds() { return mPixIds; }
-  std::vector<int>& getPixelsOrder() { return mPixelsOrder; }
-  uint32_t getOrderedPixId(int pos) const { return mPixIds[mPixelsOrder[pos]]; }
 
  private:
-  uint8_t mROFlags = 0;                            // readout flags from the chip trailer
+//  uint8_t mROFlags = 0;                            // readout flags from the chip trailer
   uint16_t mChipID = 0;                            // chip id within the detector
-  uint32_t mROFrame = 0;                           // readout frame ID
-  uint32_t mFirstUnmasked = 0;                     // first unmasked entry in the mPixels
-  uint32_t mStartID = 0;                           // entry of the 1st pixel data in the whole detector data, for MCtruth access
-  uint32_t mTrigger = 0;                           // trigger pattern
+//  uint32_t mROFrame = 0;                           // readout frame ID
   uint32_t mErrors = 0;                            // errors set during decoding
   uint64_t mErrorInfo = 0;                         // optional extra info on the error
   std::array<uint8_t, MAXDATAERRBYTES> mRawBuff{}; // buffer for raw data showing an error
-//  mvtx::InteractionRecord mInteractionRecord = {}; // interaction record
   std::vector<PixelData> mPixels;                  // vector of pixels
-  std::vector<uint32_t> mPixIds;                   // vector of label indices in case of squashing+Monte Carlo
-  std::vector<int> mPixelsOrder;                   // vector to get ordered access to pixel ids
 
   // ClassDefNV(ChipPixelData, 1);
 };
-} // namespace itsmft
+} // namespace mvtx
 
 #endif // MVTXDECODER_PIXELDATA_H

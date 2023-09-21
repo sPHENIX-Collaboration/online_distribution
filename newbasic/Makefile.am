@@ -304,6 +304,7 @@ allsources = \
   caen_correction.cc \
 	mvtx_decoder/PayLoadCont.cxx \
 	mvtx_decoder/PixelData.cxx \
+	mvtx_decoder/GBTWord.cxx \
 	mvtx_decoder/DecodingStat.cxx \
 	mvtx_decoder/GBTLink.cxx
 

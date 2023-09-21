@@ -21,257 +21,6 @@ oncsSub_idmvtxv3::oncsSub_idmvtxv3(subevtdata_ptr data)
   payload_position = 0;
 }
 
-// 01234567890 123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789
-// 00000000000 000000000 0000000000 0000000000 1010101000 0000000000 0000000000 1000000000
-
-//_________________________________________________
-void  oncsSub_idmvtxv3::pretty_print( const std::bitset<80> gbtword) const
-{
-
-  cout  << std::setfill('0');
-  for ( int i = 0; i < 10 ; i++)
-    {
-        cout << hex << setw(2) << get_GBT_value (gbtword, i * 8, 8) << " " << dec;
-    }
-  cout  << std::setfill(' ') << " ";
-}
-
-//_________________________________________________
-int  oncsSub_idmvtxv3::decode_lane( const std::vector<uint8_t> v)
-{
-
-  uint32_t pos = 0;
-  //std::vector<uint8_t>::const_iterator itr = v.begin();
-
-  int ret = 0; // currently we just print stuff, but we will add stuff to our
-               // structures and return a status later (that's why it's not a const function)
-
-  unsigned int chipid;
-  unsigned int region_id;
-  unsigned int readout_flags;
-  unsigned int addr;
-  unsigned int bunchcounter;
-  unsigned int encoder_id;
-
-  mvtx_hit *h = 0;
-
-
-
-  while ( pos < v.size() )
-    {
-      unsigned int marker = v[pos];
-      if  ((marker >> 4) ==  0xa)
-	{
-	  //	  cout  << " chip header found at position " << pos << endl;
-	  break;
-	}
-      pos++;
-    }
-
-  while ( pos < v.size() )
-    {
-      if ( pos >= v.size() ) break;
-      unsigned int marker = v[pos++];
-
-      if  ((marker >> 4) ==  0xa)  // chip header
-	{
-	  chipid    = marker & 0xf;
-	  bunchcounter = v[pos++];
-	  if ( pos >= v.size() ) break;
-	  // cout  << " chip header " << hex << marker << " chip id: " << chipid << " bunch " << bunchcounter << dec;
-	}
-
-      else if  ((marker ) ==  0xff)  // idle frame
-	{
-	  // cout  << " idle frame " << hex << marker <<  dec;
-	  if ( pos >= v.size() ) break;
-	}
-
-      else if  ((marker >> 4) ==  0xe)  // chip empty frame
-	{
-	  chipid    = marker & 0xf;
-	  bunchcounter = v[pos++];
-	  if ( pos >= v.size() ) break;
-	  // cout  << " chip empty frame " << hex << marker << " chip id: " << chipid << " bunch " << bunchcounter << dec;
-	}
-
-
-      else if  ((marker >> 4) ==  0xb)  // chip trailer
-	{
-	  readout_flags    = marker & 0xf;
-	  // cout  << " chip header " << hex << marker << " readout_flags " << readout_flags << dec;
-	}
-
-      else if  ((marker & 0xe0) ==  0xc0)  // region header 110x xxxx
-	{
-	  region_id    = marker & 0x1f;
-	  // cout  << " chip region hdr " << hex << marker << " region id " << region_id  << " next word is " << (unsigned short) v[pos] << dec;
-	}
-
-      else if  ((marker & 0xc0) ==  0x40) // we have a DATA short report
-	{
-	  unsigned short secondword = v[pos++];
-	  if ( pos >= v.size() ) break;
-	  encoder_id     = (marker >>2) & 0xf;
-	  addr           = (marker & 0x3) << 8 | secondword;
-	  // cout  << " data short hdr " << hex << setw(2) << marker << " " << setw(2) << secondword
-	  // 	<< " encoder_id " << setw(5) << encoder_id
-	  // 	<< " addr " << setw(5) << addr << dec ;
-
-	  h = new mvtx_hit;
-	  memset(h, 0, sizeof(*h));
-
-	  h->RHICBCO = last_BCO;
-	  h->LHCBC = last_LHCBC;
-	  h->source_id = last_source_id;
-	  h->fee_id = last_fee_id;
-	  h->lane = last_lane;
-	  h->addr  = addr;
-
-	  hit_vector.push_back(h);
-	}
-
-      else if  ((marker & 0xc0) ==  0x00) // we have a DATA long report
-	{
-	  unsigned short secondword = v[pos++];
-	  if ( pos >= v.size() ) break;
-	  unsigned short bits  = v[pos++];
-	  if ( pos >= v.size() ) break;
-	  encoder_id     = (marker >>2) & 0xf;
-	  addr           = (marker & 0x3) << 8 | secondword;
-	  // cout  << " data long hdr  " << hex << setw(2) << marker << " " << setw(2) << secondword << " " << setw(2) << bits
-	  // 	<< " encoder_id " << setw(5) << encoder_id
-	  // 	<< " addr " << setw(5) << addr;
-	  h = new mvtx_hit;
-	  memset(h, 0, sizeof(*h));
-
-	  h->RHICBCO = last_BCO;
-	  h->LHCBC = last_LHCBC;
-	  h->source_id = last_source_id;
-	  h->fee_id = last_fee_id;
-	  h->lane = last_lane;
-	  h->addr  = addr;
-	  hit_vector.push_back(h);
-
-	  while ( bits != 0)
-	    {
-	      addr++;
-	      if ( bits & 1)
-		{
-		  // another bit in a data long
-		  h = new mvtx_hit;
-		  memset(h, 0, sizeof(*h));
-
-		  h->RHICBCO = last_BCO;
-		  h->LHCBC = last_LHCBC;
-		  h->source_id = last_source_id;
-		  h->fee_id = last_fee_id;
-		  h->lane = last_lane;
-		  h->addr  = addr;
-		  hit_vector.push_back(h);
-
-
-		  // cout << setw(5) << addr;
-		}
-	      bits >>=1;
-	    }
-
-	}
-
-      else if  ((marker & 0xF0) == 0xB0) // we have a CHIP trailer
-	{
-	  readout_flags     = (marker >> 4) & 0xf;
-	  //  cout  << " chip trailer " << hex  << " readout flags " << setw(5) << readout_flags << dec;
-	}
-
-      //cout << endl;
-    }
-
-  return ret;
-
-}
-
-//_________________________________________________
-int  oncsSub_idmvtxv3::decode_chipdata( const std::bitset<80> gbtword)
-{
-  // unsigned int chipid;
-  // unsigned int timestamp;
-  // unsigned int region_id;
-  // unsigned int dl_bitmap;
-  // unsigned int readout_flags;
-  // unsigned int layer;
-  // unsigned int chipnr;
-  // unsigned int addr;
-
-  unsigned int marker =  get_GBT_value (gbtword, 72,8);
-  unsigned int laneidx = marker & 0x1F;
-
-  // add a check if that lane matches the embedded lane
-
-  std::map<unsigned int, std::vector<uint8_t> >::iterator itr;
-  itr = chipdata.find(laneidx);
-  // if ( itr == chipdata.end())
-  //   {
-  //     cout << __FILE__ << " " << __LINE__ << " new laneidx " << laneidx << endl;
-  //   }
-  // else
-  //   {
-  //     cout << __FILE__ << " " << __LINE__ << " adding to laneidx " << laneidx << endl;
-  //   }
-
-  //take the first 9 bytes off
-  for ( unsigned int index = 0; index < 72; index += 8)
-    {
-      chipdata[laneidx].push_back ( get_GBT_value (gbtword, index,8));
-    }
-
-  return 0;
-}
-
-
-//_________________________________________________
-unsigned long  oncsSub_idmvtxv3::get_GBT_value( const std::bitset<80> gbtword, const int pos, const int size) const
-{
-  unsigned long value = 0;
-
-  for (int i = 0; i < size; i++)
-    {
-      //cout << __FILE__ << " " << __LINE__ << " pos " << pos+i << " " << gbtword.test(pos+i) << endl;
-      value |= ( gbtword.test(pos+i) << i) ;
-    }
-  return value;
-}
-
-//_________________________________________________
-// this one can do sizes > 32 bit (like the BCO)
-unsigned long  long oncsSub_idmvtxv3::get_GBT_lvalue( const std::bitset<80> gbtword, const int pos, const int size) const
-{
-  unsigned long long value = 0;
-
-  for (int i = 0; i < size; i++)
-    {
-      //cout << __FILE__ << " " << __LINE__ << " pos " << pos+i << " " << gbtword.test(pos+i) << endl;
-      value |= ( gbtword.test(pos+i) << i) ;
-    }
-  return value;
-}
-
-//_________________________________________________
-// this function reads in 32 bytes  =  3 GBT words and 2 bytes
-int oncsSub_idmvtxv3::read_32( std::bitset<80>* gbtwords
-                               , uint16_t &w16 )
-{
-  for ( uint8_t k = 0; k < 3; k++ )
-  {
-    gbtwords[k] = *(reinterpret_cast<std::bitset<80>*>(&payload[payload_position]));
-    payload_position+=10;
-	}
-
-  w16 = *(reinterpret_cast<uint16_t*>(&payload[payload_position]));
-  payload_position += 2;
-  return 0;
-}
-
 //_________________________________________________
 int oncsSub_idmvtxv3::decode()
 {
@@ -283,7 +32,6 @@ int oncsSub_idmvtxv3::decode()
 
   for (auto& link : mGBTLinks)
   {
-    link.lastRDH = nullptr;  // pointers will be invalid
     link.clear(false, true); // clear data but not the statistics
   }
 
@@ -314,183 +62,6 @@ int oncsSub_idmvtxv3::decode()
   {
     link.collectROFCableData();
   }
-
-/*
-      // uncomment this to match the decoder.py output
-//      cout << "FELIX header found: Version 0x" << hex << rdh.flxHdrVersion << dec
-//           << " FLXID " << (int)rdh.flxId
-//           << " GBT_ID " << (int)rdh.gbtLink << endl;
-
-//        cout << __FILE__ << " " << __LINE__ <<  " packet count " << rdh.pageSize << endl;
-
-      uint16_t prev_gbt_cnt = 0;
-      size_t last_rdh_pos = link_vector.size();
-      uint16_t nGbtWords = 0;
-      for (  int i = 0 ; i < (rdh.pageSize); i++)
-	    {
-	      read_32(report, w16);
-	      //for (int i = 0; i < 3; i++) pretty_print(report[i]);
-	      //cout << hex << w0 << " " << w1 << dec << endl << endl;
-        //calculate how many GBT words these 32 bytes contain
-	      const uint16_t n_gbt_cnt = (w16 & 0x3FF) - prev_gbt_cnt;
-        prev_gbt_cnt = (w16 & 0x3FF);
-        assert( n_gbt_cnt <= 3);
-//        ASSERT((gbt_cnt - prev_gbt_cnt) <= 3, decoder,
-//               "Error. Bad gbt counter in the flx packet at byte %ld",
-//               decoder->ptr_pos(flx_ptr));
-
-	      for ( int i = 0; i < n_gbt_cnt; i++)
-        {
-          link_vector.push_back(report[i]);
-          ++nGbtWords;
-        }
-	    }
-      assert( (nGbtWords | 0xFFFF) == 0xFFFF );
-      for( uint8_t i = 0; i < 16; i++ )
-      {
-        if ( (nGbtWords >> i) & 0x1 )
-        {
-          link_vector[last_rdh_pos+2].set(64+i);
-        } else {
-          link_vector[last_rdh_pos+2].reset(64+i);
-        }
-      }
-    }
-*/
-
- // cout << __FILE__ << " " << __LINE__ << " number of Links " << gbtvector.size()  << endl;
-/*
-  std::bitset<80> b80;
-  for ( const auto& link_vector : gbtvector )
-  {
-    vector<std::bitset<80> >::const_iterator itr = link_vector.begin();
-
-  //cout << "RDH Header *** " << endl;
-  //pretty_print(*itr);
-
-
-  //  cout << " last_fee_id " << last_fee_id << endl;
-
-
-    // decode the RDH
-    b80 = *itr++; //  RDH Word 0
-  // cout << " h_ver    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::HDRVERSION, 8) << dec << endl;
-  // cout << " h_len    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::SIZE, 8) << dec << endl;
-  // cout << " feeid    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::FEEID_LSB, 16) << dec << endl;
-  // cout << " sourceid = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::SOURCE_ID, 16) << dec << endl;
-  // cout << " detfield = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW0::DET_FIELD_SB0, 32) << dec << endl;
-  last_source_id = get_GBT_value (b80, Rdh8ByteMapW0::SOURCE_ID, 16);
-  last_fee_id = get_GBT_value (b80, Rdh8ByteMapW0::FEEID_LSB, 16);
-
-
-  b80 = *itr++; //  RDH Word 1
-  // cout << " LHC BC   = 0x" << hex << (get_GBT_value (b80, Rdh8ByteMapW1::BC_LSB, 16) & 0xfff)  << dec << endl;
-  // cout << " BCO      = 0x" << hex << get_GBT_lvalue (b80, Rdh8ByteMapW1::BCO_SB0, 40)   << dec << endl;
-  last_BCO = get_GBT_lvalue (b80, Rdh8ByteMapW1::BCO_SB0, 40);
-  last_LHCBC = get_GBT_value (b80, Rdh8ByteMapW1::BC_LSB, 16) & 0xfff;
-
-  b80 = *itr++; //  RDH Word 2
-  //pretty_print(b80);
-  // cout << " trg_type    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW2::TRG_TYPE_SB0, 32)  << dec << endl;
-  // cout << " pages_count = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW2::PAGE_CNT_LSB, 16)  << dec << endl;
-  // cout << " stop_bit    = 0x" << hex << get_GBT_value (b80, Rdh8ByteMapW2::STOP_BIT, 8)  << dec << endl;
-
-  //  cout << endl;
-  }
-
-  for ( ; itr != gbtvector.end();  itr++)
-    {
-      unsigned int marker =  get_GBT_value (*itr, 72,8);
-      //  cout << __FILE__ << " " << __LINE__ << " marker: " << hex << marker << dec << endl;
-      if ( marker == WordTypeMarker::IHW)
-	{
-	  //	  cout << " IHW        ";
-	  //pretty_print(*itr);
-	}
-      else if ( marker == WordTypeMarker::TDH)
-	{
-	  // mlp needs to decode this ..... BCO  pg 11
-	  // cout << " TDH  "
-	  //      << " RHICBCO " << get_GBT_value (*itr, 32,40)
-	  //      << " LCHBC " << get_GBT_value (*itr, 16,12)
-	  //      << " STOP " << get_GBT_value (*itr, 14,1)
-	  //      << " DATA " << get_GBT_value (*itr, 13,1)
-	  //      << endl;
-
-	  //pretty_print(*itr);
-	}
-      else if ( marker == WordTypeMarker::TDT)
-	{
-	  //cout << " TDT        ";
-	  //  pretty_print(*itr);
-	}
-      else if ( marker == WordTypeMarker::DDW)
-	{
-	  //cout << " DDW        ";
-	  //pretty_print(*itr);
-	}
-      else if ( marker == WordTypeMarker::CDW)
-	{
-	  //cout << " CDW        ";
-	  //pretty_print(*itr);
-	}
-      else if ( marker >>5 == 0b101 )
-	{
-	  //cout << " IB DIAG DATA ";
-	  //pretty_print(*itr);
-	}
-      else if ( marker >>5 == 0b001 )
-	{
-	  //cout << " IB data ";
-	  //pretty_print(*itr);
-	  decode_chipdata (*itr);
-	}
-      else if ( marker >>5 == 0b110 )
-	{
-	  //cout << " OB DIAG DATA ";
-	  //pretty_print(*itr);
-	}
-      else if ( marker >>5 == 0b101 )
-	{
-	  cout << " IB DIAG DATA ";
-	  //pretty_print(*itr);
-	}
-      else if ( marker == 0xe4 )
-	{
-	  //cout << " DIAGNOSTIC DATA WORD (DDW) ";
-	  //pretty_print(*itr);
-	}
-      else if ( marker == 0xF8)
-	{
-	  //cout << " CALIBRATION DATA WORD ";
-	  //pretty_print(*itr);
-	}
-      else
-	{
-	  //cout << "  unknown data  ";
-	  //pretty_print(*itr);
-	  //cout << "   " ;
-	}
-      //cout <<  endl;
-    }
-
-  std::map<unsigned int, std::vector<unsigned char>>::iterator mitr;
-  for ( mitr = chipdata.begin(); mitr != chipdata.end(); ++mitr)
-  {
-
-
-    //    cout << " lane: " << hex << mitr->first << "   ";
-    last_lane = mitr->first ;
-
-    // for (unsigned int i = 0; i < mitr->second.size() ; i++)
-    //   {
-    // 	cout << (unsigned short ) mitr->second[i] << " ";
-    //   }
-    // cout << endl << endl;
-
-    decode_lane (  mitr->second );
-  }
-*/
 
   ++mEventId;
   return 0;
@@ -563,16 +134,16 @@ void oncsSub_idmvtxv3::setupLinks(mvtx::PayLoadCont& buf)
           if ( lnkref.entry == -1 )
           {
             lnkref.entry = mGBTLinks.size();
-            mGBTLinks.emplace_back( rdh.flxId, rdh.feeId);
+            mGBTLinks.emplace_back(rdh.flxId, rdh.feeId);
           }
           auto& gbtLink = mGBTLinks[lnkref.entry];
-          auto lnkPtr = gbtLink.data.getPtr();
+          auto lnkEndOffser= gbtLink.data.getEnd() - gbtLink.data.getPtr();
 
           gbtLink.data.add((payload + payload_position), pageSizeInBytes);
 
           if ( ! rdh.packetCounter ) // start HB
           {
-            gbtLink.hb_start = lnkPtr;
+            gbtLink.hb_start = lnkEndOffser;
             gbtLink.hb_length = pageSizeInBytes;
           }
           else
@@ -584,9 +155,8 @@ void oncsSub_idmvtxv3::setupLinks(mvtx::PayLoadCont& buf)
           {
             gbtLink.cacheData(gbtLink.hb_start, gbtLink.hb_length);
           }
-//          ASSERT(((! rdh.packetCounter) || (rdh.packetCounter == gbtLink.prev_pck_cnt + 1)),
-//           "Incorrect pages count %d in byte %ld of current chunk", rdh.packetCounter,
-//           decoder->ptr_pos());
+          ASSERT(((! rdh.packetCounter) || (rdh.packetCounter == gbtLink.prev_pck_cnt + 1)),
+           "Incorrect pages count %d", rdh.packetCounter);
           gbtLink.prev_pck_cnt = rdh.packetCounter;
           payload_position += pageSizeInBytes;
         }
@@ -612,8 +182,39 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
 {
 
   decode();
-  unsigned int i = n;
+  if ( n == -1 ) // Global Information.
+  {
+    if ( strcmp(what, "NR_LINKS") == 0)
+    {
+      ASSERT(mGBTLinks.size() == mFeeId2LinkID.size(), "");
+      return mGBTLinks.size();
+    }
+    else
+    {
+      std::cout << "Unknow option " << what << std::endl;
+      return -1;
+    }
+  }
 
+  unsigned int i = n;
+  if ( strcmp(what, "FEEID") == 0 )
+  {
+    return (i < mGBTLinks.size()) ? mGBTLinks[i].feeID : -1;
+  }
+  else if ( strcmp(what, "NR_HBF") == 0 )
+  {
+    ASSERT(mFeeId2LinkID.find(i) != mFeeId2LinkID.cend(),
+        "FeeId %d was not found in the feeId mapping for this packet", i);
+    uint32_t lnkId =  mFeeId2LinkID[i].entry;
+    ASSERT( mGBTLinks[lnkId].hbfData.size() == mGBTLinks[lnkId].rawData.getNPieces(),
+              "");
+    return mGBTLinks[lnkId].hbfData.size();
+  }
+  else
+  {
+    return -1;
+  }
+/*
   if ( strcmp(what,"NR_HITS") == 0 )  // the number of datasets
   {
     return hit_vector.size();
@@ -643,7 +244,7 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
     {
       return hit_vector[i]->addr;
     }
-
+*/
   return 0;
 }
 
@@ -652,8 +253,8 @@ long long oncsSub_idmvtxv3::lValue(const int n, const char *what)
 {
 
   decode();
-  unsigned int i = n;
-
+//  unsigned int i = n;
+/*
   if ( i >= hit_vector.size())
     {
       return 0;
@@ -668,22 +269,22 @@ long long oncsSub_idmvtxv3::lValue(const int n, const char *what)
     {
       return hit_vector[i]->LHCBC;
     }
-
+*/
   return 0;
 }
 
 //_________________________________________________
 void oncsSub_idmvtxv3::dump(OSTREAM &os)
 {
-  //  identify(os);
   decode();
+  identify(os);
 
   // Debug HB pooling
-  os << "Number of feeid: " << mFeeId2LinkID.size() << endl;
-  for ( auto& lnkref : mFeeId2LinkID )
+  os << "Number of feeid: " << iValue(-1, "NR_LINKS") << endl;
+  for ( uint32_t i = 0; i < mFeeId2LinkID.size(); ++i )
   {
-    os << "Link: " << lnkref.first << " has " << mGBTLinks[lnkref.second.entry].rawData.getNPieces();
-    os << " HBs." << endl;
+    auto feeId = iValue(i, "FEEID");
+    os << "Link " << setw(4) << feeId << " has " << iValue(feeId, "NR_HBF") << " HBs." << endl;
   }
 
 //  unsigned int n;
@@ -726,7 +327,7 @@ oncsSub_idmvtxv3::~oncsSub_idmvtxv3()
     lnk.clear(true, true);
     lnk.data.clear();
   }
-
+/*
   chipdata.clear();
 
   std::vector<mvtx_hit *>::iterator itr = hit_vector.begin();
@@ -735,5 +336,5 @@ oncsSub_idmvtxv3::~oncsSub_idmvtxv3()
       delete (*itr);
     }
   hit_vector.clear();
-
+*/
 }

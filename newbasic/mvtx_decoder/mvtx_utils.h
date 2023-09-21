@@ -16,13 +16,14 @@
 #define MVTXDECODER_UTILS_H
 
 #include <cstdint>
+#include <cassert>
 
 namespace mvtx_utils
 {
 
 #define clean_errno() (errno == 0 ? "None" : strerror(errno))
 #define log_error(M, ...) fprintf(stderr, "[ERROR] (%s:%d: errno: %s) " M "\n", __FILE__, __LINE__, clean_errno(), ##__VA_ARGS__)
-#define ASSERT(A, D, M,...) if(!(A)) { log_error(M, ##__VA_ARGS__); assert(A); }
+#define ASSERT(A, M,...) if(!(A)) { log_error(M, ##__VA_ARGS__); assert(A); }
 
   enum WordTypeMarker
     {
@@ -83,6 +84,13 @@ namespace mvtx_utils
       rdhGBTcounter = *(reinterpret_cast<const uint16_t*>(rdh_ptr + 62) ) & 0xFFFF;
     }
   };
-}
+
+  template < typename A, typename B >
+  bool comp(A a, B b)
+  {
+    return a.second < b.second;
+  }
+
+} //namespace mvtx_utils
 
 #endif

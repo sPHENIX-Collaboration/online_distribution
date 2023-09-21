@@ -28,19 +28,20 @@ class PayLoadSG
 {
   // scatter-gather buffer for the payload: base pointer + vector of references for pieces to collect
  public:
-  using DataType = unsigned char;
+//  using DataType = unsigned char;
 
   PayLoadSG() = default;
   ~PayLoadSG() = default;
 
   ///< add n bytes to the buffer
-  void add(const DataType* ptr, size_t n)
+  void add( size_t start, size_t n)
   {
-    if (n) {
-      mBuffer.emplace_back(ptr, n);
+    if (n)
+    {
+      mBuffer.emplace_back(start, n);
     }
   }
-
+/*
   ///< read current character value from buffer w/o stepping forward
   bool current(char& v)
   {
@@ -83,25 +84,25 @@ class PayLoadSG
     }
     return false;
   }
-
+*/
   ///< move current pointer to the head
   void rewind()
   {
-    mCurrentPieceID = mCurrentEntryInPiece = 0;
+    mCurrentPieceID = 0;
   }
 
   ///< make buffer empty
   void clear()
   {
     mBuffer.clear();
-    mCurrentPieceID = mCurrentEntryInPiece = 0;
+    mCurrentPieceID = 0;
   }
 
   struct SGPiece {
-    const DataType* data = nullptr; // data of the piece
-    uint32_t size = 0;              // size of the piece
+    uint32_t data = 0;   // data of the piece
+    uint32_t size = 0;   // size of the piece
     SGPiece() = default;
-    SGPiece(const DataType* st, int n) : data(st), size(n) {}
+    SGPiece(int st, int n) : data(st), size(n) {}
   };
 
   void setDone() { mCurrentPieceID = mBuffer.size(); }
@@ -109,15 +110,11 @@ class PayLoadSG
   size_t& currentPieceID() { return mCurrentPieceID; }
   size_t currentPieceID() const { return mCurrentPieceID; }
 
-  size_t& currentEntryInPiece() { return mCurrentEntryInPiece; }
-  size_t currentEntryInPiece() const { return mCurrentEntryInPiece; }
-
   const SGPiece* currentPiece() const { return mCurrentPieceID < mBuffer.size() ? &mBuffer[mCurrentPieceID] : nullptr; }
 
   const SGPiece* nextPiece()
   {
     // move to the next piece
-    mCurrentEntryInPiece = 0;
     mCurrentPieceID++;
     return currentPiece();
   }
@@ -129,7 +126,6 @@ class PayLoadSG
  private:
   std::vector<SGPiece> mBuffer;   // list of pieces to fetch
   size_t mCurrentPieceID = 0;     // current piece
-  size_t mCurrentEntryInPiece = 0; // offset within current piece
 
   //ClassDefNV(PayLoadSG, 1);
 };

@@ -239,19 +239,51 @@ struct GBTLinkDecodingStat {
     "Old ROF, discarding",                                               // ErrOldROF
   };
 
+  enum BitMaps : int {
+    ORBIT   = 0,
+    HB      = 1,
+    HBr     = 2,
+    HC      = 3,
+    PHYSICS = 4,
+    PP      = 5,
+    CAL     = 6,
+    SOT     = 7,
+    EOT     = 8,
+    SOC     = 9,
+    EOC     = 10,
+    TF      = 11,
+    FE_RST  = 12,
+    RT      = 13,
+    RS      = 14,
+    nBitMap = 15
+  };
+
+  static constexpr std::array<std::string_view, nBitMap> BitMapName = {
+   "ORBIT",
+   "HB",
+   "HBr",
+   "HC",
+   "PHYSICS",
+   "PP",
+   "CAL",
+   "SOT",
+   "EOT",
+   "SOC",
+   "EOC",
+   "TF",
+   "FE_RST",
+   "RT",
+   "RS"
+  };
+
   uint16_t feeID = 0; // FeeID
-  // Note: packet here is meant as a group of CRU pages belonging to the same trigger
-  uint32_t nPackets = 0;                                                        // total number of packets (RDH pages)
-  uint32_t nTriggers = 0;                                                       // total number of triggers (ROFs)
   std::array<uint32_t, NErrorsDefined> errorCounts = {};                        // error counters
-//  std::array<uint32_t, GBTDataTrailer::MaxStateCombinations> packetStates = {}; // packet status from the trailer
+  std::array<uint32_t, nBitMap> trgBitCounts = {};
 
   void clear()
   {
-    nPackets = 0;
-    nTriggers = 0;
     errorCounts.fill(0);
-//    packetStates.fill(0);
+    trgBitCounts.fill(0);
   }
 
   void print(bool skipNoErr = true) const;

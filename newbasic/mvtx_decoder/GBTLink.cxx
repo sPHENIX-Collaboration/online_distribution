@@ -33,6 +33,7 @@ GBTLink::GBTLink(uint16_t _flx, uint16_t _fee) : flxID(_flx), feeID(_fee)
 {
 //  chipStat.feeID = _fee;
 //  statistics.feeID = _fee;
+  data.expand(RawBufferSize);
 }
 
 /////_________________________________________________________________
@@ -60,7 +61,7 @@ void GBTLink::clear(bool resetStat, bool resetTFRaw)
   }
 
 //  lastPageSize = 0;
-//  nTrigger = 0;
+//    nTrigger = 0;
 //  lanes = 0;
 //  lanesActive = lanesStop = lanesTimeOut = lanesWithData = 0;
 //  packetCounter = -1;
@@ -69,7 +70,8 @@ void GBTLink::clear(bool resetStat, bool resetTFRaw)
   if (resetTFRaw)
   {
     rawData.clear();
-//    dataOffset = 0;
+    hbfData.clear();
+    dataOffset = 0;
 //    gbtErrStatUpadated = false;
 //    rofJumpWasSeen = false;
 //    statusInTF = None;
@@ -82,8 +84,25 @@ void GBTLink::clear(bool resetStat, bool resetTFRaw)
   }
 //  hbfEntry = 0;
 //  extTrigVect = nullptr;
-//  status = None;
+  status = None;
 }
+
+///_________________________________________________________________
+/// this function reads in 32 bytes  =  3 GBT words and 2 bytes
+int GBTLink::readFlxWord( GBTWord* gbtwords, uint16_t &w16 )
+{
+  for ( uint8_t k = 0; k < 3; k++ )
+  {
+    gbtwords[k] = *(reinterpret_cast<GBTWord*>(data.getPtr() + dataOffset));
+    dataOffset +=10;
+	}
+
+  w16 = *(reinterpret_cast<uint16_t*>(data.getPtr() + dataOffset));
+  dataOffset += 2;
+  return 0;
+}
+
+
 //
 /////_________________________________________________________________
 //void GBTLink::printTrigger(const GBTTrigger* gbtTrg, int offs)
