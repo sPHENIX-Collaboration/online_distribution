@@ -56,7 +56,7 @@ namespace mvtx
     HBFData(int id) : hbfId(id) {};
     ~HBFData()
     {
-      physTrgTime.clear();
+      clear();
     }
 
     void clearHBFId()
@@ -68,11 +68,13 @@ namespace mvtx
     {
       clearHBFId();
       physTrgTime.clear();
+      mStrobeId.clear();
     }
 
     int hbfId = -1;
     uint32_t n_no_continuation = 0;
     std::vector<uint64_t> physTrgTime;
+    std::vector<uint64_t> mStrobeId;
   };
 
 /// support for the GBT single link data
@@ -124,6 +126,7 @@ struct GBTLink
   PayLoadCont data; // data buffer for single feeeid
 
   uint32_t hbfEntry = 0;      // entry of the current HBF page in the rawData SG list
+  uint64_t strobe_id = 0;
 
   GBTLinkDecodingStat statistics; // link decoding statistics
 //  ChipStat chipStat;              // chip decoding statistics
@@ -168,16 +171,17 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
   status = None;
 
   auto currRawPiece = rawData.currentPiece();
+  dataOffset = 0;
   while (currRawPiece)
   { // we may loop over multiple CRU page
     if (dataOffset >= currRawPiece->size)
     {
+      data.movePtr(dataOffset);
+      dataOffset = 0;                              // start of the RDH
       if ( ! (currRawPiece = rawData.nextPiece()) )
       { // fetch next CRU page
         break;                                     // Data chunk (TF?) is done
       }
-      data.movePtr(dataOffset);
-      dataOffset = 0;                              // start of the RDH
     }
     // here we always start with the RDH
     RdhExt_t rdh = {};
@@ -193,7 +197,7 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
     //Fill statistics
     if ( !rdh.packetCounter )
     {
-      ASSERT(!dataOffset, "");
+      ASSERT(!dataOffset, "Wrong dataOffset value %ld at the start of a HBF", dataOffset);
       statistics.clear();
       //TODO: initialize/clear alpide data buffer
       for ( uint32_t trg = GBTLinkDecodingStat::BitMaps::ORBIT; trg < GBTLinkDecodingStat::nBitMap; ++trg )
@@ -206,7 +210,7 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
     }
     else if ( !rdh.stopBit )
     {
-      ASSERT( !prev_evt_complete, "Previous event was already complete");
+      ASSERT( !prev_evt_complete, "Previous event was already completed");
     }
 
     dataOffset += 2 * FLXWordLength;
@@ -235,7 +239,7 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
         else if ( gbtWord.isTDH() ) // TRIGGER DATA HEADER (TDH)
         {
           header_found = true;
-          uint64_t strobe_id = ((gbtWord.bco << 12) | gbtWord.bc);
+          strobe_id = ((gbtWord.bco << 12) | gbtWord.bc);
           if ( gbtWord.bc ) //statistic trigger for first bc already filled on RDH
           {
             for ( uint32_t trg = GBTLinkDecodingStat::BitMaps::ORBIT; trg < GBTLinkDecodingStat::nBitMap; ++trg )
@@ -254,13 +258,12 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
             hbfData.back().physTrgTime.push_back(strobe_id);
           }
 
-          if ( !gbtWord.continuation )
+          if ( !gbtWord.continuation && !gbtWord.noData)
           {
             hbfData.back().n_no_continuation++;
-//          TODO: save stobe_id   = strobe_id;
-          } // end if not cont*/
-        } // end TDH]
-
+            hbfData.back().mStrobeId.push_back(strobe_id);
+          } // end if not cont
+        } // end TDH
       }
     }
   }

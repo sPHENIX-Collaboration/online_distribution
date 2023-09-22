@@ -58,32 +58,21 @@ void GBTLink::clear(bool resetStat, bool resetTFRaw)
   else
   {
     data.moveUnusedToHead();
+//    std::cout << "Link: " << feeID << " buffer Size: " << data.getSize() << std::endl;
   }
 
-//  lastPageSize = 0;
-//    nTrigger = 0;
-//  lanes = 0;
-//  lanesActive = lanesStop = lanesTimeOut = lanesWithData = 0;
-//  packetCounter = -1;
-//  errorBits = 0;
-//  irHBF.clear();
   if (resetTFRaw)
   {
     rawData.clear();
     hbfData.clear();
     dataOffset = 0;
-//    gbtErrStatUpadated = false;
-//    rofJumpWasSeen = false;
-//    statusInTF = None;
-//    ir.clear();
   }
-//  //  lastRDH = nullptr;
+
   if (resetStat)
   {
     statistics.clear();
   }
-//  hbfEntry = 0;
-//  extTrigVect = nullptr;
+  hbfEntry = 0;
   status = None;
 }
 
