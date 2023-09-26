@@ -302,6 +302,7 @@ allsources = \
   packet_cdevbuckets.cc \
   packet_cdevdvm.cc \
   caen_correction.cc \
+  mvtx_decoder/InteractionRecord.cxx \
   mvtx_decoder/PayLoadCont.cxx \
   mvtx_decoder/PixelData.cxx \
   mvtx_decoder/GBTWord.cxx \
