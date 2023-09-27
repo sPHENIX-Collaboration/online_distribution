@@ -1,14 +1,3 @@
-// Copyright 2019-2020 CERN and copyright holders of ALICE O2.
-// See https://alice-o2.web.cern.ch/copyright for details of the copyright holders.
-// All rights not expressly granted are reserved.
-//
-// This software is distributed under the terms of the GNU General Public
-// License v3 (GPL Version 3), copied verbatim in the file "COPYING".
-//
-// In applying this license CERN does not waive the privileges and immunities
-// granted to it by virtue of its status as an Intergovernmental Organization
-// or submit itself to any jurisdiction.
-
 // @file GBTLink.h
 // @brief Declarations of helper classes for the ITS/MFT raw data decoding
 // @sa <O2/Detectors/ITSMFT/common/reconstruction/include/ITSMFTReconstruction/GBTLink.>
@@ -24,12 +13,12 @@
 #include "mvtx_decoder/PayLoadSG.h"
 #include "mvtx_decoder/DecodingStat.h"
 #include "mvtx_decoder/GBTWord.h"
+#include "mvtx_decoder/InteractionRecord.h"
 
 //#include "MVTXDecoder/RUDecodeData.h"
 //#include "MVTXDecoder/RUInfo.h"
 //#include "MVTXDecoder/RAWDataHeader.h"
 //#include "MVTXDecoder/RDHUtils.h"
-//#include "MVTXDecoder/InteractionRecord.h"
 //#include "MVTXDecoder/PhysTrigger.h"
 
 #include <iostream>
@@ -49,32 +38,20 @@ namespace mvtx
 {
   using namespace mvtx_utils;
 
-  struct HBFData
+  struct TRGData
   {
+    InteractionRecord ir = {};
+    bool hasCDW = false;
+    GBTCalibDataWord calWord = {};
 
-    HBFData() = delete;
-    HBFData(int id) : hbfId(id) {};
-    ~HBFData()
-    {
-      clear();
-    }
-
-    void clearHBFId()
-    {
-      hbfId = -1;
-    }
+    TRGData(uint64_t orb, uint16_t b) : ir(orb, b) {};
 
     void clear()
     {
-      clearHBFId();
-      physTrgTime.clear();
-      mStrobeId.clear();
+      ir.clear();
+      hasCDW = false;
+      calWord = {};
     }
-
-    int hbfId = -1;
-    uint32_t n_no_continuation = 0;
-    std::vector<uint64_t> physTrgTime;
-    std::vector<uint64_t> mStrobeId;
   };
 
 /// support for the GBT single link data
@@ -118,23 +95,30 @@ struct GBTLink
 //  uint32_t lanes = 0;     // lanes served by this link
 //  uint32_t subSpec = 0;   // link subspec
 
-
-  uint32_t prev_pck_cnt = 0;
-  size_t hb_start = 0;
-  size_t hb_length = 0;
-
   PayLoadCont data; // data buffer for single feeeid
 
   uint32_t hbfEntry = 0;      // entry of the current HBF page in the rawData SG list
-  uint64_t strobe_id = 0;
+  InteractionRecord ir = {};
 
   GBTLinkDecodingStat statistics; // link decoding statistics
+  size_t hbf_count = 0;
 //  ChipStat chipStat;              // chip decoding statistics
 //  RUDecodeData* ruPtr = nullptr;  // pointer on the parent RU
 
   PayLoadSG rawData;         // scatter-gatter buffer for cached CRU pages, each starting with RDH
   size_t dataOffset = 0;     //
-  std::vector<HBFData> hbfData;
+  std::vector<InteractionRecord> physTrgTime;
+  std::vector<TRGData> mTrgData;
+
+  static constexpr uint8_t MaxCablesPerLink = 3;
+  std::array<PayLoadCont, MaxCablesPerLink> cableData;
+  void clearCableData()
+  {
+    for ( auto&& data : cableData )
+    {
+      data.clear();
+    }
+  }
 
   static constexpr int RawBufferMargin = 5000000;                      // keep uploaded at least this amount
   static constexpr int RawBufferSize = 10000000 + 2 * RawBufferMargin; // size in MB
@@ -168,12 +152,17 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
 {
   bool prev_evt_complete = false;
   bool header_found = false;
+  bool trailer_found = false;
+
   status = None;
 
   auto currRawPiece = rawData.currentPiece();
   dataOffset = 0;
   while (currRawPiece)
-  { // we may loop over multiple CRU page
+  { // we may loop over multiple FLX page
+    uint32_t n_no_continuation = 0;
+    uint32_t n_packet_done = 0;
+
     if (dataOffset >= currRawPiece->size)
     {
       data.movePtr(dataOffset);
@@ -186,11 +175,6 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
     // here we always start with the RDH
     RdhExt_t rdh = {};
     rdh.decode(data.getPtr() + dataOffset);
-    if (!dataOffset)
-    {
-      hbfEntry = rawData.currentPieceID(); // in case of problems with RDH, dump full TF
-      hbfData.emplace_back(hbfEntry);
-    }
 
     size_t pagesize = (rdh.pageSize + 1) * FLXWordLength;
     const size_t nFlxWords = (pagesize - (2 * FLXWordLength)) / FLXWordLength;
@@ -198,7 +182,7 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
     if ( !rdh.packetCounter )
     {
       ASSERT(!dataOffset, "Wrong dataOffset value %ld at the start of a HBF", dataOffset);
-      statistics.clear();
+//      statistics.clear();
       //TODO: initialize/clear alpide data buffer
       for ( uint32_t trg = GBTLinkDecodingStat::BitMaps::ORBIT; trg < GBTLinkDecodingStat::nBitMap; ++trg )
       {
@@ -207,6 +191,8 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
           statistics.trgBitCounts[trg]++;
         }
       }
+      hbfEntry = rawData.currentPieceID(); // in case of problems with RDH, dump full TF
+      ++hbf_count;
     }
     else if ( !rdh.stopBit )
     {
@@ -228,7 +214,6 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
         auto &gbtWord = gbtWords[i];
         if ( gbtWord.isIHW() ) // ITS HEADER WORD
         {
-          // lane heder: needs to be present: TODO: assert this
           //TODO assert first word after RDH and active lanes
           ASSERT( ( ((gbtWord.activeLanes >> 0) & 0x7) == 0x7 || \
                     ((gbtWord.activeLanes >> 3) & 0x7) == 0x7 || \
@@ -239,7 +224,8 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
         else if ( gbtWord.isTDH() ) // TRIGGER DATA HEADER (TDH)
         {
           header_found = true;
-          strobe_id = ((gbtWord.bco << 12) | gbtWord.bc);
+          ir.orbit = gbtWord.bco;
+          ir.bc = gbtWord.bc;
           if ( gbtWord.bc ) //statistic trigger for first bc already filled on RDH
           {
             for ( uint32_t trg = GBTLinkDecodingStat::BitMaps::ORBIT; trg < GBTLinkDecodingStat::nBitMap; ++trg )
@@ -255,124 +241,90 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
 
           if ( (gbtWord.triggerType >> GBTLinkDecodingStat::BitMaps::PHYSICS) & 0x1 )
           {
-            hbfData.back().physTrgTime.push_back(strobe_id);
+            physTrgTime.push_back(ir);
           }
 
           if ( !gbtWord.continuation && !gbtWord.noData)
           {
-            hbfData.back().n_no_continuation++;
-            hbfData.back().mStrobeId.push_back(strobe_id);
+            n_no_continuation++;
+            mTrgData.emplace_back(ir.orbit, ir.bc);
           } // end if not cont
         } // end TDH
+        else if ( gbtWord.isCDW() ) // CALIBRATION DATA WORD
+        {
+          mTrgData.back().hasCDW = true;
+          mTrgData.back().calWord = *(reinterpret_cast<GBTCalibDataWord*>(&gbtWord));
+        }
+        else if ( gbtWord.isTDT() )
+        {
+          trailer_found = true;
+          if ( gbtWord.packet_done )
+          {
+            n_packet_done++;
+            ASSERT(n_packet_done == n_packet_done,
+               "TDT packet done before TDH no continuation %d != %d",
+               n_packet_done, n_packet_done);
+          }
+          prev_evt_complete = gbtWord.packet_done;
+          //TODO: YCM Add warning and counter for timeout and violation
+        }
+        else if ( gbtWord.isDDW() ) // DIAGNOSTIC DATA WORD (DDW)
+        {
+            ASSERT(rdh.stopBit, "");
+            ASSERT(gbtWord.index == 0, "");
+        }
+        else if ( gbtWord.isDiagnosticIB() ) // IB DIAGNOSTIC DATA
+        {
+            std::cout << "WARNING: IB Diagnostic word found." << std::endl;
+            std::cout << "diagnostic_lane_id: " << (gbtWord.id >> 5);
+            std::cout << " lane_error_id: " << gbtWord.lane_error_id;
+            std::cout << " diasnotic_data: 0x" << std::hex << gbtWord.diagnostic_data << std::endl;
+        }
+        else if ( gbtWord.isData() ) //IS IB DATA
+        {
+          ASSERT(header_found, "Trigger header not found before chip data");
+          auto lane = ( gbtWord.data8[9] & 0x1F ) % 3;
+          cableData[lane].add(gbtWord.getW8(), 9);
+        }
+
+        if ( prev_evt_complete )
+        {
+          /*
+                                if not self.skip_data:
+                                    previous_bc_count = bc_count
+                                    bc_count = None
+                                    for lane, data in lanes.items():
+                                        try:
+                                            chip_data = self.decode_alpide(data, self.accept_decreasing_address, thscan_current_charge, thscan_current_row)
+                                            for i, d in enumerate(chip_data):
+                                                if bc_count:
+                                                    # assert d['bc']==bc_count, f"bc_count on chip {i}, lane {lane} not matching the one of the other chips: 0x{d['bc']:02x} != 0x{bc_count:02x}"
+                                                    pass
+                                                else:
+                                                    bc_count = d['bc']
+                                                    # if not self.thscan: # thscan does not need to check this. Check is done in line 377 and following
+                                                    #     assert bc_count != previous_bc_count, f"Previous and current bc counts are the same! 0x{bc_count:2x} == 0x{previous_bc_count:2x}"
+                                        except:
+                                            self.logger.info(f"Error in block before byte {self.bytes_read} for lane {lane}")
+                                            raise
+                                        if (iblock_event-boffset)%self.print_interval==0:
+                                            for d in chip_data:
+                                                self.logger.info(f"iblock_event {iblock_event}, Lane {lane}, bytes_read {self.bytes_read}: {d}")
+            */
+          prev_evt_complete = false;
+          header_found = false;
+          trailer_found = false;
+          clearCableData();
+        }
       }
     }
   }
   return  (status = StoppedOnEndOfData);
-
-/*
-  //  cout << " last_fee_id " << last_fee_id << endl;
-
-
-    // decode the RDH
-
-  for ( ; itr != gbtvector.end();  itr++)
-    {
-      unsigned int marker =  get_GBT_value (*itr, 72,8);
-      //  cout << __FILE__ << " " << __LINE__ << " marker: " << hex << marker << dec << endl;
-      if ( marker == WordTypeMarker::IHW)
-	{
-	  //	  cout << " IHW        ";
-	  //pretty_print(*itr);
-	}
-      else if ( marker == WordTypeMarker::TDH)
-	{
-	  // mlp needs to decode this ..... BCO  pg 11
-	  // cout << " TDH  "
-	  //      << " RHICBCO " << get_GBT_value (*itr, 32,40)
-	  //      << " LCHBC " << get_GBT_value (*itr, 16,12)
-	  //      << " STOP " << get_GBT_value (*itr, 14,1)
-	  //      << " DATA " << get_GBT_value (*itr, 13,1)
-	  //      << endl;
-
-	  //pretty_print(*itr);
-	}
-      else if ( marker == WordTypeMarker::TDT)
-	{
-	  //cout << " TDT        ";
-	  //  pretty_print(*itr);
-	}
-      else if ( marker == WordTypeMarker::DDW)
-	{
-	  //cout << " DDW        ";
-	  //pretty_print(*itr);
-	}
-      else if ( marker == WordTypeMarker::CDW)
-	{
-	  //cout << " CDW        ";
-	  //pretty_print(*itr);
-	}
-      else if ( marker >>5 == 0b101 )
-	{
-	  //cout << " IB DIAG DATA ";
-	  //pretty_print(*itr);
-	}
-      else if ( marker >>5 == 0b001 )
-	{
-	  //cout << " IB data ";
-	  //pretty_print(*itr);
-	  decode_chipdata (*itr);
-	}
-      else if ( marker >>5 == 0b110 )
-	{
-	  //cout << " OB DIAG DATA ";
-	  //pretty_print(*itr);
-	}
-      else if ( marker >>5 == 0b101 )
-	{
-	  cout << " IB DIAG DATA ";
-	  //pretty_print(*itr);
-	}
-      else if ( marker == 0xe4 )
-	{
-	  //cout << " DIAGNOSTIC DATA WORD (DDW) ";
-	  //pretty_print(*itr);
-	}
-      else if ( marker == 0xF8)
-	{
-	  //cout << " CALIBRATION DATA WORD ";
-	  //pretty_print(*itr);
-	}
-      else
-	{
-	  //cout << "  unknown data  ";
-	  //pretty_print(*itr);
-	  //cout << "   " ;
-	}
-      //cout <<  endl;
-    }
-
-  std::map<unsigned int, std::vector<unsigned char>>::iterator mitr;
-  for ( mitr = chipdata.begin(); mitr != chipdata.end(); ++mitr)
-  {
-
-
-    //    cout << " lane: " << hex << mitr->first << "   ";
-    last_lane = mitr->first ;
-
-    // for (unsigned int i = 0; i < mitr->second.size() ; i++)
-    //   {
-    // 	cout << (unsigned short ) mitr->second[i] << " ";
-    //   }
-    // cout << endl << endl;
-
-    decode_lane (  mitr->second );
-  }
-*/
-
 }
 
 } // namespace mvtx
 
+#endif // _MVTX_DECODER_ITSMFT_GBTLINK_H_
 
 //  unsigned long get_GBT_value( const std::bitset<80> gbtword, const int pos, const int size) const;
 ////_________________________________________________
@@ -654,33 +606,3 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
 //
 //  std::vector<mvtx_hit *> hit_vector;
 
-
-
-
-#endif // _MVTX_DECODER_ITSMFT_GBTLINK_H_
-// Copyright 2019-2020 CERN and copyright holders of ALICE O2.
-// See https://alice-o2.web.cern.ch/copyright for details of the copyright holders.
-// All rights not expressly granted are reserved.
-//
-// This software is distributed under the terms of the GNU General Public
-// License v3 (GPL Version 3), copied verbatim in the file "COPYING".
-//
-// In applying this license CERN does not waive the privileges and immunities
-// granted to it by virtue of its status as an Intergovernmental Organization
-// or submit itself to any jurisdiction.
-
-// @file GBTLink.h
-// @brief Declarations of helper classes for the ITS/MFT raw data decoding
-// @sa <O2/Detectors/ITSMFT/common/reconstruction/include/ITSMFTReconstruction/GBTLink.>
-//     <760019308>
-
-#ifndef MVTXDECODER_GBTLINK_H
-//    // unsigned int bunchcounter;
-//  };
-//
-//  std::vector<mvtx_hit *> hit_vector;
-
-
-
-
-#endif // _MVTX_DECODER_ITSMFT_GBTLINK_H_

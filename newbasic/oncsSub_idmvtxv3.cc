@@ -12,6 +12,9 @@ std::unordered_map<uint32_t, oncsSub_idmvtxv3::dumpEntry> oncsSub_idmvtxv3::mSub
 std::vector< mvtx::PayLoadCont> oncsSub_idmvtxv3::mBuffers = {};
 std::unordered_map<uint16_t, oncsSub_idmvtxv3::dumpEntry> oncsSub_idmvtxv3::mFeeId2LinkID = {};
 std::vector< mvtx::GBTLink> oncsSub_idmvtxv3::mGBTLinks = {};
+std::array<uint32_t, oncsSub_idmvtxv3::MaxLinksPerPacket> oncsSub_idmvtxv3::hbf_start;
+std::array<uint32_t, oncsSub_idmvtxv3::MaxLinksPerPacket> oncsSub_idmvtxv3::hbf_length;
+std::array<uint32_t, oncsSub_idmvtxv3::MaxLinksPerPacket> oncsSub_idmvtxv3::prev_pck_cnt;
 
 oncsSub_idmvtxv3::oncsSub_idmvtxv3(subevtdata_ptr data)
   : oncsSubevent_w4(data)
@@ -127,6 +130,9 @@ void oncsSub_idmvtxv3::setupLinks(mvtx::PayLoadCont& buf)
           {
             lnkref.entry = mGBTLinks.size();
             mGBTLinks.emplace_back(rdh.flxId, rdh.feeId);
+            hbf_start[lnkref.entry] = 0;
+            hbf_length[lnkref.entry] = 0;
+            prev_pck_cnt[lnkref.entry] = 0;
           }
           auto& gbtLink = mGBTLinks[lnkref.entry];
           auto lnkEndOffser= gbtLink.data.getEnd() - gbtLink.data.getPtr();
@@ -135,21 +141,21 @@ void oncsSub_idmvtxv3::setupLinks(mvtx::PayLoadCont& buf)
 
           if ( ! rdh.packetCounter ) // start HB
           {
-            gbtLink.hb_start = lnkEndOffser;
-            gbtLink.hb_length = pageSizeInBytes;
+            hbf_start[lnkref.entry] = lnkEndOffser;
+            hbf_length[lnkref.entry] = pageSizeInBytes;
           }
           else
           {
-            gbtLink.hb_length += pageSizeInBytes;
+            hbf_length[lnkref.entry] += pageSizeInBytes;
           }
 
           if ( rdh.stopBit ) // found HB end
           {
-            gbtLink.cacheData(gbtLink.hb_start, gbtLink.hb_length);
+            gbtLink.cacheData(hbf_start[lnkref.entry], hbf_length[lnkref.entry]);
           }
-          ASSERT( ( (! rdh.packetCounter) || (rdh.packetCounter == gbtLink.prev_pck_cnt + 1) ),
-                 "Incorrect pages count %d, previous page count was %d", rdh.packetCounter, gbtLink.prev_pck_cnt);
-          gbtLink.prev_pck_cnt = rdh.packetCounter;
+          ASSERT( ( (! rdh.packetCounter) || (rdh.packetCounter == prev_pck_cnt[lnkref.entry] + 1) ),
+                 "Incorrect pages count %d, previous page count was %d", rdh.packetCounter, prev_pck_cnt[lnkref.entry]);
+          prev_pck_cnt[lnkref.entry] = rdh.packetCounter;
           payload_position += pageSizeInBytes;
         }
       }
@@ -207,11 +213,27 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
 
     uint32_t lnkId =  mFeeId2LinkID[i].entry;
 
-    ASSERT( mGBTLinks[lnkId].hbfData.size() == mGBTLinks[lnkId].rawData.getNPieces(),
+    ASSERT( mGBTLinks[lnkId].rawData.getNPieces() == mGBTLinks[lnkId].hbf_count,
         "Mismatch size for HBF from hbfData: %ld and link rawData Pieces: %ld",
-        mGBTLinks[lnkId].hbfData.size(), mGBTLinks[lnkId].rawData.getNPieces() );
+        mGBTLinks[lnkId].hbf_count, mGBTLinks[lnkId].rawData.getNPieces() );
 
-    return mGBTLinks[lnkId].hbfData.size();
+    return mGBTLinks[lnkId].hbf_count;
+  }
+  else if ( strcmp(what, "NR_PHYS_TRG") == 0 )
+  {
+    ASSERT(mFeeId2LinkID.find(i) != mFeeId2LinkID.cend(),
+        "FeeId %d was not found in the feeId mapping for this packet", i);
+
+    uint32_t lnkId =  mFeeId2LinkID[i].entry;
+    return mGBTLinks[lnkId].physTrgTime.size();
+  }
+  else if ( strcmp(what, "NR_STROBES") == 0 )
+  {
+    ASSERT(mFeeId2LinkID.find(i) != mFeeId2LinkID.cend(),
+        "FeeId %d was not found in the feeId mapping for this packet", i);
+
+    uint32_t lnkId =  mFeeId2LinkID[i].entry;
+    return mGBTLinks[lnkId].mTrgData.size();
   }
   else
   {
@@ -251,34 +273,12 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
   return 0;
 }
 
-int oncsSub_idmvtxv3::iValue(const int i_lnk, const int i_hbf, const char *what)
+int oncsSub_idmvtxv3::iValue(const int i_lnk, const int i_strb, const char *what)
 {
-  const uint32_t lnk = i_lnk;
-  const uint32_t hbf = i_hbf;
-  if ( strcmp(what, "NR_PHYS_TRG") == 0 )
-  {
-    ASSERT(mFeeId2LinkID.find(lnk) != mFeeId2LinkID.cend(),
-        "FeeId %d was not found in the feeId mapping for this packet", lnk);
-
-    uint32_t lnkId =  mFeeId2LinkID[lnk].entry;
-    return (hbf < mGBTLinks[lnkId].hbfData.size()) ? mGBTLinks[lnkId].hbfData[hbf].physTrgTime.size() : -1;
-  }
-  else if ( strcmp(what, "NR_STROBES") == 0 )
-  {
-    ASSERT(mFeeId2LinkID.find(lnk) != mFeeId2LinkID.cend(),
-        "FeeId %d was not found in the feeId mapping for this packet", lnk);
-
-    uint32_t lnkId =  mFeeId2LinkID[lnk].entry;
-    return (hbf < mGBTLinks[lnkId].hbfData.size()) ? mGBTLinks[lnkId].hbfData[hbf].mStrobeId.size() : -1;
-  }
-  else
-  {
-    return -1;
-  }
   return 0;
 }
 
-int oncsSub_idmvtxv3::iValue(const int lnk, const int hbf, const int hit, const char *what)
+int oncsSub_idmvtxv3::iValue(const int lnk, const int i_strb, const int hit, const char *what)
 {
   return 0;
 }
@@ -319,12 +319,12 @@ void oncsSub_idmvtxv3::dump(OSTREAM &os)
   {
     auto feeId = iValue(i, "FEEID");
     auto hbfSize = iValue(feeId, "NR_HBF");
-    os << "Link " << setw(4) << feeId << " has " << hbfSize << " HBs." << endl;
-
-    for ( int hbf = 0; hbf < hbfSize; ++hbf )
+    os << "Link " << setw(4) << feeId << " has " << hbfSize << " HBs, ";
+    os << iValue(feeId, "NR_STROBES") << " strobes and ";
+    os << iValue(feeId, "NR_PHYS_TRG") << " L1 triggers" << std::endl;
+    for ( auto& trg : mGBTLinks[i].physTrgTime )
     {
-      os << "\t HBF: " << hbf << " has " << iValue(feeId, hbf, "NR_STROBES") << " strobes and ";
-      os << iValue(feeId, hbf, "NR_PHYS_TRG") << " L1 triggers" << std::endl;
+      os << "L1: " << (&trg - &mGBTLinks[i].physTrgTime[0]) << " " << trg << std::endl;
     }
   }
 

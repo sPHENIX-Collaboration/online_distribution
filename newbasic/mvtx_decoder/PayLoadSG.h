@@ -1,14 +1,3 @@
-// Copyright 2019-2020 CERN and copyright holders of ALICE O2.
-// See https://alice-o2.web.cern.ch/copyright for details of the copyright holders.
-// All rights not expressly granted are reserved.
-//
-// This software is distributed under the terms of the GNU General Public
-// License v3 (GPL Version 3), copied verbatim in the file "COPYING".
-//
-// In applying this license CERN does not waive the privileges and immunities
-// granted to it by virtue of its status as an Intergovernmental Organization
-// or submit itself to any jurisdiction.
-
 // @file PayLoadSG.h
 // @brief Declaration of class for scatter-gather buffer
 // @author ruben.shahoyan@cern.ch
@@ -28,7 +17,6 @@ class PayLoadSG
 {
   // scatter-gather buffer for the payload: base pointer + vector of references for pieces to collect
  public:
-//  using DataType = unsigned char;
 
   PayLoadSG() = default;
   ~PayLoadSG() = default;
@@ -41,50 +29,7 @@ class PayLoadSG
       mBuffer.emplace_back(start, n);
     }
   }
-/*
-  ///< read current character value from buffer w/o stepping forward
-  bool current(char& v)
-  {
-    if (mCurrentPieceID < mBuffer.size()) {
-      const auto& piece = mBuffer[mCurrentPieceID];
-      if (mCurrentEntryInPiece < piece.size) {
-        v = piece.data[mCurrentEntryInPiece];
-        return true;
-      } else {
-        nextPiece();
-        return current(v);
-      }
-    }
-    return false;
-  }
 
-  ///< read character value from buffer
-  bool next(char& v)
-  {
-    if (mCurrentPieceID < mBuffer.size()) {
-      const auto& piece = mBuffer[mCurrentPieceID];
-      if (mCurrentEntryInPiece < piece.size) {
-        v = piece.data[mCurrentEntryInPiece++];
-        return true;
-      } else {
-        nextPiece();
-        return next(v);
-      }
-    }
-    return false;
-  }
-
-  ///< read short value from buffer
-  bool next(uint16_t& v)
-  {
-    char b0, b1;
-    if (next(b0) && next(b1)) {
-      v = (b0 << 8) | b1;
-      return true;
-    }
-    return false;
-  }
-*/
   ///< move current pointer to the head
   void rewind()
   {
