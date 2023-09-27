@@ -55,6 +55,11 @@ void GBTLink::clear(bool resetStat, bool resetTFRaw)
     rawData.clear();
     physTrgTime.clear();
     mTrgData.clear();
+    for ( auto&& hit : hit_vector )
+    {
+      delete hit;
+    }
+    hit_vector.clear();
     dataOffset = 0;
     hbf_count = 0;
   }

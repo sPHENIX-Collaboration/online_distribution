@@ -22,6 +22,7 @@
 //#include "MVTXDecoder/PhysTrigger.h"
 
 #include <iostream>
+#include <memory>
 
 #define GBTLINK_DECODE_ERRORCHECK(errRes, errEval)                            \
   errRes = errEval;                                                           \
@@ -43,6 +44,8 @@ namespace mvtx
     InteractionRecord ir = {};
     bool hasCDW = false;
     GBTCalibDataWord calWord = {};
+    size_t first_hit_pos = 0;
+    size_t n_hits = 0;
 
     TRGData(uint64_t orb, uint16_t b) : ir(orb, b) {};
 
@@ -51,7 +54,17 @@ namespace mvtx
       ir.clear();
       hasCDW = false;
       calWord = {};
+      first_hit_pos = 0;
+      n_hits = 0;
     }
+  };
+
+  struct mvtx_hit
+  {
+    uint8_t chip_id = 0xf;
+    uint16_t bunchcounter = 0xFFFF;
+    uint16_t row_pos = 0xFFFF;
+    uint16_t col_pos = 0xFFFF;
   };
 
 /// support for the GBT single link data
@@ -72,46 +85,49 @@ struct GBTLink
 //                             Skip = 0x2,
 //                             Abort = 0x4,
 //                             ErrorPrinted = 0x1 << 7 };
-//
-//  enum Verbosity : int8_t { Silent = -1,
-//                            VerboseErrors,
-//                            VerboseHeaders,
-//                            VerboseData };
-//
-//  using RDH = mvtx::RDHAny;
-//  using RDHUtils = mvtx::RDHUtils;
+
+  static constexpr int RawBufferMargin = 5000000;                      // keep uploaded at least this amount
+  static constexpr int RawBufferSize = 10000000 + 2 * RawBufferMargin; // size in MB
+  static constexpr uint8_t MaxCablesPerLink = 3;
+
 
   CollectedDataStatus status = None;
-//  Verbosity verbosity = VerboseErrors;
 
-//  std::vector<PhysTrigger> trgVec;
-
-//  uint8_t idInRU = 0;     // link ID within the RU
-//  uint8_t idInCRU = 0;    // link ID within the CRU
-//  bool gbtErrStatUpadated = false;
   uint16_t flxID = 0;     // FLX ID
   uint16_t feeID = 0;     // FEE ID
-//  uint16_t channelID = 0; // channel ID in the reader input
-//  uint32_t lanes = 0;     // lanes served by this link
-//  uint32_t subSpec = 0;   // link subspec
 
   PayLoadCont data; // data buffer for single feeeid
+  std::array<PayLoadCont, MaxCablesPerLink> cableData;
+
 
   uint32_t hbfEntry = 0;      // entry of the current HBF page in the rawData SG list
   InteractionRecord ir = {};
 
   GBTLinkDecodingStat statistics; // link decoding statistics
   size_t hbf_count = 0;
-//  ChipStat chipStat;              // chip decoding statistics
-//  RUDecodeData* ruPtr = nullptr;  // pointer on the parent RU
 
   PayLoadSG rawData;         // scatter-gatter buffer for cached CRU pages, each starting with RDH
   size_t dataOffset = 0;     //
   std::vector<InteractionRecord> physTrgTime;
   std::vector<TRGData> mTrgData;
 
-  static constexpr uint8_t MaxCablesPerLink = 3;
-  std::array<PayLoadCont, MaxCablesPerLink> cableData;
+
+  std::vector<mvtx_hit *> hit_vector = {};
+
+
+  //------------------------------------------------------------------------
+
+  GBTLink() = default;
+  GBTLink(uint16_t _flx, uint16_t _fee);
+  void clear(bool resetStat = true, bool resetTFRaw = false);
+
+  CollectedDataStatus collectROFCableData();
+
+  void cacheData(size_t start, size_t sz)
+  {
+    rawData.add(start, sz);
+  }
+
   void clearCableData()
   {
     for ( auto&& data : cableData )
@@ -120,26 +136,73 @@ struct GBTLink
     }
   }
 
-  static constexpr int RawBufferMargin = 5000000;                      // keep uploaded at least this amount
-  static constexpr int RawBufferSize = 10000000 + 2 * RawBufferMargin; // size in MB
+  int readFlxWord( GBTWord* gbtwords, uint16_t &w16 );
+  int decode_lane( const uint8_t chipId, PayLoadCont& buffer );
 
-
-  //------------------------------------------------------------------------
-
-  GBTLink() = default;
-  GBTLink(uint16_t _flx, uint16_t _fee);
-//  std::string describe() const;
-  void clear(bool resetStat = true, bool resetTFRaw = false);
-
-//  template <class Mapping>
-  CollectedDataStatus collectROFCableData(/*const Mapping& chmap*/);
-
-  void cacheData(size_t start, size_t sz)
+  void getRowCol(const uint8_t reg, const uint16_t addr, uint16_t& row, uint16_t& col)
   {
-    rawData.add(start, sz);
+    row = ( addr >> 0x1 ) & 0x1FF;
+    col = ( (reg << 5 | addr >> 9 ) & 0x1E ) | ( (addr ^ addr >> 1) & 0x1 );
   }
 
-  int readFlxWord( GBTWord* gbtwords, uint16_t &w16 );
+  void addHit(const uint8_t laneId, const uint8_t bc, uint8_t reg, const uint16_t addr)
+  {
+    auto* hit = new mvtx_hit();
+	  memset(hit, 0, sizeof(*hit));
+
+    hit->chip_id = laneId;
+    hit->bunchcounter = bc;
+    getRowCol(reg, addr, hit->row_pos, hit->col_pos);
+
+	  hit_vector.push_back(hit);
+  }
+
+  void check_APE(const uint8_t& dataC)
+  {
+  switch (dataC)
+  {
+    case 0xF2:
+      std::cerr << " APE_STRIP_START" << std::endl;
+      break;
+    case 0xF4:
+      std::cerr << " APE_DET_TIMEOUT" << std::endl;
+      break;
+    case 0xF5:
+      std::cerr << " APE_OOT" << std::endl;
+      break;
+    case 0xF6:
+      std::cerr << " APE_PROTOCOL_ERROR" << std::endl;
+      break;
+    case 0xF7:
+      std::cerr << " APE_LANE_FIFO_OVERFLOW_ERROR" << std::endl;
+      break;
+    case 0xF8:
+      std::cerr << " APE_FSM_ERROR" << std::endl;
+      break;
+    case 0xF9:
+      std::cerr << " APE_PENDING_DETECTOR_EVENT_LIMIT" << std::endl;
+      break;
+    case 0xFA:
+      std::cerr << " APE_PENDING_LANE_EVENT_LIMIT" << std::endl;
+      break;
+    case 0xFB:
+      std::cerr << " APE_O2N_ERROR" << std::endl;
+      break;
+    case 0xFC:
+      std::cerr << " APE_RATE_MISSING_TRG_ERROR" << std::endl;
+      break;
+    case 0xFD:
+      std::cerr << " APE_PE_DATA_MISSING" << std::endl;
+      break;
+    case 0xFE:
+      std::cerr << " APE_OOT_DATA_MISSING" << std::endl;
+      break;
+    default:
+      std::cerr << " Unknown APE code" << std::endl;
+  }
+  return;
+}
+
 
 //  ClassDefNV(GBTLink, 1);
 };
@@ -147,7 +210,6 @@ struct GBTLink
 ///_________________________________________________________________
 /// collect cables data for single ROF, return number of real payload words seen,
 /// -1 in case of critical error
-//template <class Mapping>
 inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping& chmap*/)
 {
   bool prev_evt_complete = false;
@@ -289,6 +351,17 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
 
         if ( prev_evt_complete )
         {
+          auto&& trgData = mTrgData.back();
+          trgData.first_hit_pos = hit_vector.size();
+          for( auto&& itr = cableData.begin(); itr != cableData.end(); ++itr)
+          {
+            decode_lane(std::distance(cableData.begin(), itr), *itr);
+          }
+          prev_evt_complete = false;
+          header_found = false;
+          trailer_found = false;
+          clearCableData();
+
           /*
                                 if not self.skip_data:
                                     previous_bc_count = bc_count
@@ -311,10 +384,6 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
                                             for d in chip_data:
                                                 self.logger.info(f"iblock_event {iblock_event}, Lane {lane}, bytes_read {self.bytes_read}: {d}")
             */
-          prev_evt_complete = false;
-          header_found = false;
-          trailer_found = false;
-          clearCableData();
         }
       }
     }
@@ -322,237 +391,136 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
   return  (status = StoppedOnEndOfData);
 }
 
-} // namespace mvtx
+//_________________________________________________
+inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
+{
+  int ret = 0; // currently we just print stuff, but we will add stuff to our
+               // structures and return a status later (that's why it's not a const function)
 
-#endif // _MVTX_DECODER_ITSMFT_GBTLINK_H_
+  ASSERT(buffer.getSize() > 2, "chip data is too short: %ld", buffer.getSize());
 
-//  unsigned long get_GBT_value( const std::bitset<80> gbtword, const int pos, const int size) const;
-////_________________________________________________
-//unsigned long  oncsSub_idmvtxv3::get_GBT_value( const std::bitset<80> gbtword, const int pos, const int size) const
-//{
-//  unsigned long value = 0;
-//
-//  for (int i = 0; i < size; i++)
-//    {
-//      //cout << __FILE__ << " " << __LINE__ << " pos " << pos+i << " " << gbtword.test(pos+i) << endl;
-//      value |= ( gbtword.test(pos+i) << i) ;
-//    }
-//  return value;
-//}
+  uint8_t dataC = 0;
+  uint16_t dataS = 0;
+
+  bool busy_on = false, busy_off = false;
+  bool chip_header_found = false;
+  bool chip_trailer_found = false;
+
+  uint8_t laneId = 0xFF;
+  uint8_t bc = 0xFF;
+  uint8_t reg = 0xFF;
+
+  ASSERT( ( (buffer[0] & 0xF0) == 0xE0 || (buffer[0] & 0xF0) == 0xA0 || (buffer[0] == 0xF0) || (buffer[0] == 0xF1) ),
+    "first byte 0x%x is not a valid chip header, busy on or busy off", buffer[0] );
+
+  while ( buffer.next(dataC) )
+  {
+    if ( dataC == 0xF1 ) // BUSY ON
+    {
+      busy_on = true ;
+    }
+    else if ( dataC == 0xF0 ) // BUSY OFF
+    {
+      busy_off = true;
+    }
+    else if ( (dataC & 0xF0) == 0xF0) // APE
+    {
+      std::cerr << " Chip: " << (int)chipId << ":";
+      check_APE(dataC);
+      chip_trailer_found = 1;
+      busy_on = busy_off = chip_header_found = 0;
+    }
+    else if ( (dataC & 0xF0) == 0xE0 ) // EMPTY
+    {
+      chip_header_found = false;
+      chip_trailer_found = true;
+      laneId = (dataC & 0x0F) % 3;
+      ASSERT(laneId == chipId, "Error laneId %d (%d) and chipId %d", laneId, (dataC & 0xF), chipId);
+      buffer.next(bc);
+      busy_on = busy_off = false;
+    }
+    else
+    {
+      if ( chip_header_found )
+      {
+        if ( (dataC & 0xE0) == 0xC0 ) // REGION HEADER
+        {
+          ASSERT(buffer.getUnusedSize() > 1, "No data short would fit (at least a data short after region header!)");
+          // TODO: move first region header out of loop, asserting its existence
+          reg = dataC & 0x1F;
+        }
+        else if ( (dataC & 0xC0) == 0x40 ) // DATA SHORT
+        {
+          ASSERT(buffer.getUnusedSize() > 0, "data short do not fit");
+          ASSERT( reg < 0xFF, "data short at %ld before region header", buffer.getOffset());
+          dataS = (dataC << 8);
+          buffer.next(dataC);
+          dataS |= dataC;
+          addHit(laneId, bc, reg, (dataS & 0x3FFF));
+        }
+        else if ( (dataC & 0xC0) == 0x00) // DATA LONG
+        {
+          ASSERT(buffer.getUnusedSize() > 2, "No data long would fit (at least a data short after region header!)");
+          ASSERT( reg < 0xFF, "data short at %ld before region header", buffer.getOffset());
+          buffer.next(dataS);
+          uint16_t addr = ((dataC & 0x3F) << 8) | ( (dataS >> 8) & 0xFF );
+          addHit(laneId, bc, reg, addr);
+          uint8_t hit_map = (dataS & 0xFF);
+          ASSERT( !(hit_map & 0x80), "Wrong bit before DATA LONG bit map");
+          while( hit_map != 0x00 )
+          {
+            ++addr;
+            if ( hit_map & 1 )
+            {
+              addHit(laneId, bc, reg, addr);
+            }
+            hit_map >>= 1;
+          }
+        }
+        else if ( (dataC & 0xF0) == 0xB0 ) // CHIP TRAILER
+        {
+//          uint8_t flag = (dataC & 0x0F);
+          //TODO: YCM add chipdata statistic
+          chip_trailer_found = 1;
+          busy_on = busy_off = chip_header_found = 0;
+        }
+        else // ERROR
+
+        {
+          std::cerr << "ERROR: invalid byte 0x" << std::hex << (int)(dataC) << std::endl;
+          while ( buffer.next(dataC) )
+          {
+            std::cerr << " " << std::hex << (int)(dataC) << " ";
+          }
+        }
+      }
+      else
+      {
+        if ( (dataC & 0xF0) == 0xA0 ) // CHIP HEADER
+        {
+          chip_header_found = true;
+          chip_trailer_found = false;
+          laneId = (dataC & 0x0F) % 3;
+          ASSERT(laneId == chipId, "Error laneId %d (%d) and chipId %d", laneId, (dataC & 0xF), chipId);
+          buffer.next(bc);
+          reg = 0xFF;
+        }
+        else if ( dataC == 0x00 ) // PADDING
+        {
+          continue;
+        }
+        else { // ERROR
+          std::cerr << "ERROR: invalid byte 0x" << std::hex << (int)(dataC) << std::endl;
+          while ( buffer.next(dataC) )
+          {
+            std::cerr << " " << std::hex << (int)(dataC) << " ";
+          }
+        } // else !chip_header_found
+      }  // if chip_header_found
+    } // busy_on, busy_off, chip_empty, other
+  }  // while
 
 
-//  unsigned long long get_GBT_lvalue( const std::bitset<80> gbtword, const int pos, const int size) const;
-////_________________________________________________
-//// this one can do sizes > 32 bit (like the BCO)
-//unsigned long  long oncsSub_idmvtxv3::get_GBT_lvalue( const std::bitset<80> gbtword, const int pos, const int size) const
-//{
-//  unsigned long long value = 0;
-//
-//  for (int i = 0; i < size; i++)
-//    {
-//      //cout << __FILE__ << " " << __LINE__ << " pos " << pos+i << " " << gbtword.test(pos+i) << endl;
-//      value |= ( gbtword.test(pos+i) << i) ;
-//    }
-//  return value;
-//}
-
-
-
-//  int  decode_chipdata( const std::bitset<80> gbtword);
-////_________________________________________________
-//int  oncsSub_idmvtxv3::decode_chipdata( const std::bitset<80> gbtword)
-//{
-//  // unsigned int chipid;
-//  // unsigned int timestamp;
-//  // unsigned int region_id;
-//  // unsigned int dl_bitmap;
-//  // unsigned int readout_flags;
-//  // unsigned int layer;
-//  // unsigned int chipnr;
-//  // unsigned int addr;
-//
-//  unsigned int marker =  get_GBT_value (gbtword, 72,8);
-//  unsigned int laneidx = marker & 0x1F;
-//
-//  // add a check if that lane matches the embedded lane
-//
-//  std::map<unsigned int, std::vector<uint8_t> >::iterator itr;
-//  itr = chipdata.find(laneidx);
-//  // if ( itr == chipdata.end())
-//  //   {
-//  //     cout << __FILE__ << " " << __LINE__ << " new laneidx " << laneidx << endl;
-//  //   }
-//  // else
-//  //   {
-//  //     cout << __FILE__ << " " << __LINE__ << " adding to laneidx " << laneidx << endl;
-//  //   }
-//
-//  //take the first 9 bytes off
-//  for ( unsigned int index = 0; index < 72; index += 8)
-//    {
-//      chipdata[laneidx].push_back ( get_GBT_value (gbtword, index,8));
-//    }
-//
-//  return 0;
-//}
-
-
-//  void  pretty_print( const std::bitset<80> gbtword) const;
-////_________________________________________________
-//void  oncsSub_idmvtxv3::pretty_print( const std::bitset<80> gbtword) const
-//{
-//
-//  cout  << std::setfill('0');
-//  for ( int i = 0; i < 10 ; i++)
-//    {
-//        cout << hex << setw(2) << get_GBT_value (gbtword, i * 8, 8) << " " << dec;
-//    }
-//  cout  << std::setfill(' ') << " ";
-//}
-
-//
-//  int  decode_lane( const std::vector<uint8_t> v);
-////_________________________________________________
-//int  oncsSub_idmvtxv3::decode_lane( const std::vector<uint8_t> v)
-//{
-//
-//  uint32_t pos = 0;
-//  //std::vector<uint8_t>::const_iterator itr = v.begin();
-//
-//  int ret = 0; // currently we just print stuff, but we will add stuff to our
-//               // structures and return a status later (that's why it's not a const function)
-//
-//  unsigned int chipid;
-//  unsigned int region_id;
-//  unsigned int readout_flags;
-//  unsigned int addr;
-//  unsigned int bunchcounter;
-//  unsigned int encoder_id;
-//
-//  mvtx_hit *h = 0;
-//
-//
-//
-//  while ( pos < v.size() )
-//    {
-//      unsigned int marker = v[pos];
-//      if  ((marker >> 4) ==  0xa)
-//	{
-//	  //	  cout  << " chip header found at position " << pos << endl;
-//	  break;
-//	}
-//      pos++;
-//    }
-//
-//  while ( pos < v.size() )
-//    {
-//      if ( pos >= v.size() ) break;
-//      unsigned int marker = v[pos++];
-//
-//      if  ((marker >> 4) ==  0xa)  // chip header
-//	{
-//	  chipid    = marker & 0xf;
-//	  bunchcounter = v[pos++];
-//	  if ( pos >= v.size() ) break;
-//	  // cout  << " chip header " << hex << marker << " chip id: " << chipid << " bunch " << bunchcounter << dec;
-//	}
-//
-//      else if  ((marker ) ==  0xff)  // idle frame
-//	{
-//	  // cout  << " idle frame " << hex << marker <<  dec;
-//	  if ( pos >= v.size() ) break;
-//	}
-//
-//      else if  ((marker >> 4) ==  0xe)  // chip empty frame
-//	{
-//	  chipid    = marker & 0xf;
-//	  bunchcounter = v[pos++];
-//	  if ( pos >= v.size() ) break;
-//	  // cout  << " chip empty frame " << hex << marker << " chip id: " << chipid << " bunch " << bunchcounter << dec;
-//	}
-//
-//
-//      else if  ((marker >> 4) ==  0xb)  // chip trailer
-//	{
-//	  readout_flags    = marker & 0xf;
-//	  // cout  << " chip header " << hex << marker << " readout_flags " << readout_flags << dec;
-//	}
-//
-//      else if  ((marker & 0xe0) ==  0xc0)  // region header 110x xxxx
-//	{
-//	  region_id    = marker & 0x1f;
-//	  // cout  << " chip region hdr " << hex << marker << " region id " << region_id  << " next word is " << (unsigned short) v[pos] << dec;
-//	}
-//
-//      else if  ((marker & 0xc0) ==  0x40) // we have a DATA short report
-//	{
-//	  unsigned short secondword = v[pos++];
-//	  if ( pos >= v.size() ) break;
-//	  encoder_id     = (marker >>2) & 0xf;
-//	  addr           = (marker & 0x3) << 8 | secondword;
-//	  // cout  << " data short hdr " << hex << setw(2) << marker << " " << setw(2) << secondword
-//	  // 	<< " encoder_id " << setw(5) << encoder_id
-//	  // 	<< " addr " << setw(5) << addr << dec ;
-//
-//	  h = new mvtx_hit;
-//	  memset(h, 0, sizeof(*h));
-//
-//	  h->RHICBCO = last_BCO;
-//	  h->LHCBC = last_LHCBC;
-//	  h->source_id = last_source_id;
-//	  h->fee_id = last_fee_id;
-//	  h->lane = last_lane;
-//	  h->addr  = addr;
-//
-//	  hit_vector.push_back(h);
-//	}
-//
-//      else if  ((marker & 0xc0) ==  0x00) // we have a DATA long report
-//	{
-//	  unsigned short secondword = v[pos++];
-//	  if ( pos >= v.size() ) break;
-//	  unsigned short bits  = v[pos++];
-//	  if ( pos >= v.size() ) break;
-//	  encoder_id     = (marker >>2) & 0xf;
-//	  addr           = (marker & 0x3) << 8 | secondword;
-//	  // cout  << " data long hdr  " << hex << setw(2) << marker << " " << setw(2) << secondword << " " << setw(2) << bits
-//	  // 	<< " encoder_id " << setw(5) << encoder_id
-//	  // 	<< " addr " << setw(5) << addr;
-//	  h = new mvtx_hit;
-//	  memset(h, 0, sizeof(*h));
-//
-//	  h->RHICBCO = last_BCO;
-//	  h->LHCBC = last_LHCBC;
-//	  h->source_id = last_source_id;
-//	  h->fee_id = last_fee_id;
-//	  h->lane = last_lane;
-//	  h->addr  = addr;
-//	  hit_vector.push_back(h);
-//
-//	  while ( bits != 0)
-//	    {
-//	      addr++;
-//	      if ( bits & 1)
-//		{
-//		  // another bit in a data long
-//		  h = new mvtx_hit;
-//		  memset(h, 0, sizeof(*h));
-//
-//		  h->RHICBCO = last_BCO;
-//		  h->LHCBC = last_LHCBC;
-//		  h->source_id = last_source_id;
-//		  h->fee_id = last_fee_id;
-//		  h->lane = last_lane;
-//		  h->addr  = addr;
-//		  hit_vector.push_back(h);
-//
-//
-//		  // cout << setw(5) << addr;
-//		}
-//	      bits >>=1;
-//	    }
-//
-//	}
 //
 //      else if  ((marker & 0xF0) == 0xB0) // we have a CHIP trailer
 //	{
@@ -562,47 +530,10 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
 //
 //      //cout << endl;
 //    }
-//
-//  return ret;
-//
-//}
+  return ret;
+}
 
 
- // the per-lane keeper of the chip data
-  // lane, vector
-//  std::map<unsigned int, std::vector<unsigned char> > chipdata;
-//
-//  std::vector< std::vector<std::bitset<80> > > gbtvector;
-//
-//  unsigned long long last_BCO;
-//  unsigned long long last_LHCBC;
-//  unsigned short last_source_id;
-//  unsigned short last_fee_id;
-//  unsigned short last_lane;
-//
-//
-//  struct mvtx_hit
-//  {
-//    unsigned long long RHICBCO;
-//    unsigned long long LHCBC;
-//    // take out    unsigned int source_id;
-//
-//    unsigned int chip_id;
-//
-//    unsigned int fee_id;
-//    unsigned int lane;
-//    unsigned int encoder_id;
-//    unsigned int addr;
-//    unsigned int source_id;
-//    // unsigned int row_pos;
-//    // unsigned int col_pos;
-//    // unsigned int L1Trigger;
-//
-//    // unsigned int chipid;
-//    // unsigned int region_id;
-//    // unsigned int readout_flags;
-//    // unsigned int bunchcounter;
-//  };
-//
-//  std::vector<mvtx_hit *> hit_vector;
+} // namespace mvtx
 
+#endif // _MVTX_DECODER_ITSMFT_GBTLINK_H_

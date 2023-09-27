@@ -235,15 +235,20 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
     uint32_t lnkId =  mFeeId2LinkID[i].entry;
     return mGBTLinks[lnkId].mTrgData.size();
   }
+  else if ( strcmp(what, "NR_HITS") == 0 )  // the number of datasets
+  {
+    ASSERT(mFeeId2LinkID.find(i) != mFeeId2LinkID.cend(),
+        "FeeId %d was not found in the feeId mapping for this packet", i);
+
+    uint32_t lnkId =  mFeeId2LinkID[i].entry;
+    return mGBTLinks[lnkId].hit_vector.size();
+  }
   else
   {
+    std::cout << "Unknow option " << what << std::endl;
     return -1;
   }
 /*
-  if ( strcmp(what,"NR_HITS") == 0 )  // the number of datasets
-  {
-    return hit_vector.size();
-  }
 
   if ( i >= hit_vector.size())
     {
@@ -326,14 +331,11 @@ void oncsSub_idmvtxv3::dump(OSTREAM &os)
     {
       os << "L1: " << (&trg - &mGBTLinks[i].physTrgTime[0]) << " " << trg << std::endl;
     }
+    os << "Total number of hits: " << iValue(feeId, "NR_HITS") << endl;
   }
 
 //  unsigned int n;
 /*
-  unsigned int nr_hits = iValue(0, "NR_HITS");
-
-  os << "Number of hits: " << nr_hits << endl;
-
   os << " hit number   addr   enc.id   lane   src.id      BCO         LHC BC  "  << endl;
 
   for ( n = 0; n < nr_hits; n++)
@@ -348,23 +350,14 @@ void oncsSub_idmvtxv3::dump(OSTREAM &os)
 	 << endl;
     }
 */
-// 0 0 0 0 0 0 1 0 0 0 0 0
-
-//   iValue(x, "L1TriggerBCO")
   return;
 }
 
 //_________________________________________________
 oncsSub_idmvtxv3::~oncsSub_idmvtxv3()
 {
-/*
-  chipdata.clear();
-
-  std::vector<mvtx_hit *>::iterator itr = hit_vector.begin();
-  for ( ; itr != hit_vector.end(); ++itr)
-    {
-      delete (*itr);
-    }
-  hit_vector.clear();
-*/
+  for ( auto&& link : mGBTLinks )
+  {
+    link.clear(true, true);
+  }
 }
