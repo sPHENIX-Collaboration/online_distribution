@@ -7,14 +7,12 @@
 #define MVTXDECODER_PIXELDATA_H
 
 #include "mvtx_decoder/DecodingStat.h"
-#include <string>
-#include <vector>
-#include <utility>
 #include <cstdint>
+#include <vector>
 
 namespace mvtx
 {
-///< single pixel datum, with possibility to set a flag of pixel being masked out
+///< single pixel datum
 class PixelData
 {
 
@@ -24,7 +22,6 @@ class PixelData
   uint16_t getCol() const { return mCol; }
 
  private:
-  void sanityCheck() const;
   uint16_t mRow = 0;                    ///< pixel row
   uint16_t mCol = 0;                    ///< pixel column
 
@@ -41,9 +38,7 @@ class ChipPixelData
   static constexpr size_t MAXDATAERRBYTES = 16, MAXDATAERRBYTES_AFTER = 2;
   ChipPixelData() = default;
   ~ChipPixelData() = default;
-//  uint8_t getROFlags() const { return mROFlags; }
   uint16_t getChipID() const { return mChipID; }
-//  uint32_t getROFrame() const { return mROFrame; }
   const std::vector<PixelData>& getData() const { return mPixels; }
   std::vector<PixelData>& getData() { return (std::vector<PixelData>&)mPixels; }
 
@@ -73,17 +68,13 @@ class ChipPixelData
   {
     resetChipID();
     mPixels.clear();
-//    mROFlags = 0;
     mErrors = 0;
     mErrorInfo = 0;
   }
 
   void swap(ChipPixelData& other)
   {
-    // swap content of two objects
-//    std::swap(mROFlags, other.mROFlags);
     std::swap(mChipID, other.mChipID);
-//    std::swap(mROFrame, other.mROFrame);
     std::swap(mErrors, other.mErrors);
     mPixels.swap(other.mPixels);
   }
@@ -91,9 +82,7 @@ class ChipPixelData
   void print() const;
 
  private:
-//  uint8_t mROFlags = 0;                            // readout flags from the chip trailer
   uint16_t mChipID = 0;                            // chip id within the detector
-//  uint32_t mROFrame = 0;                           // readout frame ID
   uint32_t mErrors = 0;                            // errors set during decoding
   uint64_t mErrorInfo = 0;                         // optional extra info on the error
   std::array<uint8_t, MAXDATAERRBYTES> mRawBuff{}; // buffer for raw data showing an error
