@@ -358,7 +358,7 @@ void oncsSub_idmvtxv3::dump(OSTREAM &os)
       os << "-- Strobe: " << i_trg << " has " << iValue(feeId, i_trg, "TRG_NR_HITS") << " hits." << std::endl;
       if ( iValue(feeId, i_trg, "TRG_NR_HITS") )
       {
-        os << "   hit number chip_id  bc    row    col  "  << endl;
+        os << "   hit number chip_id  bc   row   col  "  << endl;
       }
       for ( int i_hit = 0; i_hit < iValue(feeId, i_trg, "TRG_NR_HITS"); ++i_hit )
       {
@@ -366,7 +366,7 @@ void oncsSub_idmvtxv3::dump(OSTREAM &os)
         os << "  " << setw(9) << iValue(feeId, i_trg, i_hit, "HIT_CHIP_ID");
         os << "  " << setw(8) << std::hex << iValue(feeId, i_trg, i_hit, "HIT_BC") << std::dec;
         os << "  " << setw(4) << iValue(feeId, i_trg, i_hit, "HIT_ROW");
-        os << "  " << setw(6) << iValue(feeId, i_trg, i_hit, "HIT_COL");
+        os << "  " << setw(4) << iValue(feeId, i_trg, i_hit, "HIT_COL");
 	      os << endl;
       }
     }
