@@ -90,7 +90,6 @@ struct GBTLink
   static constexpr int RawBufferSize = 10000000 + 2 * RawBufferMargin; // size in MB
   static constexpr uint8_t MaxCablesPerLink = 3;
 
-
   CollectedDataStatus status = None;
 
   uint16_t flxID = 0;     // FLX ID
@@ -111,12 +110,9 @@ struct GBTLink
   std::vector<InteractionRecord> physTrgTime;
   std::vector<TRGData> mTrgData;
 
-
   std::vector<mvtx_hit *> hit_vector = {};
 
-
   //------------------------------------------------------------------------
-
   GBTLink() = default;
   GBTLink(uint16_t _flx, uint16_t _fee);
   void clear(bool resetStat = true, bool resetTFRaw = false);
@@ -159,50 +155,49 @@ struct GBTLink
 
   void check_APE(const uint8_t& dataC)
   {
-  switch (dataC)
-  {
-    case 0xF2:
-      std::cerr << " APE_STRIP_START" << std::endl;
-      break;
-    case 0xF4:
-      std::cerr << " APE_DET_TIMEOUT" << std::endl;
-      break;
-    case 0xF5:
-      std::cerr << " APE_OOT" << std::endl;
-      break;
-    case 0xF6:
-      std::cerr << " APE_PROTOCOL_ERROR" << std::endl;
-      break;
-    case 0xF7:
-      std::cerr << " APE_LANE_FIFO_OVERFLOW_ERROR" << std::endl;
-      break;
-    case 0xF8:
-      std::cerr << " APE_FSM_ERROR" << std::endl;
-      break;
-    case 0xF9:
-      std::cerr << " APE_PENDING_DETECTOR_EVENT_LIMIT" << std::endl;
-      break;
-    case 0xFA:
-      std::cerr << " APE_PENDING_LANE_EVENT_LIMIT" << std::endl;
-      break;
-    case 0xFB:
-      std::cerr << " APE_O2N_ERROR" << std::endl;
-      break;
-    case 0xFC:
-      std::cerr << " APE_RATE_MISSING_TRG_ERROR" << std::endl;
-      break;
-    case 0xFD:
-      std::cerr << " APE_PE_DATA_MISSING" << std::endl;
-      break;
-    case 0xFE:
-      std::cerr << " APE_OOT_DATA_MISSING" << std::endl;
-      break;
-    default:
-      std::cerr << " Unknown APE code" << std::endl;
+    switch (dataC)
+    {
+      case 0xF2:
+        std::cerr << " APE_STRIP_START" << std::endl;
+        break;
+      case 0xF4:
+        std::cerr << " APE_DET_TIMEOUT" << std::endl;
+        break;
+      case 0xF5:
+        std::cerr << " APE_OOT" << std::endl;
+        break;
+      case 0xF6:
+        std::cerr << " APE_PROTOCOL_ERROR" << std::endl;
+        break;
+      case 0xF7:
+        std::cerr << " APE_LANE_FIFO_OVERFLOW_ERROR" << std::endl;
+        break;
+      case 0xF8:
+        std::cerr << " APE_FSM_ERROR" << std::endl;
+        break;
+      case 0xF9:
+        std::cerr << " APE_PENDING_DETECTOR_EVENT_LIMIT" << std::endl;
+        break;
+      case 0xFA:
+        std::cerr << " APE_PENDING_LANE_EVENT_LIMIT" << std::endl;
+        break;
+      case 0xFB:
+        std::cerr << " APE_O2N_ERROR" << std::endl;
+        break;
+      case 0xFC:
+        std::cerr << " APE_RATE_MISSING_TRG_ERROR" << std::endl;
+        break;
+      case 0xFD:
+        std::cerr << " APE_PE_DATA_MISSING" << std::endl;
+        break;
+      case 0xFE:
+        std::cerr << " APE_OOT_DATA_MISSING" << std::endl;
+        break;
+      default:
+        std::cerr << " Unknown APE code" << std::endl;
+    }
+    return;
   }
-  return;
-}
-
 
 //  ClassDefNV(GBTLink, 1);
 };
