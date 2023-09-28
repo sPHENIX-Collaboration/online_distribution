@@ -107,7 +107,7 @@ struct GBTLink
 
   PayLoadSG rawData;         // scatter-gatter buffer for cached CRU pages, each starting with RDH
   size_t dataOffset = 0;     //
-  std::vector<InteractionRecord> physTrgTime;
+  std::vector<InteractionRecord> mL1TrgTime;
   std::vector<TRGData> mTrgData;
 
   std::vector<mvtx_hit *> hit_vector = {};
@@ -298,7 +298,7 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
 
           if ( (gbtWord.triggerType >> GBTLinkDecodingStat::BitMaps::PHYSICS) & 0x1 )
           {
-            physTrgTime.push_back(ir);
+            mL1TrgTime.push_back(ir);
           }
 
           if ( !gbtWord.continuation && !gbtWord.noData)
@@ -352,33 +352,11 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
           {
             decode_lane(std::distance(cableData.begin(), itr), *itr);
           }
+          trgData.n_hits = hit_vector.size() - trgData.first_hit_pos;
           prev_evt_complete = false;
           header_found = false;
           trailer_found = false;
           clearCableData();
-
-          /*
-                                if not self.skip_data:
-                                    previous_bc_count = bc_count
-                                    bc_count = None
-                                    for lane, data in lanes.items():
-                                        try:
-                                            chip_data = self.decode_alpide(data, self.accept_decreasing_address, thscan_current_charge, thscan_current_row)
-                                            for i, d in enumerate(chip_data):
-                                                if bc_count:
-                                                    # assert d['bc']==bc_count, f"bc_count on chip {i}, lane {lane} not matching the one of the other chips: 0x{d['bc']:02x} != 0x{bc_count:02x}"
-                                                    pass
-                                                else:
-                                                    bc_count = d['bc']
-                                                    # if not self.thscan: # thscan does not need to check this. Check is done in line 377 and following
-                                                    #     assert bc_count != previous_bc_count, f"Previous and current bc counts are the same! 0x{bc_count:2x} == 0x{previous_bc_count:2x}"
-                                        except:
-                                            self.logger.info(f"Error in block before byte {self.bytes_read} for lane {lane}")
-                                            raise
-                                        if (iblock_event-boffset)%self.print_interval==0:
-                                            for d in chip_data:
-                                                self.logger.info(f"iblock_event {iblock_event}, Lane {lane}, bytes_read {self.bytes_read}: {d}")
-            */
         }
       }
     }

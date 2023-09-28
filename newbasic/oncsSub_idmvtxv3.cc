@@ -225,7 +225,7 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
         "FeeId %d was not found in the feeId mapping for this packet", i);
 
     uint32_t lnkId =  mFeeId2LinkID[i].entry;
-    return mGBTLinks[lnkId].physTrgTime.size();
+    return mGBTLinks[lnkId].mL1TrgTime.size();
   }
   else if ( strcmp(what, "NR_STROBES") == 0 )
   {
@@ -248,66 +248,86 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
     std::cout << "Unknow option " << what << std::endl;
     return -1;
   }
-/*
-
-  if ( i >= hit_vector.size())
-    {
-      return 0;
-    }
-
-  else if ( strcmp(what,"SOURCE_ID") == 0 )
-    {
-      return hit_vector[i]->source_id;
-    }
-
-  else if ( strcmp(what,"LANE") == 0 )
-    {
-      return hit_vector[i]->lane;
-    }
-
-  else if ( strcmp(what,"ENCODER_ID") == 0 )
-    {
-      return hit_vector[i]->encoder_id;
-    }
-
-  else if ( strcmp(what,"ADDR") == 0 )
-    {
-      return hit_vector[i]->addr;
-    }
-*/
   return 0;
 }
 
-int oncsSub_idmvtxv3::iValue(const int i_lnk, const int i_strb, const char *what)
+int oncsSub_idmvtxv3::iValue(const int i_feeid, const int idx, const char *what)
 {
+  uint32_t feeId = i_feeid;
+  uint32_t index = idx;
+
+  ASSERT(mFeeId2LinkID.find(feeId) != mFeeId2LinkID.cend(),
+      "FeeId %d was not found in the feeId mapping for this packet", feeId);
+
+  uint32_t lnkId =  mFeeId2LinkID[feeId].entry;
+
+  if ( strcmp(what, "L1_IR_BCO") == 0 )
+  {
+    return (index < mGBTLinks[lnkId].mL1TrgTime.size()) ? mGBTLinks[lnkId].mL1TrgTime[index].orbit : -1;
+  }
+  else if ( strcmp(what, "L1_IR_BC") == 0 )
+  {
+    return (index < mGBTLinks[lnkId].mL1TrgTime.size()) ? mGBTLinks[lnkId].mL1TrgTime[index].bc : -1;
+  }
+  else if ( strcmp(what, "TRG_IR_BCO") == 0 )
+  {
+    return (index < mGBTLinks[lnkId].mTrgData.size()) ? mGBTLinks[lnkId].mTrgData[index].ir.orbit : -1;
+  }
+  else if ( strcmp(what, "TRG_IR_BC") == 0 )
+  {
+    return (index < mGBTLinks[lnkId].mTrgData.size()) ? mGBTLinks[lnkId].mTrgData[index].ir.bc : -1;
+  }
+  else if ( strcmp(what, "TRG_NR_HITS") == 0)
+  {
+    return (index < mGBTLinks[lnkId].mTrgData.size()) ? mGBTLinks[lnkId].mTrgData[index].n_hits : -1;
+  }
+  else
+  {
+    std::cout << "Unknow option " << what << std::endl;
+    return -1;
+  }
+
   return 0;
 }
 
-int oncsSub_idmvtxv3::iValue(const int lnk, const int i_strb, const int hit, const char *what)
+int oncsSub_idmvtxv3::iValue(const int i_feeid, const int i_trg, const int i_hit, const char *what)
 {
-  return 0;
-}
+  uint32_t feeId = i_feeid;
+  uint32_t trg = i_trg;
+  uint32_t hit = i_hit;
 
-long long oncsSub_idmvtxv3::lValue(const int n, const char *what)
-{
-  decode();
-//  unsigned int i = n;
-/*
-  if ( i >= hit_vector.size())
-    {
-      return 0;
-    }
+  ASSERT(mFeeId2LinkID.find(feeId) != mFeeId2LinkID.cend(),
+      "FeeId %d was not found in the feeId mapping for this packet", feeId);
 
-  if ( strcmp(what,"RHICBCO") == 0 )
-    {
-      return hit_vector[i]->RHICBCO;
-    }
+  uint32_t lnkId =  mFeeId2LinkID[feeId].entry;
 
-  else if ( strcmp(what,"LHCBC") == 0 )
-    {
-      return hit_vector[i]->LHCBC;
-    }
-*/
+  uint32_t hit_global_id = mGBTLinks[lnkId].mTrgData[trg].first_hit_pos + hit;
+
+  if ( strcmp(what, "HIT_CHIP_ID") == 0 )
+  {
+    return ( (hit >= 0) && (hit < mGBTLinks[lnkId].mTrgData[trg].n_hits) ) ? \
+                     mGBTLinks[lnkId].hit_vector[hit_global_id]->chip_id : -1;
+  }
+  else if ( strcmp(what, "HIT_BC") == 0 )
+  {
+    return ( (hit >= 0) && (hit < mGBTLinks[lnkId].mTrgData[trg].n_hits) ) ? \
+                     mGBTLinks[lnkId].hit_vector[hit_global_id]->bunchcounter : -1;
+  }
+  else if ( strcmp(what, "HIT_ROW") == 0 )
+  {
+    return ( (hit >= 0) && (hit < mGBTLinks[lnkId].mTrgData[trg].n_hits) ) ? \
+                     mGBTLinks[lnkId].hit_vector[hit_global_id]->row_pos : -1;
+  }
+  else if ( strcmp(what, "HIT_COL") == 0 )
+  {
+    return ( (hit >= 0) && (hit < mGBTLinks[lnkId].mTrgData[trg].n_hits) ) ? \
+                     mGBTLinks[lnkId].hit_vector[hit_global_id]->col_pos : -1;
+  }
+  else
+  {
+    std::cout << "Unknow option " << what << std::endl;
+    return -1;
+  }
   return 0;
 }
 
@@ -327,29 +347,31 @@ void oncsSub_idmvtxv3::dump(OSTREAM &os)
     os << "Link " << setw(4) << feeId << " has " << hbfSize << " HBs, ";
     os << iValue(feeId, "NR_STROBES") << " strobes and ";
     os << iValue(feeId, "NR_PHYS_TRG") << " L1 triggers" << std::endl;
-    for ( auto& trg : mGBTLinks[i].physTrgTime )
+    for ( int iL1 = 0; iL1 < iValue(feeId, "NR_PHYS_TRG"); ++iL1 )
     {
-      os << "L1: " << (&trg - &mGBTLinks[i].physTrgTime[0]) << " " << trg << std::endl;
+      os << "L1: " << iL1  << std::hex << " BCO: 0x" << iValue(feeId, iL1, "L1_IR_BCO");
+      os << std::dec << " BC: " << iValue(feeId, iL1, "L1_IR_BC") << endl;
     }
     os << "Total number of hits: " << iValue(feeId, "NR_HITS") << endl;
+    for ( int i_trg = 0; i_trg < iValue(feeId, "NR_STROBES"); ++i_trg )
+    {
+      os << "-- Strobe: " << i_trg << " has " << iValue(feeId, i_trg, "TRG_NR_HITS") << " hits." << std::endl;
+      if ( iValue(feeId, i_trg, "TRG_NR_HITS") )
+      {
+        os << "   hit number chip_id  bc    row    col  "  << endl;
+      }
+      for ( int i_hit = 0; i_hit < iValue(feeId, i_trg, "TRG_NR_HITS"); ++i_hit )
+      {
+        os << setw(4) << i_hit;
+        os << "  " << setw(9) << iValue(feeId, i_trg, i_hit, "HIT_CHIP_ID");
+        os << "  " << setw(8) << std::hex << iValue(feeId, i_trg, i_hit, "HIT_BC") << std::dec;
+        os << "  " << setw(4) << iValue(feeId, i_trg, i_hit, "HIT_ROW");
+        os << "  " << setw(6) << iValue(feeId, i_trg, i_hit, "HIT_COL");
+	      os << endl;
+      }
+    }
   }
 
-//  unsigned int n;
-/*
-  os << " hit number   addr   enc.id   lane   src.id      BCO         LHC BC  "  << endl;
-
-  for ( n = 0; n < nr_hits; n++)
-    {
-      os << setw(6) << n
-      << "  " << setw(6)  << iValue(n, "ENCOODER_ID")
-	 << "     " << setw(6) << iValue(n, "ADDR")
-	 << "  " << setw(6)  << iValue(n, "LANE")
-	 << "  " << setw(6)  << iValue(n, "SOURCE_ID")
-	 << "  " << setw(6)  << "0x" << lValue(n, "RHICBCO")
-	 << "  " << setw(6)  << "0x" << lValue(n, "LHCBC")
-	 << endl;
-    }
-*/
   return;
 }
 
