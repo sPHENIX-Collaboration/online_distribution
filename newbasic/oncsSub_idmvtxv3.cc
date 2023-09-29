@@ -261,17 +261,9 @@ int oncsSub_idmvtxv3::iValue(const int i_feeid, const int idx, const char *what)
 
   uint32_t lnkId =  mFeeId2LinkID[feeId].entry;
 
-  if ( strcmp(what, "L1_IR_BCO") == 0 )
-  {
-    return (index < mGBTLinks[lnkId].mL1TrgTime.size()) ? mGBTLinks[lnkId].mL1TrgTime[index].orbit : -1;
-  }
-  else if ( strcmp(what, "L1_IR_BC") == 0 )
+  if ( strcmp(what, "L1_IR_BC") == 0 )
   {
     return (index < mGBTLinks[lnkId].mL1TrgTime.size()) ? mGBTLinks[lnkId].mL1TrgTime[index].bc : -1;
-  }
-  else if ( strcmp(what, "TRG_IR_BCO") == 0 )
-  {
-    return (index < mGBTLinks[lnkId].mTrgData.size()) ? mGBTLinks[lnkId].mTrgData[index].ir.orbit : -1;
   }
   else if ( strcmp(what, "TRG_IR_BC") == 0 )
   {
@@ -331,6 +323,35 @@ int oncsSub_idmvtxv3::iValue(const int i_feeid, const int i_trg, const int i_hit
   return 0;
 }
 
+
+long long int oncsSub_idmvtxv3::lValue(const int i_feeid, const int idx, const char *what)
+{
+  uint32_t feeId = i_feeid;
+  uint32_t index = idx;
+
+  ASSERT(mFeeId2LinkID.find(feeId) != mFeeId2LinkID.cend(),
+      "FeeId %d was not found in the feeId mapping for this packet", feeId);
+
+  uint32_t lnkId =  mFeeId2LinkID[feeId].entry;
+
+  if ( strcmp(what, "L1_IR_BCO") == 0 )
+  {
+    return (index < mGBTLinks[lnkId].mL1TrgTime.size()) ? mGBTLinks[lnkId].mL1TrgTime[index].orbit : -1;
+  }
+  else if ( strcmp(what, "TRG_IR_BCO") == 0 )
+  {
+    return (index < mGBTLinks[lnkId].mTrgData.size()) ? mGBTLinks[lnkId].mTrgData[index].ir.orbit : -1;
+  }
+  else
+  {
+    std::cout << "Unknow option " << what << std::endl;
+    return -1;
+  }
+
+  return 0;
+}
+
+
 //_________________________________________________
 void oncsSub_idmvtxv3::dump(OSTREAM &os)
 {
@@ -350,7 +371,7 @@ void oncsSub_idmvtxv3::dump(OSTREAM &os)
 
     for ( int iL1 = 0; iL1 < iValue(feeId, "NR_PHYS_TRG"); ++iL1 )
     {
-      os << "L1: " << iL1  << std::hex << " BCO: 0x" << iValue(feeId, iL1, "L1_IR_BCO");
+      os << "L1: " << iL1  << std::hex << " BCO: 0x" << lValue(feeId, iL1, "L1_IR_BCO");
       os << std::dec << " BC: " << iValue(feeId, iL1, "L1_IR_BC") << endl;
     }
 
@@ -358,7 +379,7 @@ void oncsSub_idmvtxv3::dump(OSTREAM &os)
     for ( int i_trg = 0; i_trg < iValue(feeId, "NR_STROBES"); ++i_trg )
     {
       os << "-- Strobe: " << i_trg;
-      os << ", BCO: 0x" << std::hex << iValue(feeId, i_trg, "TRG_IR_BCO") << std::dec;
+      os << ", BCO: 0x" << std::hex << lValue(feeId, i_trg, "TRG_IR_BCO") << std::dec;
       os << " BC: " << iValue(feeId, i_trg, "TRG_IR_BC");
       os << ", has " << iValue(feeId, i_trg, "TRG_NR_HITS") << " hits." << std::endl;
 
