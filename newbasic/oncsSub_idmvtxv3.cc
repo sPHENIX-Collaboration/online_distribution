@@ -105,7 +105,7 @@ void oncsSub_idmvtxv3::setupLinks(mvtx::PayLoadCont& buf)
   do
   {
     // Skip FLX padding
-    if ( (*(reinterpret_cast<uint16_t*>(&payload[payload_position] + 30)) == 0xFFFF) )
+    if ( *(reinterpret_cast<uint16_t*>(&payload[payload_position] + 30)) == 0xFFFF )
     {
       while ( (*(reinterpret_cast<uint16_t*>(&payload[payload_position] + 30)) == 0xFFFF) &&\
              payload_position < dlength)
