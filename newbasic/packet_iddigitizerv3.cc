@@ -109,7 +109,7 @@ int Packet_iddigitizerv3::decode ()
 
       if ( k[fem_index] == 0xa000ffff)
 	{
-	  //coutfl << " FEM_ start at  " << fem_index << "   " << hex << k[fem_index] << dec  << endl;
+	  // coutfl << " FEM_ start at  " << fem_index << "   " << hex << k[fem_index] << dec  << endl;
 	  
 	  unsigned int i = decode_FEM (  &k[fem_index], fem_nr, dlength - fem_index); // we make "i" so we can debug
 	  if ( i == 0)
@@ -129,19 +129,20 @@ int Packet_iddigitizerv3::decode ()
 	}
     }
 
+  
   return 0;
 }
 
 
 unsigned int Packet_iddigitizerv3::decode_FEM ( unsigned int *k, const int fem_nr, const int len)
 {
-  int NFEM = 0;
+  int NFEM = fem_nr;
   int CHNL = 0;
-  int index_channel = 0;
+  int index_channel = NFEM*64;
   int index_sample = 0;
   int index_parity = 0;
 
-  //coutfl << " calling decode_FEM for fem " << fem_nr << endl;
+  //  coutfl << " calling decode_FEM for fem " << fem_nr << endl << endl;
 
   
   // should have been checked but let's be sure
@@ -163,18 +164,30 @@ unsigned int Packet_iddigitizerv3::decode_FEM ( unsigned int *k, const int fem_n
   //   }
 
 
-  for ( index = 4; index < len; index++)
+
+  for ( index = 4; index < len;)
     {
       int word_classifier = k[index] >> 28;
       
-      if ( word_classifier == 0x1) // FEM/Ch address
+      if ( (k[index] >> 28) == 0xe) // ah! another "0xe" channel
+	{
+	  isZeroSuppressed[index_channel] = true;
+	  pre_post[0][index_channel] = (k[index] & 0x3fff);
+	  pre_post[1][index_channel] = ((k[index]>>14) & 0x3fff);
+	  // coutfl << " found a zp-word  " << hex << "0x" << k[index]  << dec << " at index " << index
+	  // 	 << " for channel " << index_channel << "  " << isZeroSuppressed[index_channel] << " **** zero-suppressed " <<  endl;
+	  index++;
+	  index_channel++;
+	}
+
+      else if ( word_classifier == 0x1) // FEM/Ch address
 	{
 	  // _fem_calculated_checksum_MSB[NFEM] ^= ((k[index] >> 16 ) & 0xffff);
 	  // _fem_calculated_checksum_LSB[NFEM] ^= (k[index] & 0xffff);
 
 	  NFEM = (k[index] >> 6) & 0x7;
 	  CHNL   = k[index] & 0x3f;
-	  //coutfl << "new NFEM and channel - " << NFEM << " " << CHNL << "   "  << hex << k[index] << dec << endl;
+	  //	  coutfl << "new NFEM and channel - " << NFEM << " " << CHNL << "   "  << hex << k[index] << dec << endl;
 	  if (NFEM != fem_nr || NFEM >= NR_FEMS)
 	    {
 	      coutfl << "NFEM and fem_nr differ - " << NFEM << " " << fem_nr << "  " << hex << k[index] << dec << endl;
@@ -184,45 +197,61 @@ unsigned int Packet_iddigitizerv3::decode_FEM ( unsigned int *k, const int fem_n
 	  index_parity = 0;  
 	  index_channel = NFEM*64+CHNL;
 	  // we assume we are zero-suppressed and reset this if we find later that we are not
-	  isZeroSuppressed[index_channel] = true;
+	  //	  isZeroSuppressed[index_channel] = true;
+
+	  if ( (k[index+1] >> 28) == 0x3) // we have a full waveform
+	    {
+	      index++;  //move on to that word
+	      for ( int c = 0; c < ( _nsamples/2 + 1) ; c++)  // like for 12 samples we expect 7 words
+		{
+		  if ( (k[index] >> 28) == 0x3)  // normal word
+		    {
+		      // coutfl << " found a normal word   " << hex << "0x" << k[index]  << dec << " at index " << index
+		      // 	     << " for channel " << index_channel << " and " << index_sample  << endl;
+		      adc[index_sample++][index_channel] = k[index] & 0x3fff;
+		      adc[index_sample++][index_channel] = (k[index] >> 14) & 0x3fff;
+		      isZeroSuppressed[index_channel] = false; // we are ot zero-sppressed
+		      // coutfl << " setting not zp  for channel " << index_channel  << " " << isZeroSuppressed[index_channel] << endl;
+
+		    }
+		  else if ( (k[index] >> 28) == 0xe) // here is our regular pre-post word
+		    {
+		      pre_post[0][index_channel] = (k[index] & 0x3fff);
+		      pre_post[1][index_channel] = ((k[index]>>14) & 0x3fff);
+		      // coutfl << " found a regular zp-word  " << hex << "0x" << k[index]  << dec << " at index " << index
+		      // 	     << " for channel " << index_channel << endl;
+		    }
+		  else
+		    {
+		      // scream if that's not 0x3 nor 0xe
+		      coutfl << "wrong tag! " << hex << (k[index] >> 28) << dec << " at index " << index << endl;
+		    }
+		  index++;
+		}
+	    }
+
+	  // just in case we get a zero-suppressed word, step the index_channel
+	  index_channel++;
 	}
-
-      else if ( word_classifier == 0x3)  // two samples
-	{
-	  _fem_calculated_checksum_MSB[NFEM] ^= k[index] & 0x3fff;
-	  _fem_calculated_checksum_LSB[NFEM] ^= (k[index] >> 14) & 0x3fff;
-
-
-	  adc[index_sample++][index_channel] = k[index] & 0x3fff;
-	  adc[index_sample++][index_channel] = (k[index] >> 14) & 0x3fff;
-	  isZeroSuppressed[index_channel] = false; // we are ot zero-sppressed
-	}
-
-      else if ( word_classifier == 0xe)   // suppressed channel info
-	{
-	  // _fem_calculated_checksum_MSB[NFEM] ^= ((k[index] >> 16 ) & 0xffff);
-	  // _fem_calculated_checksum_LSB[NFEM] ^= (k[index] & 0xffff);
-
-	  pre_post[0][index_channel] = (k[index] & 0x3fff);
-	  pre_post[1][index_channel] = ((k[index]>>14) & 0x3fff);
-	}
-
+      
       else if ( word_classifier == 0xb)   // parity info
 	{
 	  if ( index_parity == 0)
 	    {
 	      _fem_checksum_MSB[NFEM] = (k[index] & 0xffff);
 	      index_parity++;
+	      index++;
 	    }
 	  else
 	    {
 	      _fem_checksum_LSB[NFEM] = (k[index] & 0xffff);
+	      index++;
 	      break;
 	    }
-
+	  if ( index >= len) break;
 	}
     }
-  return index+1;
+  return index;
 }
 
 
@@ -411,8 +440,16 @@ void  Packet_iddigitizerv3::dump ( OSTREAM& os )
 
   for ( int c = 0; c < _nchannels; c++)
     {
-      os << setw(4) << c << " | ";
+      if (  iValue(c,"SUPPRESSED") )
+	{
+	  os << setw(4) << c << " |-";
+	}
+      else
+	{
+	  os << setw(4) << c << " | ";
+	}
 
+	  
       os << hex;
 
       os << setw(6) << iValue(c, "PRE");

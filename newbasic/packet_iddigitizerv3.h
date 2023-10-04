@@ -50,10 +50,11 @@ protected:
   int _nchannels;
   int _is_decoded;
 
+  bool isZeroSuppressed[NR_FEMS*64];
+
   int adc[32][NR_FEMS*64];
   int pre_post[2][NR_FEMS*64];
 
-  bool isZeroSuppressed[NR_FEMS*64];
 
 };
 

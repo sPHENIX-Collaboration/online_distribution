@@ -195,7 +195,7 @@ long long oncsSub_idgl1v0::lValue(const int i, const char *what)
 
 void oncsSub_idgl1v0::dump(std::ostream &os)
 {
-
+  identify(os);
   os << "packet nr:       " << iValue(0) << endl;
   os << "Beam Clock:      " << "0x" << hex << lValue(0, "BCO") << dec  << "   "  << lValue(0, "BCO") << endl;
   os << "Trigger Input:   " << "0x" << hex <<  lValue(0, "TriggerInput")  << dec << "   " << lValue(0, "TriggerInput") << endl;
