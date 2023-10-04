@@ -365,7 +365,6 @@ bin_PROGRAMS = \
   eventcombiner \
   prdf2prdf \
   prdfcheck \
-  last_events \
   prdfsplit
 
 
@@ -373,7 +372,6 @@ dpipe_SOURCES = dpipe.cc
 dlist_SOURCES = dlist.cc
 ddump_SOURCES = ddump.cc
 eventcombiner_SOURCES = eventcombiner.cc
-last_events_SOURCES = last_events.cc
 
 if LINUX
 dpipe_LDFLAGS = -Wl,-export-dynamic
@@ -390,7 +388,6 @@ dpipe_LDADD = libNoRootEvent.la libmessage.la  -ldl  @LZOLIB@
 dlist_LDADD = libNoRootEvent.la libmessage.la  -ldl  @LZOLIB@
 ddump_LDADD = libNoRootEvent.la libmessage.la  -ldl @LZOLIB@
 eventcombiner_LDADD = libNoRootEvent.la libmessage.la -ldl  @LZOLIB@
-last_events_LDADD = libNoRootEvent.la libmessage.la -ldl  @LZOLIB@
 
 
 changeid_LDADD = libNoRootEvent.la libmessage.la -ldl @LZOLIB@
