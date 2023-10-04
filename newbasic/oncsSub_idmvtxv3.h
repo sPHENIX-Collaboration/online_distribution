@@ -3,10 +3,16 @@
 
 #include "oncsSubevent.h"
 
+#include "mvtx_decoder/PayLoadCont.h"
+#include "mvtx_decoder/GBTLink.h"
+
+#include "mvtx_decoder/mvtx_utils.h"
+
 #include <map>
 #include <vector>
 #include <bitset>
 #include <stdint.h>
+#include <unordered_map>
 
 #ifndef __CINT__
 class WINDOWSEXPORT oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
@@ -18,177 +24,43 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
   explicit oncsSub_idmvtxv3(subevtdata_ptr);
   ~oncsSub_idmvtxv3();
 
-  int    iValue(const int ,const char * what);
-  long long    lValue(const int ,const char * what);
+  int iValue(const int ,const char * what) final;
+  int iValue(const int, const int, const char* what) final;
+  int iValue(const int, const int, const int, const char* what) final;
 
+  long long int lValue(const int, const int, const char* what);
 
-  
-  void dump(OSTREAM &os = COUT);
-
+  void dump(OSTREAM &os = COUT) final;
 
  protected:
 
   int decode();
-  int read_32( std::bitset<80> &gbtword0
-	       , std::bitset<80> &gbtword1
-	       , std::bitset<80> &gbtword2
-	       , unsigned short &w0
-	       , unsigned short &w1 );
-
-  
   bool m_is_decoded;
 
-  unsigned long get_GBT_value( const std::bitset<80> gbtword, const int pos, const int size) const;
-  unsigned long long get_GBT_lvalue( const std::bitset<80> gbtword, const int pos, const int size) const;
-  int  decode_chipdata( const std::bitset<80> gbtword);
 
-  void  pretty_print( const std::bitset<80> gbtword) const;
+  struct dumpEntry
+  {
+    int entry = -1;
+  };
 
-  int  decode_lane( const std::vector<uint8_t> v);
+  void loadInput(mvtx::PayLoadCont& buf);
+  void setupLinks(mvtx::PayLoadCont&);
+
+  static size_t mEventId;
+  static std::unordered_map<uint32_t, dumpEntry> mSubId2Buffers; // link sub_id to data buffer in the pool mapping
+  static std::vector< mvtx::PayLoadCont > mBuffers;
+  static std::unordered_map<uint16_t, dumpEntry> mFeeId2LinkID; // link fee_id to GBTLinks
+  static std::vector<mvtx::GBTLink> mGBTLinks;
+
+  static constexpr uint8_t MaxLinksPerPacket = 12;
+
+  static std::array<uint32_t, MaxLinksPerPacket> hbf_start;
+  static std::array<uint32_t, MaxLinksPerPacket> hbf_length;
+  static std::array<uint32_t, MaxLinksPerPacket> prev_pck_cnt;
 
   uint8_t *payload;
   unsigned int payload_position;
 
-  // the per-lane keeper of the chip data
-  // lane, vector 
-  std::map<unsigned int, std::vector<unsigned char> > chipdata;
-  
-  std::vector<std::bitset<80> > gbtvector;
-
-  
-  unsigned long long last_BCO;
-  unsigned long long last_LHCBC;
-  unsigned short last_source_id;
-  unsigned short last_fee_id;
-  unsigned short last_lane;
-  
-  
-  struct mvtx_hit
-  {
-    unsigned long long RHICBCO;
-    unsigned long long LHCBC;
-    // take out    unsigned int source_id;
-
-    unsigned int chip_id;
-
-    unsigned int fee_id;
-    unsigned int lane;
-    unsigned int encoder_id;
-    unsigned int addr;
-    unsigned int source_id;
-    // unsigned int row_pos;
-    // unsigned int col_pos;
-    // unsigned int L1Trigger;
-
-    // unsigned int chipid;
-    // unsigned int region_id;
-    // unsigned int readout_flags;
-    // unsigned int bunchcounter;
-  };
-    
-  std::vector<mvtx_hit *> hit_vector;
-
-  
-  enum WordTypeMarker
-    {
-     IHW = 0xe0,
-     TDH = 0xe8,
-     TDT = 0xf0,
-     DDW = 0x40,
-     CDW = 0xf8
-    };
-     
-  
-  enum Rdh8ByteMapW0
-    {
-     HDRVERSION     = 0 *8,
-     SIZE           = 1 *8,
-     FEEID_LSB      = 2 *8,
-     FEEID_MSB      = 3 *8,
-     SOURCE_ID      = 4 *8,
-     DET_FIELD_SB0  = 5 *8,
-     DET_FIELD_SB1  = 6 *8,
-     DET_FIELD_SB2  = 7 *8,
-     DET_FIELD_SB3  = 8 *8,
-     RESERVED_0_LSB = 9 *8
-    };
-  
-  enum Rdh8ByteMapW1
-    {
-     BC_LSB         = 0 *8,
-     BC_MSB         = 1 *8,
-     RESERVED_1_LSB = 2 *8,
-     RESERVED_1_MSB = 3 *8,
-     BCO_SB0        = 4 *8,
-     BCO_SB1        = 5 *8,
-     BCO_SB2        = 6 *8,
-     BCO_SB3        = 7 *8,
-     BCO_SB4        = 8 *8,
-     RESERVED_2_SB0 = 9 *8
-    };
-
-  enum Rdh8ByteMapW2
-    {
-     TRG_TYPE_SB0    = 0 * 8,
-     TRG_TYPE_SB1    = 1 * 8,
-     TRG_TYPE_SB2    = 2 * 8,
-     TRG_TYPE_SB3    = 3 * 8,
-     PAGE_CNT_LSB    = 4 * 8,
-     PAGE_CNT_MSB    = 5 * 8,
-     STOP_BIT        = 6 * 8,
-     PRIORITY        = 7 * 8,
-     RESERVED_3_SB0  = 8 * 8,
-     RESERVED_3_SB1  = 9 * 8
-    };
-  
-     
-  enum flxhdr_word0
-    {
-     RESERVED_0_SB0 = 0 *8,
-     RESERVED_0_SB1 = 1 *8,
-     RESERVED_0_SB2 = 2 *8,
-     RESERVED_0_SB3 = 3 *8,
-     RESERVED_0_SB4 = 4 *8,
-     RESERVED_0_SB5 = 5 *8,
-     RESERVED_0_SB6 = 6 *8,
-     RESERVED_0_SB7 = 7 *8,
-     RESERVED_0_SB8 = 8 *8,
-     RESERVED_0_SB9 = 9 *8
-    };
-  
-
-  enum flxhdr_word1
-    {
-     RESERVED_0_SB10 = 0 * 8,
-     RESERVED_0_SB11 = 1 * 8,
-     RESERVED_0_SB12 = 2 * 8,
-     RESERVED_0_SB13 = 3 * 8,
-     RESERVED_0_SB14 = 4 * 8,
-     RESERVED_0_SB15 = 5 * 8,
-     RESERVED_0_SB16 = 6 * 8,
-     RESERVED_0_SB17 = 7 * 8,
-     RESERVED_0_SB18 = 8 * 8,
-     RESERVED_0_SB19 = 9 * 8
-
-    };
-
-     enum flxhdr_word2
-    {
-     RESERVED_0_SB20  = 0 * 8,
-     RESERVED_0_SB21  = 1 * 8,
-     RESERVED_0_SB22  = 2 * 8,
-     FLXID            = 3 * 8,
-     RESERVED_1       = 4 * 8,
-     DMA_WRD_CTR_LSB  = 5 * 8,
-     DMA_WRD_CTR_MSB  = 6 * 8,
-     RESERVED_2       = 7 * 8,
-     GBT_ID           = 8 * 8,
-     RESERVED_3       = 9 * 8
-    };
-    
-
-
-  
-};
+ };
 
 #endif /* __ONCSSUB_IDMVTXV3_H__ */

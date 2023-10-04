@@ -202,8 +202,8 @@ allheaders = \
   packet_cdevringnopol.h \
   packet_cdevbuckets.h \
   packet_cdevdvm.h \
-  caen_correction.h
-
+  caen_correction.h \
+  mvtx_decoder/PayLoadCont.h
 
 allsources = \
   Cframe.C \
@@ -301,7 +301,13 @@ allsources = \
   packet_cdevringnopol.cc \
   packet_cdevbuckets.cc \
   packet_cdevdvm.cc \
-  caen_correction.cc
+  caen_correction.cc \
+  mvtx_decoder/InteractionRecord.cxx \
+  mvtx_decoder/PayLoadCont.cxx \
+  mvtx_decoder/PixelData.cxx \
+  mvtx_decoder/GBTWord.cxx \
+  mvtx_decoder/DecodingStat.cxx \
+  mvtx_decoder/GBTLink.cxx
 
 AM_LDFLAGS = -L$(libdir) -L$(ONLINE_MAIN)/lib -L$(OPT_SPHENIX)/lib
 
