@@ -353,7 +353,10 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
           trgData.first_hit_pos = hit_vector.size();
           for( auto&& itr = cableData.begin(); itr != cableData.end(); ++itr)
           {
-            decode_lane(std::distance(cableData.begin(), itr), *itr);
+            if (!itr->isEmpty())
+            {
+              decode_lane(std::distance(cableData.begin(), itr), *itr);
+            }
           }
           trgData.n_hits = hit_vector.size() - trgData.first_hit_pos;
           prev_evt_complete = false;
