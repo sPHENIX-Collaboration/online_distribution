@@ -52,11 +52,11 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
   static std::unordered_map<uint16_t, dumpEntry> mFeeId2LinkID; // link fee_id to GBTLinks
   static std::vector<mvtx::GBTLink> mGBTLinks;
 
-  static constexpr uint8_t MaxLinksPerPacket = 12;
+  static constexpr uint8_t MaxGBTLinks = 144; // 6 FLXs * 2 Packets * 12 Links
 
-  static std::array<uint32_t, MaxLinksPerPacket> hbf_start;
-  static std::array<uint32_t, MaxLinksPerPacket> hbf_length;
-  static std::array<uint32_t, MaxLinksPerPacket> prev_pck_cnt;
+  static std::array<uint32_t, MaxGBTLinks> hbf_start;
+  static std::array<uint32_t, MaxGBTLinks> hbf_length;
+  static std::array<uint32_t, MaxGBTLinks> prev_pck_cnt;
 
   uint8_t *payload;
   unsigned int payload_position;
