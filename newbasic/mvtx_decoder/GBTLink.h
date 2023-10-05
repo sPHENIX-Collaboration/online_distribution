@@ -103,7 +103,10 @@ struct GBTLink
   InteractionRecord ir = {};
 
   GBTLinkDecodingStat statistics; // link decoding statistics
-  size_t hbf_count = 0;
+  uint32_t hbf_start = 0;
+  uint32_t hbf_length = 0;
+  uint32_t prev_pck_cnt = 0;
+  uint32_t hbf_count = 0;
 
   PayLoadSG rawData;         // scatter-gatter buffer for cached CRU pages, each starting with RDH
   size_t dataOffset = 0;     //

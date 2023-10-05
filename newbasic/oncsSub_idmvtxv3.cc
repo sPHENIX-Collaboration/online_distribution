@@ -12,9 +12,6 @@ std::unordered_map<uint32_t, oncsSub_idmvtxv3::dumpEntry> oncsSub_idmvtxv3::mSub
 std::vector< mvtx::PayLoadCont> oncsSub_idmvtxv3::mBuffers = {};
 std::unordered_map<uint16_t, oncsSub_idmvtxv3::dumpEntry> oncsSub_idmvtxv3::mFeeId2LinkID = {};
 std::vector< mvtx::GBTLink> oncsSub_idmvtxv3::mGBTLinks = {};
-std::array<uint32_t, oncsSub_idmvtxv3::MaxGBTLinks> oncsSub_idmvtxv3::hbf_start;
-std::array<uint32_t, oncsSub_idmvtxv3::MaxGBTLinks> oncsSub_idmvtxv3::hbf_length;
-std::array<uint32_t, oncsSub_idmvtxv3::MaxGBTLinks> oncsSub_idmvtxv3::prev_pck_cnt;
 
 oncsSub_idmvtxv3::oncsSub_idmvtxv3(subevtdata_ptr data)
   : oncsSubevent_w4(data)
@@ -133,9 +130,6 @@ void oncsSub_idmvtxv3::setupLinks(mvtx::PayLoadCont& buf)
           {
             lnkref.entry = mGBTLinks.size();
             mGBTLinks.emplace_back(rdh.flxId, rdh.feeId);
-            hbf_start[lnkref.entry] = 0;
-            hbf_length[lnkref.entry] = 0;
-            prev_pck_cnt[lnkref.entry] = 0;
           }
           auto& gbtLink = mGBTLinks[lnkref.entry];
           auto lnkEndOffset= gbtLink.data.getUnusedSize();
@@ -144,21 +138,22 @@ void oncsSub_idmvtxv3::setupLinks(mvtx::PayLoadCont& buf)
 
           if ( ! rdh.packetCounter ) // start HB
           {
-            hbf_start[lnkref.entry] = lnkEndOffset;
-            hbf_length[lnkref.entry] = pageSizeInBytes;
+            gbtLink.hbf_start = lnkEndOffset;
+            gbtLink.hbf_length = pageSizeInBytes;
           }
           else
           {
-            hbf_length[lnkref.entry] += pageSizeInBytes;
+            gbtLink.hbf_length += pageSizeInBytes;
           }
 
           if ( rdh.stopBit ) // found HB end
           {
-            gbtLink.cacheData(hbf_start[lnkref.entry], hbf_length[lnkref.entry]);
+            gbtLink.cacheData(gbtLink.hbf_start, gbtLink.hbf_length);
           }
-          ASSERT( ( (! rdh.packetCounter) || (rdh.packetCounter == prev_pck_cnt[lnkref.entry] + 1) ),
-                 "Incorrect pages count %d, previous page count was %d", rdh.packetCounter, prev_pck_cnt[lnkref.entry]);
-          prev_pck_cnt[lnkref.entry] = rdh.packetCounter;
+          ASSERT( ( (! rdh.packetCounter) || (rdh.packetCounter == gbtLink.prev_pck_cnt + 1) ),
+                 "Incorrect pages count %d, previous page count was %d", rdh.packetCounter,
+                 gbtLink.prev_pck_cnt);
+          gbtLink.prev_pck_cnt = rdh.packetCounter;
           payload_position += pageSizeInBytes;
         }
       }
@@ -213,7 +208,7 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
     uint32_t lnkId =  mFeeId2LinkID[i].entry;
 
     ASSERT( mGBTLinks[lnkId].rawData.getNPieces() == mGBTLinks[lnkId].hbf_count,
-        "Mismatch size for HBF from hbfData: %ld and link rawData Pieces: %ld",
+        "Mismatch size for HBF from hbfData: %d and link rawData Pieces: %ld",
         mGBTLinks[lnkId].hbf_count, mGBTLinks[lnkId].rawData.getNPieces() );
 
     return mGBTLinks[lnkId].hbf_count;
