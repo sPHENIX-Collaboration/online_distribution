@@ -33,6 +33,8 @@ int oncsSub_idmvtxv3::decode()
   }
   m_is_decoded = true;
 
+  feeid_set.clear();
+
   for (auto& link : mGBTLinks)
   {
     link.clear(false, true); // clear data but not the statistics
@@ -125,6 +127,7 @@ void oncsSub_idmvtxv3::setupLinks(mvtx::PayLoadCont& buf)
         }
         else
         {
+          feeid_set.insert(rdh.feeId);
           auto& lnkref = mFeeId2LinkID[rdh.feeId];
           if ( lnkref.entry == -1 )
           {
@@ -188,10 +191,7 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
   {
     if ( strcmp(what, "NR_LINKS") == 0)
     {
-      ASSERT(mGBTLinks.size() == mFeeId2LinkID.size(),
-          "Mismatch size for GBTLink list and reference mapping, mGBTLinks size: %ld and mFeeId2LinkID size: %ld",
-          mGBTLinks.size(), mFeeId2LinkID.size());
-      return mGBTLinks.size();
+      return feeid_set.size();
     }
     else
     {
@@ -203,7 +203,7 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
   unsigned int i = n;
   if ( strcmp(what, "FEEID") == 0 )
   {
-    return (i < mGBTLinks.size()) ? mGBTLinks[i].feeID : -1;
+    return (i < feeid_set.size()) ? *(next(feeid_set.begin(), i)) : -1;
   }
   else if ( strcmp(what, "NR_HBF") == 0 )
   {
@@ -359,7 +359,6 @@ long long int oncsSub_idmvtxv3::lValue(const int i_feeid, const int idx, const c
 //_________________________________________________
 void oncsSub_idmvtxv3::dump(OSTREAM &os)
 {
-  os << "Event: " << mEventId << std::endl;
   identify(os);
   decode();
 
@@ -417,4 +416,5 @@ oncsSub_idmvtxv3::~oncsSub_idmvtxv3()
   {
     link.clear(true, true);
   }
+  feeid_set.clear();
 }

@@ -9,6 +9,7 @@
 #include "mvtx_decoder/mvtx_utils.h"
 
 #include <map>
+#include <set>
 #include <vector>
 #include <bitset>
 #include <stdint.h>
@@ -58,6 +59,7 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
   static std::array<uint32_t, MaxGBTLinks> hbf_length;
   static std::array<uint32_t, MaxGBTLinks> prev_pck_cnt;
 
+  std::set<uint16_t> feeid_set;
   uint8_t *payload;
   unsigned int payload_position;
 
