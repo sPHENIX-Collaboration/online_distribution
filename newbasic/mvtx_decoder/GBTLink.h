@@ -202,8 +202,24 @@ struct GBTLink
     return;
   }
 
+  void AlpideByteError(PayLoadCont& buffer)
+  {
+    uint8_t dataC = 0;
+
+    std::cerr << "ERROR: invalid byte 0x" << std::hex << (int)(dataC) << std::endl;
+    while ( buffer.next(dataC) )
+    {
+      std::cerr << " " << std::hex << (int)(dataC) << " ";
+    }
+    std::cerr << std::endl;
+    buffer.clear();
+    return;
+  }
+
+
 //  ClassDefNV(GBTLink, 1);
 };
+
 
 ///_________________________________________________________________
 /// collect cables data for single ROF, return number of real payload words seen,
@@ -390,8 +406,11 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
   uint8_t bc = 0xFF;
   uint8_t reg = 0xFF;
 
-  ASSERT( ( (buffer[0] & 0xF0) == 0xE0 || (buffer[0] & 0xF0) == 0xA0 || (buffer[0] == 0xF0) || (buffer[0] == 0xF1) ),
-    "first byte 0x%x is not a valid chip header, busy on or busy off, link: %d", buffer[0], feeID );
+  if ( !( (buffer[0] & 0xF0) == 0xE0 || (buffer[0] & 0xF0) == 0xA0 || (buffer[0] == 0xF0) || (buffer[0] == 0xF1) ) )
+  {
+    AlpideByteError(buffer);
+    return 0;
+  }
 
   while ( buffer.next(dataC) )
   {
@@ -465,13 +484,8 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
           busy_on = busy_off = chip_header_found = 0;
         }
         else // ERROR
-
         {
-          std::cerr << "ERROR: invalid byte 0x" << std::hex << (int)(dataC) << std::endl;
-          while ( buffer.next(dataC) )
-          {
-            std::cerr << " " << std::hex << (int)(dataC) << " ";
-          }
+          AlpideByteError(buffer);
         }
       }
       else
@@ -489,27 +503,14 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
         {
           continue;
         }
-        else { // ERROR
-          std::cerr << "ERROR: invalid byte 0x" << std::hex << (int)(dataC) << std::endl;
-          while ( buffer.next(dataC) )
-          {
-            std::cerr << " " << std::hex << (int)(dataC) << " ";
-          }
+        else
+        { // ERROR
+          AlpideByteError(buffer);
         } // else !chip_header_found
       }  // if chip_header_found
     } // busy_on, busy_off, chip_empty, other
   }  // while
 
-
-//
-//      else if  ((marker & 0xF0) == 0xB0) // we have a CHIP trailer
-//	{
-//	  readout_flags     = (marker >> 4) & 0xf;
-//	  //  cout  << " chip trailer " << hex  << " readout flags " << setw(5) << readout_flags << dec;
-//	}
-//
-//      //cout << endl;
-//    }
   return ret;
 }
 
