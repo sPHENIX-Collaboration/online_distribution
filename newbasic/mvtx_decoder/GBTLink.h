@@ -275,7 +275,8 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
         if ( gbtWord.isIHW() ) // ITS HEADER WORD
         {
           //TODO assert first word after RDH and active lanes
-          ASSERT( ( ((gbtWord.activeLanes >> 0) & 0x7) == 0x7 || \
+          ASSERT( ( !gbtWord.activeLanes || \
+                    ((gbtWord.activeLanes >> 0) & 0x7) == 0x7 || \
                     ((gbtWord.activeLanes >> 3) & 0x7) == 0x7 || \
                     ((gbtWord.activeLanes >> 6) & 0x7) == 0x7),
               "Expected all active lanes for links, but %d found in HBF %d, %s", \
@@ -390,7 +391,7 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
   uint8_t reg = 0xFF;
 
   ASSERT( ( (buffer[0] & 0xF0) == 0xE0 || (buffer[0] & 0xF0) == 0xA0 || (buffer[0] == 0xF0) || (buffer[0] == 0xF1) ),
-    "first byte 0x%x is not a valid chip header, busy on or busy off", buffer[0] );
+    "first byte 0x%x is not a valid chip header, busy on or busy off, link: %d", buffer[0], feeID );
 
   while ( buffer.next(dataC) )
   {
