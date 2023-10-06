@@ -29,7 +29,7 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
   int iValue(const int, const int, const char* what) final;
   int iValue(const int, const int, const int, const char* what) final;
 
-  long long int lValue(const int, const int, const char* what);
+  long long int lValue(const int, const int, const char* what) final;
 
   void dump(OSTREAM &os = COUT) final;
 
