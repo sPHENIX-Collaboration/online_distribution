@@ -156,8 +156,9 @@ struct GBTLink
 	  hit_vector.push_back(hit);
   }
 
-  void check_APE(const uint8_t& dataC)
+  void check_APE(const uint8_t& chipId, const uint8_t& dataC)
   {
+    std::cerr << "Link: " << feeID << ", Chip: " << (int)chipId;
     switch (dataC)
     {
       case 0xF2:
@@ -202,11 +203,12 @@ struct GBTLink
     return;
   }
 
-  void AlpideByteError(PayLoadCont& buffer)
+  void AlpideByteError(const uint8_t& chipId, PayLoadCont& buffer)
   {
     uint8_t dataC = 0;
 
-    std::cerr << "ERROR: invalid byte 0x" << std::hex << (int)(dataC) << std::endl;
+    std::cerr << "Link: " << feeID << ", Chip: " << (int)chipId;
+    std::cerr << " invalid byte 0x" << std::hex << (int)(dataC) << std::endl;
     while ( buffer.next(dataC) )
     {
       std::cerr << " " << std::hex << (int)(dataC) << " ";
@@ -406,9 +408,10 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
   uint8_t bc = 0xFF;
   uint8_t reg = 0xFF;
 
-  if ( !( (buffer[0] & 0xF0) == 0xE0 || (buffer[0] & 0xF0) == 0xA0 || (buffer[0] == 0xF0) || (buffer[0] == 0xF1) ) )
+  if ( !( (buffer[0] & 0xF0) == 0xE0 || (buffer[0] & 0xF0) == 0xA0 ||\
+          (buffer[0] == 0xF0) || (buffer[0] == 0xF1) || (buffer[0] & 0xF0) == 0xF0 ) )
   {
-    AlpideByteError(buffer);
+    AlpideByteError(chipId, buffer);
     return 0;
   }
 
@@ -424,8 +427,7 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
     }
     else if ( (dataC & 0xF0) == 0xF0) // APE
     {
-      std::cerr << " Chip: " << (int)chipId << ":";
-      check_APE(dataC);
+      check_APE(chipId, dataC);
       chip_trailer_found = 1;
       busy_on = busy_off = chip_header_found = 0;
     }
@@ -485,7 +487,7 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
         }
         else // ERROR
         {
-          AlpideByteError(buffer);
+          AlpideByteError(chipId, buffer);
         }
       }
       else
@@ -505,7 +507,7 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
         }
         else
         { // ERROR
-          AlpideByteError(buffer);
+          AlpideByteError(chipId, buffer);
         } // else !chip_header_found
       }  // if chip_header_found
     } // busy_on, busy_off, chip_empty, other
