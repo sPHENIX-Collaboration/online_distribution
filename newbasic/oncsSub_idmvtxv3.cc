@@ -12,15 +12,12 @@ std::unordered_map<uint32_t, oncsSub_idmvtxv3::dumpEntry> oncsSub_idmvtxv3::mSub
 std::vector< mvtx::PayLoadCont> oncsSub_idmvtxv3::mBuffers = {};
 std::unordered_map<uint16_t, oncsSub_idmvtxv3::dumpEntry> oncsSub_idmvtxv3::mFeeId2LinkID = {};
 std::vector< mvtx::GBTLink> oncsSub_idmvtxv3::mGBTLinks = {};
-std::array<uint32_t, oncsSub_idmvtxv3::MaxLinksPerPacket> oncsSub_idmvtxv3::hbf_start;
-std::array<uint32_t, oncsSub_idmvtxv3::MaxLinksPerPacket> oncsSub_idmvtxv3::hbf_length;
-std::array<uint32_t, oncsSub_idmvtxv3::MaxLinksPerPacket> oncsSub_idmvtxv3::prev_pck_cnt;
 
 oncsSub_idmvtxv3::oncsSub_idmvtxv3(subevtdata_ptr data)
   : oncsSubevent_w4(data)
 {
   m_is_decoded = false;
-  payload = 0;
+  payload = nullptr;
   payload_position = 0;
 }
 
@@ -32,6 +29,8 @@ int oncsSub_idmvtxv3::decode()
     return 0;
   }
   m_is_decoded = true;
+
+  feeid_set.clear();
 
   for (auto& link : mGBTLinks)
   {
@@ -101,7 +100,7 @@ void oncsSub_idmvtxv3::loadInput(mvtx::PayLoadCont& buffer)
 void oncsSub_idmvtxv3::setupLinks(mvtx::PayLoadCont& buf)
 {
   mvtx_utils::RdhExt_t rdh = {};
-  size_t dlength = buf.getEnd() - payload;
+  size_t dlength = buf.getUnusedSize();
   do
   {
     // Skip FLX padding
@@ -125,37 +124,36 @@ void oncsSub_idmvtxv3::setupLinks(mvtx::PayLoadCont& buf)
         }
         else
         {
+          feeid_set.insert(rdh.feeId);
           auto& lnkref = mFeeId2LinkID[rdh.feeId];
           if ( lnkref.entry == -1 )
           {
             lnkref.entry = mGBTLinks.size();
             mGBTLinks.emplace_back(rdh.flxId, rdh.feeId);
-            hbf_start[lnkref.entry] = 0;
-            hbf_length[lnkref.entry] = 0;
-            prev_pck_cnt[lnkref.entry] = 0;
           }
           auto& gbtLink = mGBTLinks[lnkref.entry];
-          auto lnkEndOffser= gbtLink.data.getEnd() - gbtLink.data.getPtr();
+          auto lnkEndOffset= gbtLink.data.getUnusedSize();
 
           gbtLink.data.add((payload + payload_position), pageSizeInBytes);
 
           if ( ! rdh.packetCounter ) // start HB
           {
-            hbf_start[lnkref.entry] = lnkEndOffser;
-            hbf_length[lnkref.entry] = pageSizeInBytes;
+            gbtLink.hbf_start = lnkEndOffset;
+            gbtLink.hbf_length = pageSizeInBytes;
           }
           else
           {
-            hbf_length[lnkref.entry] += pageSizeInBytes;
+            gbtLink.hbf_length += pageSizeInBytes;
           }
 
           if ( rdh.stopBit ) // found HB end
           {
-            gbtLink.cacheData(hbf_start[lnkref.entry], hbf_length[lnkref.entry]);
+            gbtLink.cacheData(gbtLink.hbf_start, gbtLink.hbf_length);
           }
-          ASSERT( ( (! rdh.packetCounter) || (rdh.packetCounter == prev_pck_cnt[lnkref.entry] + 1) ),
-                 "Incorrect pages count %d, previous page count was %d", rdh.packetCounter, prev_pck_cnt[lnkref.entry]);
-          prev_pck_cnt[lnkref.entry] = rdh.packetCounter;
+          ASSERT( ( (! rdh.packetCounter) || (rdh.packetCounter == gbtLink.prev_pck_cnt + 1) ),
+                 "Incorrect pages count %d, previous page count was %d", rdh.packetCounter,
+                 gbtLink.prev_pck_cnt);
+          gbtLink.prev_pck_cnt = rdh.packetCounter;
           payload_position += pageSizeInBytes;
         }
       }
@@ -183,16 +181,12 @@ void oncsSub_idmvtxv3::setupLinks(mvtx::PayLoadCont& buf)
 
 int oncsSub_idmvtxv3::iValue(const int n, const char *what)
 {
-
   decode();
   if ( n == -1 ) // Global Information.
   {
     if ( strcmp(what, "NR_LINKS") == 0)
     {
-      ASSERT(mGBTLinks.size() == mFeeId2LinkID.size(),
-          "Mismatch size for GBTLink list and reference mapping, mGBTLinks size: %ld and mFeeId2LinkID size: %ld",
-          mGBTLinks.size(), mFeeId2LinkID.size());
-      return mGBTLinks.size();
+      return feeid_set.size();
     }
     else
     {
@@ -204,7 +198,7 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
   unsigned int i = n;
   if ( strcmp(what, "FEEID") == 0 )
   {
-    return (i < mGBTLinks.size()) ? mGBTLinks[i].feeID : -1;
+    return (i < feeid_set.size()) ? *(next(feeid_set.begin(), i)) : -1;
   }
   else if ( strcmp(what, "NR_HBF") == 0 )
   {
@@ -214,7 +208,7 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
     uint32_t lnkId =  mFeeId2LinkID[i].entry;
 
     ASSERT( mGBTLinks[lnkId].rawData.getNPieces() == mGBTLinks[lnkId].hbf_count,
-        "Mismatch size for HBF from hbfData: %ld and link rawData Pieces: %ld",
+        "Mismatch size for HBF from hbfData: %d and link rawData Pieces: %ld",
         mGBTLinks[lnkId].hbf_count, mGBTLinks[lnkId].rawData.getNPieces() );
 
     return mGBTLinks[lnkId].hbf_count;
@@ -253,6 +247,7 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
 
 int oncsSub_idmvtxv3::iValue(const int i_feeid, const int idx, const char *what)
 {
+  decode();
   uint32_t feeId = i_feeid;
   uint32_t index = idx;
 
@@ -284,6 +279,8 @@ int oncsSub_idmvtxv3::iValue(const int i_feeid, const int idx, const char *what)
 
 int oncsSub_idmvtxv3::iValue(const int i_feeid, const int i_trg, const int i_hit, const char *what)
 {
+  decode();
+
   uint32_t feeId = i_feeid;
   uint32_t trg = i_trg;
   uint32_t hit = i_hit;
@@ -326,6 +323,8 @@ int oncsSub_idmvtxv3::iValue(const int i_feeid, const int i_trg, const int i_hit
 
 long long int oncsSub_idmvtxv3::lValue(const int i_feeid, const int idx, const char *what)
 {
+  decode();
+
   uint32_t feeId = i_feeid;
   uint32_t index = idx;
 
@@ -355,46 +354,49 @@ long long int oncsSub_idmvtxv3::lValue(const int i_feeid, const int idx, const c
 //_________________________________________________
 void oncsSub_idmvtxv3::dump(OSTREAM &os)
 {
-  os << "Event: " << mEventId << std::endl;
   identify(os);
   decode();
 
   // Debug HB pooling
-  os << "Event: " << mEventId << " Number of feeid: " << iValue(-1, "NR_LINKS") << endl;
-  for ( uint32_t i = 0; i < mFeeId2LinkID.size(); ++i )
+  int num_feeids = iValue(-1, "NR_LINKS");
+  os << "Event: " << mEventId << " Number of feeid: " << num_feeids << std::endl;
+  if (num_feeids > 0)
   {
-    auto feeId = iValue(i, "FEEID");
-    auto hbfSize = iValue(feeId, "NR_HBF");
-    os << "Link " << setw(4) << feeId << " has " << hbfSize << " HBs, ";
-    os << iValue(feeId, "NR_STROBES") << " strobes and ";
-    os << iValue(feeId, "NR_PHYS_TRG") << " L1 triggers" << std::endl;
-
-    for ( int iL1 = 0; iL1 < iValue(feeId, "NR_PHYS_TRG"); ++iL1 )
+    for ( int i = 0; i < num_feeids; ++i )
     {
-      os << "L1: " << iL1  << std::hex << " BCO: 0x" << lValue(feeId, iL1, "L1_IR_BCO");
-      os << std::dec << " BC: " << iValue(feeId, iL1, "L1_IR_BC") << endl;
-    }
+      auto feeId = iValue(i, "FEEID");
+      auto hbfSize = iValue(feeId, "NR_HBF");
+      os << "Link " << setw(4) << feeId << " has " << hbfSize << " HBs, ";
+      os << iValue(feeId, "NR_STROBES") << " strobes and ";
+      os << iValue(feeId, "NR_PHYS_TRG") << " L1 triggers" << std::endl;
 
-    os << "Total number of hits: " << iValue(feeId, "NR_HITS") << endl;
-    for ( int i_trg = 0; i_trg < iValue(feeId, "NR_STROBES"); ++i_trg )
-    {
-      os << "-- Strobe: " << i_trg;
-      os << ", BCO: 0x" << std::hex << lValue(feeId, i_trg, "TRG_IR_BCO") << std::dec;
-      os << " BC: " << iValue(feeId, i_trg, "TRG_IR_BC");
-      os << ", has " << iValue(feeId, i_trg, "TRG_NR_HITS") << " hits." << std::endl;
-
-      if ( iValue(feeId, i_trg, "TRG_NR_HITS") )
+      for ( int iL1 = 0; iL1 < iValue(feeId, "NR_PHYS_TRG"); ++iL1 )
       {
-        os << "   hit number chip_id  bc   row   col  "  << endl;
+        os << "L1: " << iL1  << std::hex << " BCO: 0x" << lValue(feeId, iL1, "L1_IR_BCO");
+        os << std::dec << " BC: " << iValue(feeId, iL1, "L1_IR_BC") << endl;
       }
-      for ( int i_hit = 0; i_hit < iValue(feeId, i_trg, "TRG_NR_HITS"); ++i_hit )
+
+      os << "Total number of hits: " << iValue(feeId, "NR_HITS") << endl;
+      for ( int i_trg = 0; i_trg < iValue(feeId, "NR_STROBES"); ++i_trg )
       {
-        os << setw(4) << i_hit;
-        os << "  " << setw(9) << iValue(feeId, i_trg, i_hit, "HIT_CHIP_ID");
-        os << "  " << setw(8) << std::hex << iValue(feeId, i_trg, i_hit, "HIT_BC") << std::dec;
-        os << "  " << setw(4) << iValue(feeId, i_trg, i_hit, "HIT_ROW");
-        os << "  " << setw(4) << iValue(feeId, i_trg, i_hit, "HIT_COL");
-	      os << endl;
+        os << "-- Strobe: " << i_trg;
+        os << ", BCO: 0x" << std::hex << lValue(feeId, i_trg, "TRG_IR_BCO") << std::dec;
+        os << " BC: " << iValue(feeId, i_trg, "TRG_IR_BC");
+        os << ", has " << iValue(feeId, i_trg, "TRG_NR_HITS") << " hits." << std::endl;
+
+        if ( iValue(feeId, i_trg, "TRG_NR_HITS") )
+        {
+          os << "   hit number chip_id  bc   row   col  "  << endl;
+        }
+        for ( int i_hit = 0; i_hit < iValue(feeId, i_trg, "TRG_NR_HITS"); ++i_hit )
+        {
+          os << setw(4) << i_hit;
+          os << "  " << setw(9) << iValue(feeId, i_trg, i_hit, "HIT_CHIP_ID");
+          os << "  " << setw(8) << std::hex << iValue(feeId, i_trg, i_hit, "HIT_BC") << std::dec;
+          os << "  " << setw(4) << iValue(feeId, i_trg, i_hit, "HIT_ROW");
+          os << "  " << setw(4) << iValue(feeId, i_trg, i_hit, "HIT_COL");
+          os << endl;
+        }
       }
     }
   }
@@ -409,4 +411,5 @@ oncsSub_idmvtxv3::~oncsSub_idmvtxv3()
   {
     link.clear(true, true);
   }
+  feeid_set.clear();
 }

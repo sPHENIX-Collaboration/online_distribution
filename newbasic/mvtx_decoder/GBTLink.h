@@ -103,7 +103,10 @@ struct GBTLink
   InteractionRecord ir = {};
 
   GBTLinkDecodingStat statistics; // link decoding statistics
-  size_t hbf_count = 0;
+  uint32_t hbf_start = 0;
+  uint32_t hbf_length = 0;
+  uint32_t prev_pck_cnt = 0;
+  uint32_t hbf_count = 0;
 
   PayLoadSG rawData;         // scatter-gatter buffer for cached CRU pages, each starting with RDH
   size_t dataOffset = 0;     //
@@ -153,8 +156,9 @@ struct GBTLink
 	  hit_vector.push_back(hit);
   }
 
-  void check_APE(const uint8_t& dataC)
+  void check_APE(const uint8_t& chipId, const uint8_t& dataC)
   {
+    std::cerr << "Link: " << feeID << ", Chip: " << (int)chipId;
     switch (dataC)
     {
       case 0xF2:
@@ -199,8 +203,25 @@ struct GBTLink
     return;
   }
 
+  void AlpideByteError(const uint8_t& chipId, PayLoadCont& buffer)
+  {
+    uint8_t dataC = 0;
+
+    std::cerr << "Link: " << feeID << ", Chip: " << (int)chipId;
+    std::cerr << " invalid byte 0x" << std::hex << (int)(dataC) << std::endl;
+    while ( buffer.next(dataC) )
+    {
+      std::cerr << " " << std::hex << (int)(dataC) << " ";
+    }
+    std::cerr << std::endl;
+    buffer.clear();
+    return;
+  }
+
+
 //  ClassDefNV(GBTLink, 1);
 };
+
 
 ///_________________________________________________________________
 /// collect cables data for single ROF, return number of real payload words seen,
@@ -272,7 +293,8 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
         if ( gbtWord.isIHW() ) // ITS HEADER WORD
         {
           //TODO assert first word after RDH and active lanes
-          ASSERT( ( ((gbtWord.activeLanes >> 0) & 0x7) == 0x7 || \
+          ASSERT( ( !gbtWord.activeLanes || \
+                    ((gbtWord.activeLanes >> 0) & 0x7) == 0x7 || \
                     ((gbtWord.activeLanes >> 3) & 0x7) == 0x7 || \
                     ((gbtWord.activeLanes >> 6) & 0x7) == 0x7),
               "Expected all active lanes for links, but %d found in HBF %d, %s", \
@@ -350,7 +372,10 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
           trgData.first_hit_pos = hit_vector.size();
           for( auto&& itr = cableData.begin(); itr != cableData.end(); ++itr)
           {
-            decode_lane(std::distance(cableData.begin(), itr), *itr);
+            if (!itr->isEmpty())
+            {
+              decode_lane(std::distance(cableData.begin(), itr), *itr);
+            }
           }
           trgData.n_hits = hit_vector.size() - trgData.first_hit_pos;
           prev_evt_complete = false;
@@ -383,8 +408,12 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
   uint8_t bc = 0xFF;
   uint8_t reg = 0xFF;
 
-  ASSERT( ( (buffer[0] & 0xF0) == 0xE0 || (buffer[0] & 0xF0) == 0xA0 || (buffer[0] == 0xF0) || (buffer[0] == 0xF1) ),
-    "first byte 0x%x is not a valid chip header, busy on or busy off", buffer[0] );
+  if ( !( (buffer[0] & 0xF0) == 0xE0 || (buffer[0] & 0xF0) == 0xA0 ||\
+          (buffer[0] == 0xF0) || (buffer[0] == 0xF1) || (buffer[0] & 0xF0) == 0xF0 ) )
+  {
+    AlpideByteError(chipId, buffer);
+    return 0;
+  }
 
   while ( buffer.next(dataC) )
   {
@@ -398,8 +427,7 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
     }
     else if ( (dataC & 0xF0) == 0xF0) // APE
     {
-      std::cerr << " Chip: " << (int)chipId << ":";
-      check_APE(dataC);
+      check_APE(chipId, dataC);
       chip_trailer_found = 1;
       busy_on = busy_off = chip_header_found = 0;
     }
@@ -458,13 +486,8 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
           busy_on = busy_off = chip_header_found = 0;
         }
         else // ERROR
-
         {
-          std::cerr << "ERROR: invalid byte 0x" << std::hex << (int)(dataC) << std::endl;
-          while ( buffer.next(dataC) )
-          {
-            std::cerr << " " << std::hex << (int)(dataC) << " ";
-          }
+          AlpideByteError(chipId, buffer);
         }
       }
       else
@@ -482,27 +505,14 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
         {
           continue;
         }
-        else { // ERROR
-          std::cerr << "ERROR: invalid byte 0x" << std::hex << (int)(dataC) << std::endl;
-          while ( buffer.next(dataC) )
-          {
-            std::cerr << " " << std::hex << (int)(dataC) << " ";
-          }
+        else
+        { // ERROR
+          AlpideByteError(chipId, buffer);
         } // else !chip_header_found
       }  // if chip_header_found
     } // busy_on, busy_off, chip_empty, other
   }  // while
 
-
-//
-//      else if  ((marker & 0xF0) == 0xB0) // we have a CHIP trailer
-//	{
-//	  readout_flags     = (marker >> 4) & 0xf;
-//	  //  cout  << " chip trailer " << hex  << " readout flags " << setw(5) << readout_flags << dec;
-//	}
-//
-//      //cout << endl;
-//    }
   return ret;
 }
 

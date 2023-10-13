@@ -9,6 +9,7 @@
 #include "mvtx_decoder/mvtx_utils.h"
 
 #include <map>
+#include <set>
 #include <vector>
 #include <bitset>
 #include <stdint.h>
@@ -28,7 +29,7 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
   int iValue(const int, const int, const char* what) final;
   int iValue(const int, const int, const int, const char* what) final;
 
-  long long int lValue(const int, const int, const char* what);
+  long long int lValue(const int, const int, const char* what) final;
 
   void dump(OSTREAM &os = COUT) final;
 
@@ -52,12 +53,7 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
   static std::unordered_map<uint16_t, dumpEntry> mFeeId2LinkID; // link fee_id to GBTLinks
   static std::vector<mvtx::GBTLink> mGBTLinks;
 
-  static constexpr uint8_t MaxLinksPerPacket = 12;
-
-  static std::array<uint32_t, MaxLinksPerPacket> hbf_start;
-  static std::array<uint32_t, MaxLinksPerPacket> hbf_length;
-  static std::array<uint32_t, MaxLinksPerPacket> prev_pck_cnt;
-
+  std::set<uint16_t> feeid_set;
   uint8_t *payload;
   unsigned int payload_position;
 
