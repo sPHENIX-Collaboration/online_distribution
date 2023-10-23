@@ -373,49 +373,49 @@ void oncsSub_idmvtxv3::dump(OSTREAM &os)
   identify(os);
   decode();
 
-//  // Debug HB pooling
-//  int num_feeids = iValue(-1, "NR_LINKS");
-//  os << "Event: " << mEventId << " Number of feeid: " << num_feeids << std::endl;
-//  if (num_feeids > 0)
-//  {
-//    for ( int i = 0; i < num_feeids; ++i )
-//    {
-//      auto feeId = iValue(i, "FEEID");
-//      auto hbfSize = iValue(feeId, "NR_HBF");
-//      os << "Link " << setw(4) << feeId << " has " << hbfSize << " HBs, ";
-//      os << iValue(feeId, "NR_STROBES") << " strobes and ";
-//      os << iValue(feeId, "NR_PHYS_TRG") << " L1 triggers" << std::endl;
-//
-//      for ( int iL1 = 0; iL1 < iValue(feeId, "NR_PHYS_TRG"); ++iL1 )
-//      {
-//        os << "L1: " << iL1  << std::hex << " BCO: 0x" << lValue(feeId, iL1, "L1_IR_BCO");
-//        os << std::dec << " BC: " << iValue(feeId, iL1, "L1_IR_BC") << endl;
-//      }
-//
-//      os << "Total number of hits: " << iValue(feeId, "NR_HITS") << endl;
-//      for ( int i_trg = 0; i_trg < iValue(feeId, "NR_STROBES"); ++i_trg )
-//      {
-//        os << "-- Strobe: " << i_trg;
-//        os << ", BCO: 0x" << std::hex << lValue(feeId, i_trg, "TRG_IR_BCO") << std::dec;
-//        os << " BC: " << iValue(feeId, i_trg, "TRG_IR_BC");
-//        os << ", has " << iValue(feeId, i_trg, "TRG_NR_HITS") << " hits." << std::endl;
-//
-//        if ( iValue(feeId, i_trg, "TRG_NR_HITS") )
-//        {
-//          os << "   hit number chip_id  bc   row   col  "  << endl;
-//        }
-//        for ( int i_hit = 0; i_hit < iValue(feeId, i_trg, "TRG_NR_HITS"); ++i_hit )
-//        {
-//          os << setw(4) << i_hit;
-//          os << "  " << setw(9) << iValue(feeId, i_trg, i_hit, "HIT_CHIP_ID");
-//          os << "  " << setw(8) << std::hex << iValue(feeId, i_trg, i_hit, "HIT_BC") << std::dec;
-//          os << "  " << setw(4) << iValue(feeId, i_trg, i_hit, "HIT_ROW");
-//          os << "  " << setw(4) << iValue(feeId, i_trg, i_hit, "HIT_COL");
-//          os << endl;
-//        }
-//      }
-//    }
-//  }
+  // Debug HB pooling
+  int num_feeids = iValue(-1, "NR_LINKS");
+  os << "Event: " << mEventId << " Number of feeid: " << num_feeids << std::endl;
+  if (num_feeids > 0)
+  {
+    for ( int i = 0; i < num_feeids; ++i )
+    {
+      auto feeId = iValue(i, "FEEID");
+      auto hbfSize = iValue(feeId, "NR_HBF");
+      os << "Link " << setw(4) << feeId << " has " << hbfSize << " HBs, ";
+      os << iValue(feeId, "NR_STROBES") << " strobes and ";
+      os << iValue(feeId, "NR_PHYS_TRG") << " L1 triggers" << std::endl;
+
+      for ( int iL1 = 0; iL1 < iValue(feeId, "NR_PHYS_TRG"); ++iL1 )
+      {
+        os << "L1: " << iL1  << std::hex << " BCO: 0x" << lValue(feeId, iL1, "L1_IR_BCO");
+        os << std::dec << " BC: " << iValue(feeId, iL1, "L1_IR_BC") << endl;
+      }
+
+      os << "Total number of hits: " << iValue(feeId, "NR_HITS") << endl;
+      for ( int i_trg = 0; i_trg < iValue(feeId, "NR_STROBES"); ++i_trg )
+      {
+        os << "-- Strobe: " << i_trg;
+        os << ", BCO: 0x" << std::hex << lValue(feeId, i_trg, "TRG_IR_BCO") << std::dec;
+        os << " BC: " << iValue(feeId, i_trg, "TRG_IR_BC");
+        os << ", has " << iValue(feeId, i_trg, "TRG_NR_HITS") << " hits." << std::endl;
+
+        if ( iValue(feeId, i_trg, "TRG_NR_HITS") )
+        {
+          os << "   hit number chip_id  bc   row   col  "  << endl;
+        }
+        for ( int i_hit = 0; i_hit < iValue(feeId, i_trg, "TRG_NR_HITS"); ++i_hit )
+        {
+          os << setw(4) << i_hit;
+          os << "  " << setw(9) << iValue(feeId, i_trg, i_hit, "HIT_CHIP_ID");
+          os << "  " << setw(8) << std::hex << iValue(feeId, i_trg, i_hit, "HIT_BC") << std::dec;
+          os << "  " << setw(4) << iValue(feeId, i_trg, i_hit, "HIT_ROW");
+          os << "  " << setw(4) << iValue(feeId, i_trg, i_hit, "HIT_COL");
+          os << endl;
+        }
+      }
+    }
+  }
 
   return;
 }
