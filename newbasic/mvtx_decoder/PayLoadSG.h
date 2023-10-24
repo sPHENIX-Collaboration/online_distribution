@@ -22,45 +22,46 @@ class PayLoadSG
   ~PayLoadSG() = default;
 
   ///< add n bytes to the buffer
-  void add( size_t start, size_t n)
+  void add( size_t n, bool err )
   {
     if (n)
     {
-      mBuffer.emplace_back(start, n);
+      mBuffer.emplace_back(n, err);
     }
   }
 
   ///< move current pointer to the head
   void rewind()
   {
-    mCurrentPieceID = 0;
+    mCurrentPieceId = 0;
   }
 
   ///< make buffer empty
   void clear()
   {
     mBuffer.clear();
-    mCurrentPieceID = 0;
+    mCurrentPieceId = 0;
   }
 
-  struct SGPiece {
-    uint32_t data = 0;   // data of the piece
+  struct SGPiece
+  {
     uint32_t size = 0;   // size of the piece
+    bool hasError = false;
     SGPiece() = default;
-    SGPiece(int st, int n) : data(st), size(n) {}
+    SGPiece(int n, bool err) : size(n), hasError(err) {}
   };
 
-  void setDone() { mCurrentPieceID = mBuffer.size(); }
+  void setDone() { mCurrentPieceId = mBuffer.size(); }
 
-  size_t& currentPieceID() { return mCurrentPieceID; }
-  size_t currentPieceID() const { return mCurrentPieceID; }
+  size_t& currentPieceId() { return mCurrentPieceId; }
+  size_t currentPieceId() const { return mCurrentPieceId; }
 
-  const SGPiece* currentPiece() const { return mCurrentPieceID < mBuffer.size() ? &mBuffer[mCurrentPieceID] : nullptr; }
+  const SGPiece* currentPiece() const { return mCurrentPieceId < mBuffer.size() ? &mBuffer[mCurrentPieceId] : nullptr; }
 
   const SGPiece* nextPiece()
   {
     // move to the next piece
-    mCurrentPieceID++;
+    mCurrentPieceId++;
     return currentPiece();
   }
 
@@ -70,7 +71,7 @@ class PayLoadSG
 
  private:
   std::vector<SGPiece> mBuffer;   // list of pieces to fetch
-  size_t mCurrentPieceID = 0;     // current piece
+  size_t mCurrentPieceId = 0;     // current piece
 
   //ClassDefNV(PayLoadSG, 1);
 };

@@ -132,13 +132,27 @@ void oncsSub_idmvtxv3::setupLinks(mvtx::PayLoadCont& buf)
             mGBTLinks.emplace_back(rdh.flxId, rdh.feeId);
           }
           auto& gbtLink = mGBTLinks[lnkref.entry];
-          auto lnkEndOffset= gbtLink.data.getUnusedSize();
+
+          if ( (rdh.packetCounter) && (rdh.packetCounter != gbtLink.prev_pck_cnt + 1) )
+          {
+            log_error("Incorrect pages count %d, previous page count was %d",
+                rdh.packetCounter, gbtLink.prev_pck_cnt);
+            payload_position += pageSizeInBytes;
+            continue;
+          }
+          gbtLink.prev_pck_cnt = rdh.packetCounter;
 
           gbtLink.data.add((payload + payload_position), pageSizeInBytes);
 
           if ( ! rdh.packetCounter ) // start HB
           {
-            gbtLink.hbf_start = lnkEndOffset;
+            if ( gbtLink.hbf_found )
+            {
+              log_error("FLX: %d, FeeId: %d. Found new HBF before stop previous HBF. Previous HBF will be ignored",
+                  gbtLink.flxId, gbtLink.feeId);
+              gbtLink.cacheData(gbtLink.hbf_length, true);
+            }
+            gbtLink.hbf_found = true;
             gbtLink.hbf_length = pageSizeInBytes;
           }
           else
@@ -148,12 +162,15 @@ void oncsSub_idmvtxv3::setupLinks(mvtx::PayLoadCont& buf)
 
           if ( rdh.stopBit ) // found HB end
           {
-            gbtLink.cacheData(gbtLink.hbf_start, gbtLink.hbf_length);
+            if ( ! gbtLink.hbf_found )
+            {
+              log_error("FLX: %d, FeeId: %d. Stopping HBF without start. This block will be ignored",
+                  gbtLink.flxId, gbtLink.feeId);
+              gbtLink.cacheData(gbtLink.hbf_length, true);
+            }
+            gbtLink.hbf_found = false;
+            gbtLink.cacheData(gbtLink.hbf_length, false);
           }
-          ASSERT( ( (! rdh.packetCounter) || (rdh.packetCounter == gbtLink.prev_pck_cnt + 1) ),
-                 "Incorrect pages count %d, previous page count was %d", rdh.packetCounter,
-                 gbtLink.prev_pck_cnt);
-          gbtLink.prev_pck_cnt = rdh.packetCounter;
           payload_position += pageSizeInBytes;
         }
       }
@@ -200,47 +217,41 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
   {
     return (i < feeid_set.size()) ? *(next(feeid_set.begin(), i)) : -1;
   }
-  else if ( strcmp(what, "NR_HBF") == 0 )
-  {
-    ASSERT(mFeeId2LinkID.find(i) != mFeeId2LinkID.cend(),
-        "FeeId %d was not found in the feeId mapping for this packet", i);
-
-    uint32_t lnkId =  mFeeId2LinkID[i].entry;
-
-    ASSERT( mGBTLinks[lnkId].rawData.getNPieces() == mGBTLinks[lnkId].hbf_count,
-        "Mismatch size for HBF from hbfData: %d and link rawData Pieces: %ld",
-        mGBTLinks[lnkId].hbf_count, mGBTLinks[lnkId].rawData.getNPieces() );
-
-    return mGBTLinks[lnkId].hbf_count;
-  }
-  else if ( strcmp(what, "NR_PHYS_TRG") == 0 )
-  {
-    ASSERT(mFeeId2LinkID.find(i) != mFeeId2LinkID.cend(),
-        "FeeId %d was not found in the feeId mapping for this packet", i);
-
-    uint32_t lnkId =  mFeeId2LinkID[i].entry;
-    return mGBTLinks[lnkId].mL1TrgTime.size();
-  }
-  else if ( strcmp(what, "NR_STROBES") == 0 )
-  {
-    ASSERT(mFeeId2LinkID.find(i) != mFeeId2LinkID.cend(),
-        "FeeId %d was not found in the feeId mapping for this packet", i);
-
-    uint32_t lnkId =  mFeeId2LinkID[i].entry;
-    return mGBTLinks[lnkId].mTrgData.size();
-  }
-  else if ( strcmp(what, "NR_HITS") == 0 )  // the number of datasets
-  {
-    ASSERT(mFeeId2LinkID.find(i) != mFeeId2LinkID.cend(),
-        "FeeId %d was not found in the feeId mapping for this packet", i);
-
-    uint32_t lnkId =  mFeeId2LinkID[i].entry;
-    return mGBTLinks[lnkId].hit_vector.size();
-  }
   else
   {
-    std::cout << "Unknow option " << what << std::endl;
-    return -1;
+    if (mFeeId2LinkID.find(i) == mFeeId2LinkID.cend())
+    {
+      log_error("FeeId %d was not found in the feeId mapping for this packet", i);
+      assert(false);
+    }
+    uint32_t lnkId =  mFeeId2LinkID[i].entry;
+    if ( strcmp(what, "NR_HBF") == 0 )
+    {
+      if ( mGBTLinks[lnkId].rawData.getNPieces() != mGBTLinks[lnkId].hbf_count)
+      {
+        log_error("Mismatch size for HBF from hbfData: %d and link rawData Pieces: %ld",
+            mGBTLinks[lnkId].hbf_count, mGBTLinks[lnkId].rawData.getNPieces() );
+        assert(false);
+      }
+      return mGBTLinks[lnkId].hbf_count;
+    }
+    else if ( strcmp(what, "NR_PHYS_TRG") == 0 )
+    {
+      return mGBTLinks[lnkId].mL1TrgTime.size();
+    }
+    else if ( strcmp(what, "NR_STROBES") == 0 )
+    {
+    return mGBTLinks[lnkId].mTrgData.size();
+    }
+    else if ( strcmp(what, "NR_HITS") == 0 )  // the number of datasets
+    {
+      return mGBTLinks[lnkId].hit_vector.size();
+    }
+    else
+    {
+      std::cout << "Unknow option " << what << std::endl;
+      return -1;
+    }
   }
   return 0;
 }
@@ -251,9 +262,11 @@ int oncsSub_idmvtxv3::iValue(const int i_feeid, const int idx, const char *what)
   uint32_t feeId = i_feeid;
   uint32_t index = idx;
 
-  ASSERT(mFeeId2LinkID.find(feeId) != mFeeId2LinkID.cend(),
-      "FeeId %d was not found in the feeId mapping for this packet", feeId);
-
+  if (mFeeId2LinkID.find(feeId) == mFeeId2LinkID.cend())
+  {
+    log_error("FeeId %d was not found in the feeId mapping for this packet", feeId);
+    assert(false);
+  }
   uint32_t lnkId =  mFeeId2LinkID[feeId].entry;
 
   if ( strcmp(what, "L1_IR_BC") == 0 )
@@ -273,7 +286,6 @@ int oncsSub_idmvtxv3::iValue(const int i_feeid, const int idx, const char *what)
     std::cout << "Unknow option " << what << std::endl;
     return -1;
   }
-
   return 0;
 }
 
@@ -285,9 +297,11 @@ int oncsSub_idmvtxv3::iValue(const int i_feeid, const int i_trg, const int i_hit
   uint32_t trg = i_trg;
   uint32_t hit = i_hit;
 
-  ASSERT(mFeeId2LinkID.find(feeId) != mFeeId2LinkID.cend(),
-      "FeeId %d was not found in the feeId mapping for this packet", feeId);
-
+  if (mFeeId2LinkID.find(feeId) == mFeeId2LinkID.cend())
+  {
+    log_error("FeeId %d was not found in the feeId mapping for this packet", feeId);
+    assert(false);
+  }
   uint32_t lnkId =  mFeeId2LinkID[feeId].entry;
 
   uint32_t hit_global_id = mGBTLinks[lnkId].mTrgData[trg].first_hit_pos + hit;
@@ -328,9 +342,11 @@ long long int oncsSub_idmvtxv3::lValue(const int i_feeid, const int idx, const c
   uint32_t feeId = i_feeid;
   uint32_t index = idx;
 
-  ASSERT(mFeeId2LinkID.find(feeId) != mFeeId2LinkID.cend(),
-      "FeeId %d was not found in the feeId mapping for this packet", feeId);
-
+  if (mFeeId2LinkID.find(feeId) == mFeeId2LinkID.cend())
+  {
+    log_error("FeeId %d was not found in the feeId mapping for this packet", feeId);
+    assert(false);
+  }
   uint32_t lnkId =  mFeeId2LinkID[feeId].entry;
 
   if ( strcmp(what, "L1_IR_BCO") == 0 )

@@ -18,7 +18,7 @@ using namespace mvtx;
 
 ///_________________________________________________________________
 /// create link with given ids
-GBTLink::GBTLink(uint16_t _flx, uint16_t _fee) : flxID(_flx), feeID(_fee)
+GBTLink::GBTLink(uint16_t _flx, uint16_t _fee) : flxId(_flx), feeId(_fee)
 {
 //  chipStat.feeID = _fee;
 //  statistics.feeID = _fee;
