@@ -12,16 +12,6 @@ namespace mvtx_utils
 
 #define clean_errno() (errno == 0 ? "None" : strerror(errno))
 #define log_error(M, ...) fprintf(stderr, "[ERROR] (%s:%d: errno: %s) " M "\n", __FILE__, __LINE__, clean_errno(), ##__VA_ARGS__)
-#define ASSERT(A, M,...) if(!(A)) { log_error(M, ##__VA_ARGS__); assert(A); }
-
-  enum WordTypeMarker
-    {
-     IHW = 0xe0,
-     TDH = 0xe8,
-     TDT = 0xf0,
-     DDW = 0x40,
-     CDW = 0xf8
-    };
 
   constexpr uint8_t FLXWordLength = 32;
 
