@@ -14,7 +14,7 @@ oncsSub_idtpcfeev3::oncsSub_idtpcfeev3(subevtdata_ptr data)
 
  _is_decoded = 0;
  _last_requested_element = -1;  // impossible value to mark "unnused" 
-
+ _last_requested_waveform = 0;
 }
 
 
@@ -27,7 +27,13 @@ oncsSub_idtpcfeev3::~oncsSub_idtpcfeev3()
     }
   waveforms.clear();
   
-
+  for (auto itr = waveform_vector.begin() ; itr  != waveform_vector.end() ; ++itr)
+    {
+      delete (*itr);
+    }
+  waveform_vector.clear();
+  
+  
   for (auto itr = gtm_data.begin() ; itr  != gtm_data.end() ; ++itr)
     {
       delete (*itr);
@@ -41,16 +47,17 @@ int oncsSub_idtpcfeev3::cacheIterator(const int n)
   if ( n < 0) return 0; // not ok
   if ( _last_requested_element == n) return 1; // say "ok"
 
-  unsigned int i = n;
-  
-  if  ( i >= waveforms.size() )
+  unsigned i = n;
+  if  ( i >= waveform_vector.size() )
     {
       _last_requested_element = -1;
+      _last_requested_waveform = 0;
       return 0;
     }
 
-  auto it = std::next(waveforms.begin(), i);
-  _cached_iter = it;
+  _last_requested_element = n;
+  _last_requested_waveform = waveform_vector[n];  
+
   return 1;
 }
 
@@ -60,18 +67,35 @@ int oncsSub_idtpcfeev3::decode_gtm_data(unsigned short dat[16])
     gtm_payload *payload = new gtm_payload;
 
     payload->pkt_type = gtm[0] | ((unsigned short)gtm[1] << 8);
-    if (payload->pkt_type != GTM_LVL1_ACCEPT_MAGIC_KEY && payload->pkt_type != GTM_ENDAT_MAGIC_KEY) {
-      delete payload;
-      return -1;
-    }
+    if (payload->pkt_type != GTM_LVL1_ACCEPT_MAGIC_KEY && payload->pkt_type != GTM_ENDAT_MAGIC_KEY)
+      {
+	delete payload;
+	return -1;
+      }
 
     payload->is_lvl1 = payload->pkt_type == GTM_LVL1_ACCEPT_MAGIC_KEY;
     payload->is_endat = payload->pkt_type == GTM_ENDAT_MAGIC_KEY;
 
-    payload->bco = ((unsigned long long)gtm[2] << 0) | ((unsigned long long)gtm[3] << 8) | ((unsigned long long)gtm[4] << 16) | ((unsigned long long)gtm[5] << 24) | ((unsigned long long)gtm[6] << 32) | (((unsigned long long)gtm[7]) << 40);
-    payload->lvl1_count = ((unsigned int)gtm[8] << 0) | ((unsigned int)gtm[9] << 8) | ((unsigned int)gtm[10] << 16) | ((unsigned int)gtm[11] << 24);
-    payload->endat_count = ((unsigned int)gtm[12] << 0) | ((unsigned int)gtm[13] << 8) | ((unsigned int)gtm[14] << 16) | ((unsigned int)gtm[15] << 24);
-    payload->last_bco = ((unsigned long long)gtm[16] << 0) | ((unsigned long long)gtm[17] << 8) | ((unsigned long long)gtm[18] << 16) | ((unsigned long long)gtm[19] << 24) | ((unsigned long long)gtm[20] << 32) | (((unsigned long long)gtm[21]) << 40);
+    payload->bco = ((unsigned long long)gtm[2] << 0)
+      | ((unsigned long long)gtm[3] << 8)
+      | ((unsigned long long)gtm[4] << 16)
+      | ((unsigned long long)gtm[5] << 24)
+      | ((unsigned long long)gtm[6] << 32)
+      | (((unsigned long long)gtm[7]) << 40);
+    payload->lvl1_count = ((unsigned int)gtm[8] << 0)
+      | ((unsigned int)gtm[9] << 8)
+      | ((unsigned int)gtm[10] << 16)
+      | ((unsigned int)gtm[11] << 24);
+    payload->endat_count = ((unsigned int)gtm[12] << 0)
+      | ((unsigned int)gtm[13] << 8)
+      | ((unsigned int)gtm[14] << 16)
+      | ((unsigned int)gtm[15] << 24);
+    payload->last_bco = ((unsigned long long)gtm[16] << 0)
+      | ((unsigned long long)gtm[17] << 8)
+      | ((unsigned long long)gtm[18] << 16)
+      | ((unsigned long long)gtm[19] << 24)
+      | ((unsigned long long)gtm[20] << 32)
+      | (((unsigned long long)gtm[21]) << 40);
     payload->modebits = gtm[22];
 
     this->gtm_data.push_back(payload);
@@ -212,6 +236,13 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 	  //waveform_vector[ifee*MAX_CHANNELS + sw->channel].push_back(sw);
 	}
     }
+
+  auto it = waveforms.begin();
+  for ( ; it != waveforms.end(); ++it)
+    {
+      waveform_vector.push_back( *it);
+    }
+  waveforms.clear();
   
   return 0;
 }
@@ -303,8 +334,8 @@ int oncsSub_idtpcfeev3::iValue(const int n, const int sample)
   if ( cacheIterator(n) )
     {
       unsigned int m = sample; 
-      if ( m >= (*_cached_iter)->waveform.size() ) return 0;
-      return (*_cached_iter)->waveform[m];
+      if ( m >= (_last_requested_waveform)->waveform.size() ) return 0;
+      return (_last_requested_waveform)->waveform[m];
     }
   return 0;
 }
@@ -320,7 +351,7 @@ int oncsSub_idtpcfeev3::iValue(const int n, const char *what)
 
   if ( strcmp(what,"NR_WF") == 0 )  // the number of datasets
   {
-    return waveforms.size();
+    return waveform_vector.size();
   }
 
   else if ( strcmp(what,"MAX_FEECOUNT") == 0 )
@@ -333,7 +364,7 @@ int oncsSub_idtpcfeev3::iValue(const int n, const char *what)
     {
       if ( cacheIterator(n) )
 	{
-	  return (int) (*_cached_iter)->waveform.size();
+	  return (int) (_last_requested_waveform)->waveform.size();
 	}
       return 0;
     }
@@ -342,7 +373,7 @@ int oncsSub_idtpcfeev3::iValue(const int n, const char *what)
     {
       if ( cacheIterator(n) )
 	{
-	  return (int) (*_cached_iter)->fee;
+	  return (int) (_last_requested_waveform)->fee;
 	}
       return 0;
     }
@@ -351,7 +382,7 @@ int oncsSub_idtpcfeev3::iValue(const int n, const char *what)
     {
       if ( cacheIterator(n) )
 	{
-	  return (int) (*_cached_iter)->sampa_address;
+	  return (int) (_last_requested_waveform)->sampa_address;
 	}
       return 0;
     }
@@ -360,7 +391,7 @@ int oncsSub_idtpcfeev3::iValue(const int n, const char *what)
     {
       if ( cacheIterator(n) )
 	{
-	  return (int) (*_cached_iter)->sampa_channel;
+	  return (int) (_last_requested_waveform)->sampa_channel;
 	}
       return 0;
     }
@@ -369,7 +400,7 @@ int oncsSub_idtpcfeev3::iValue(const int n, const char *what)
     {
       if ( cacheIterator(n) )
 	{
-	  return (int) (*_cached_iter)->channel;
+	  return (int) (_last_requested_waveform)->channel;
 	}
       return 0;
     }
@@ -378,7 +409,7 @@ int oncsSub_idtpcfeev3::iValue(const int n, const char *what)
     {
       if ( cacheIterator(n) )
 	{
-	  return (int) (*_cached_iter)->bx_timestamp;
+	  return (int) (_last_requested_waveform)->bx_timestamp;
 	}
       return 0;
     }
@@ -387,7 +418,7 @@ int oncsSub_idtpcfeev3::iValue(const int n, const char *what)
     {
       if ( cacheIterator(n) )
 	{
-	  return (int) (*_cached_iter)->checksum;
+	  return (int) (_last_requested_waveform)->checksum;
 	}
       return 0;
     }
@@ -396,7 +427,7 @@ int oncsSub_idtpcfeev3::iValue(const int n, const char *what)
     {
       if ( cacheIterator(n) )
 	{
-	  if ( (*_cached_iter)->valid ) return 0; 
+	  if ( (_last_requested_waveform)->valid ) return 0; 
 	  return 1;
 	}
       return 0;
@@ -473,18 +504,19 @@ void  oncsSub_idtpcfeev3::dump ( OSTREAM& os )
       os << "  0x" << setw(4) << hex << lValue(i, "TAGGER_TYPE") << dec
          << " (" << (lValue(i, "IS_ENDAT") ? "ENDAT" : "") << (lValue(i, "IS_LEVEL1_TRIGGER") ? "LVL1 " : "")
          << ") "
-         << setw(12) << lValue(i, "BCO") << " "
+         << setw(12) << hex << lValue(i, "BCO") << dec << " "
          << setw(10) << lValue(i, "LEVEL1_COUNT") << " "
          << setw(10) << lValue(i, "ENDAT_COUNT") << " "
-         << setw(12) << lValue(i, "LAST_BCO")
+         << setw(12) << hex << lValue(i, "LAST_BCO") << dec
          << "     0x" << std::setfill('0') << setw(2) << hex << lValue(i, "MODEBITS") << std::setfill(' ')<< dec
          << endl;
     }
 
     os << endl;
   }
-  waveform_set::const_iterator wf_iter;
 
+  os << " number of waveforms " << iValue(0, "NR_WF") << endl;
+    
   for ( int i = 0; i < iValue(0, "NR_WF") ; i++) // go through the datasets
     {
       os << "  FEE   Channel   Sampachannel   Samples     BCO     CRC_ERR" << endl;

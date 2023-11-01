@@ -97,10 +97,12 @@ struct bco_compare {
   waveform_set waveforms;
   //  waveform_set waveforms[MAX_FEECOUNT * MAX_CHANNELS];
 
+  std::vector<sampa_waveform*> waveform_vector;
+  
   int cacheIterator(const int n);
   
-  waveform_set::iterator _cached_iter;
   int _last_requested_element;
+  sampa_waveform* _last_requested_waveform;
   
   std::vector<unsigned short> fee_data[MAX_FEECOUNT];
 
