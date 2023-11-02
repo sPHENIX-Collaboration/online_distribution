@@ -1,5 +1,6 @@
 #include "lzobuffer.h"
 #include "lzo/lzoutil.h"
+#include "oncsBuffer.h"
 
 int lzobuffer::lzo_initialized = 0;
 
@@ -66,9 +67,18 @@ lzobuffer::lzobuffer (PHDWORD *array , const int length )
 	//	bufferarray = 0;
 	//	return;
      }
-
-  theBuffer = new prdfBuffer(bufferarray, outputlength);
-
+    if ( bufferarray[1]== BUFFERMARKER || buffer::u4swap(bufferarray[1])== BUFFERMARKER )
+      {
+	theBuffer = new prdfBuffer(bufferarray, outputlength);
+      }
+    else if ( bufferarray[1]== ONCSBUFFERMARKER || buffer::u4swap(bufferarray[1])== ONCSBUFFERMARKER )
+      {
+	theBuffer = new oncsBuffer(bufferarray, outputlength);
+      }
+    else
+      {
+	theBuffer = 0;
+      }
 }
 
 // ---------------------------------------------------------
