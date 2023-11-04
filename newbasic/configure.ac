@@ -56,7 +56,7 @@ AM_INIT_AUTOMAKE(Event,1.00)
 
 AC_PROG_INSTALL
 
-dnl   no point in suppressing warnings people should 
+dnl   no point in suppressing warnings people should
 dnl   at least see them, so here we go for g++: -Wall
 if test $ac_cv_prog_gxx = yes; then
   CXXFLAGS="$CXXFLAGS -Wall -Werror -Wno-overloaded-virtual -Wno-class-memaccess -Wno-unused-parameter -Wno-type-limits -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-deprecated-declarations"
@@ -92,9 +92,9 @@ AC_SUBST(LZOLIB)
 
 dnl sorry - we want to find out if the prototype is in the header.
 dnl We cannot use AC_CHECK_FUNCS(strptime) because it always returns true
-dnl so we try to compile the two lines and see what we get. 
+dnl so we try to compile the two lines and see what we get.
 dnl With gcc-2.95++ we should get an error and can define the
-dnl prototypes ourselves. 
+dnl prototypes ourselves.
 
 AC_LANG_SAVE
 AC_LANG_CPLUSPLUS
@@ -110,8 +110,8 @@ fi
 AC_LANG_RESTORE
 
 dnl for the message library, we must use a custom check.
-dnl there are two distict types of systems, one where 
-dnl a new streambuf is given to cout as a parameter, 
+dnl there are two distict types of systems, one where
+dnl a new streambuf is given to cout as a parameter,
 dnl ( cout.rdbuf(x) ), the other by assignment (cout = x)
 
 AC_LANG_SAVE
@@ -140,26 +140,15 @@ if test $new_iostream = yes; then
 fi
 AC_LANG_RESTORE
 
-AC_ARG_ENABLE(demos, 
+AC_ARG_ENABLE(demos,
 	[  --enable-demos          build demos [default=yes]],
 	[case "${enableval}" in
 		yes) demos=true ;;
 		no)  demos=false ;;
 		*) AC_MSG_ERROR(bad value ${enableval} for --enable-demos) ;;
-		esac], 
+		esac],
 	demos=true)
 AM_CONDITIONAL(DEMOS, test "$demos" = true)
-
-AC_ARG_ENABLE(mvtx_decoder,
-	[  --enable-mvtx-decoder  build using mvtx_decoder [default=no]],
-	[case "${enableval}" in
-		yes) mvtx_decoder=true ;;
-		no)  mvtx_decoder=false ;;
-		*) AC_MSG_ERROR(bad value ${enableval} for --enable-mvtx-decoder) ;;
-		esac],
-	mvtx_decoder=false)
-AM_CONDITIONAL(ENABLE_MVTX_DECODER, test "x$mvtx_decoder" = xtrue)
-
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
