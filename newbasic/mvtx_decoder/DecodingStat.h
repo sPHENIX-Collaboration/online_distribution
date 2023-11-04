@@ -6,6 +6,8 @@
 #ifndef MVTXDECODER_DECODINGSTAT_H
 #define MVTXDECODER_DECODINGSTAT_H
 
+#define CXX_17 201703L
+
 #include <string>
 #include <array>
 #include <cstring>
@@ -56,7 +58,11 @@ struct ChipStat {
     NErrorsDefined
   };
 
+#if ( __cplusplus >= CXX_17 )
   static constexpr std::array<std::string_view, NErrorsDefined> ErrNames = {
+#else
+  const std::array<const std::string, NErrorsDefined> ErrNames = {
+#endif
     "BusyViolation flag ON",                        // BusyViolation
     "DataOverrun flag ON",                          // DataOverrun
     "Fatal flag ON",                                // Fatal
@@ -202,7 +208,12 @@ struct GBTLinkDecodingStat {
     ErrOldROF,                   // old ROF (desync?)
     NErrorsDefined
   };
+
+#if ( __cplusplus >= CXX_17 )
   static constexpr std::array<std::string_view, NErrorsDefined> ErrNames = {
+#else
+  const std::array<std::string, NErrorsDefined> ErrNames = {
+#endif
     "Page data not start with expected RDH",                             // ErrNoRDHAtStart
     "RDH is stopped, but the time is not matching the stop packet",      // ErrPageNotStopped
     "Page with RDH.stop does not contain diagnostic word only",          // ErrStopPageNotEmpty
@@ -247,7 +258,11 @@ struct GBTLinkDecodingStat {
     nBitMap = 15
   };
 
+#if ( __cplusplus >= CXX_17 )
   static constexpr std::array<std::string_view, nBitMap> BitMapName = {
+#else
+  const std::array<std::string, nBitMap> BitMapName = {
+#endif
    "ORBIT",
    "HB",
    "HBr",
