@@ -156,7 +156,7 @@ unsigned int Packet_iddigitizerv3::decode_FEM ( unsigned int *k, const int fem_n
   _nchannels += 64;  
 
   int index;
-
+  int corrected_index_channel;
   // for ( index = 1; index < 4; index++)
   //   {
   //     _fem_calculated_checksum_MSB[NFEM] ^= ((k[index] >> 16 ) & 0xffff);
@@ -171,9 +171,10 @@ unsigned int Packet_iddigitizerv3::decode_FEM ( unsigned int *k, const int fem_n
       
       if ( (k[index] >> 28) == 0xe) // ah! another "0xe" channel
 	{
-	  isZeroSuppressed[index_channel] = true;
-	  pre_post[0][index_channel] = (k[index] & 0x3fff);
-	  pre_post[1][index_channel] = ((k[index]>>14) & 0x3fff);
+	  corrected_index_channel = index_channel^1;
+	  isZeroSuppressed[corrected_index_channel] = true;
+	  pre_post[0][corrected_index_channel] = (k[index] & 0x3fff);
+	  pre_post[1][corrected_index_channel] = ((k[index]>>14) & 0x3fff);
 	  // coutfl << " found a zp-word  " << hex << "0x" << k[index]  << dec << " at index " << index
 	  // 	 << " for channel " << index_channel << "  " << isZeroSuppressed[index_channel] << " **** zero-suppressed " <<  endl;
 	  index++;
@@ -196,6 +197,7 @@ unsigned int Packet_iddigitizerv3::decode_FEM ( unsigned int *k, const int fem_n
 	  index_sample = 0;
 	  index_parity = 0;  
 	  index_channel = NFEM*64+CHNL;
+	  corrected_index_channel = index_channel^1;
 	  // we assume we are zero-suppressed and reset this if we find later that we are not
 	  //	  isZeroSuppressed[index_channel] = true;
 
@@ -208,16 +210,16 @@ unsigned int Packet_iddigitizerv3::decode_FEM ( unsigned int *k, const int fem_n
 		    {
 		      // coutfl << " found a normal word   " << hex << "0x" << k[index]  << dec << " at index " << index
 		      // 	     << " for channel " << index_channel << " and " << index_sample  << endl;
-		      adc[index_sample++][index_channel] = k[index] & 0x3fff;
-		      adc[index_sample++][index_channel] = (k[index] >> 14) & 0x3fff;
-		      isZeroSuppressed[index_channel] = false; // we are ot zero-sppressed
+		      adc[index_sample++][corrected_index_channel] = k[index] & 0x3fff;
+		      adc[index_sample++][corrected_index_channel] = (k[index] >> 14) & 0x3fff;
+		      isZeroSuppressed[corrected_index_channel] = false; // we are ot zero-sppressed
 		      // coutfl << " setting not zp  for channel " << index_channel  << " " << isZeroSuppressed[index_channel] << endl;
 
 		    }
 		  else if ( (k[index] >> 28) == 0xe) // here is our regular pre-post word
 		    {
-		      pre_post[0][index_channel] = (k[index] & 0x3fff);
-		      pre_post[1][index_channel] = ((k[index]>>14) & 0x3fff);
+		      pre_post[0][corrected_index_channel] = (k[index] & 0x3fff);
+		      pre_post[1][corrected_index_channel] = ((k[index]>>14) & 0x3fff);
 		      // coutfl << " found a regular zp-word  " << hex << "0x" << k[index]  << dec << " at index " << index
 		      // 	     << " for channel " << index_channel << endl;
 		    }
