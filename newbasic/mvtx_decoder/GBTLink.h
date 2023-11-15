@@ -143,7 +143,7 @@ struct GBTLink
   void getRowCol(const uint8_t reg, const uint16_t addr, uint16_t& row, uint16_t& col)
   {
     row = ( addr >> 0x1 ) & 0x1FF;
-    col = ( (reg << 5 | addr >> 9 ) & 0x1E ) | ( (addr ^ addr >> 1) & 0x1 );
+    col = ( reg << 5 | ( (addr >> 9) & 0x1E ) ) | ( (addr ^ addr >> 1) & 0x1 );
   }
 
   void addHit(const uint8_t laneId, const uint8_t bc, uint8_t reg, const uint16_t addr)
