@@ -8,7 +8,12 @@
 #include <bitset>
 
 using namespace mvtx;
-constexpr std::array<std::string_view, ChipStat::NErrorsDefined> ChipStat::ErrNames;
+
+#if ( __cplusplus >= CXX_17 )
+  constexpr std::array<std::string_view, ChipStat::NErrorsDefined> ChipStat::ErrNames;
+#endif
+
+  constexpr std::array<uint32_t, ChipStat::NErrorsDefined> ChipStat::ErrActions;
 
 //________________________________________________________________________________
 uint32_t ChipStat::getNErrors() const

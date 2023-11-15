@@ -325,11 +325,6 @@ msgheaders = \
 
 AM_CPPFLAGS = -I$(includedir)  -I@ROOTINC@ -I$(OPT_SPHENIX)/include
 
-if ENABLE_MVTX_DECODER
-AM_CPPFLAGS += -DMVTX_DECODER
-AM_LDFLAGS +=  -lmvtxdecoder
-endif
-
 noinst_HEADERS = \
   eventLinkDef.h \
   all.h
