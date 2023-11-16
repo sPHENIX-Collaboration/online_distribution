@@ -135,8 +135,8 @@ void oncsSub_idmvtxv3::setupLinks(mvtx::PayLoadCont& buf)
 
           if ( (rdh.packetCounter) && (rdh.packetCounter != gbtLink.prev_pck_cnt + 1) )
           {
-            log_error("Incorrect pages count %d, previous page count was %d",
-                rdh.packetCounter, gbtLink.prev_pck_cnt);
+            log_error << "Incorrect pages count " << rdh.packetCounter <<", previous page count was " \
+              << gbtLink.prev_pck_cnt << std::endl;
             payload_position += pageSizeInBytes;
             continue;
           }
@@ -148,8 +148,8 @@ void oncsSub_idmvtxv3::setupLinks(mvtx::PayLoadCont& buf)
           {
             if ( gbtLink.hbf_found )
             {
-              log_error("FLX: %d, FeeId: %d. Found new HBF before stop previous HBF. Previous HBF will be ignored",
-                  gbtLink.flxId, gbtLink.feeId);
+              log_error << "FLX: " << gbtLink.flxId << ", FeeId: " << gbtLink.feeId \
+                << ". Found new HBF before stop previous HBF. Previous HBF will be ignored." << std::endl;
               gbtLink.cacheData(gbtLink.hbf_length, true);
             }
             gbtLink.hbf_found = true;
@@ -164,8 +164,8 @@ void oncsSub_idmvtxv3::setupLinks(mvtx::PayLoadCont& buf)
           {
             if ( ! gbtLink.hbf_found )
             {
-              log_error("FLX: %d, FeeId: %d. Stopping HBF without start. This block will be ignored",
-                  gbtLink.flxId, gbtLink.feeId);
+              log_error << "FLX: " << gbtLink.flxId << ", FeeId: " << gbtLink.feeId \
+                << ". Stopping HBF without start. This block will be ignored." << std::endl;
               gbtLink.cacheData(gbtLink.hbf_length, true);
             }
             gbtLink.hbf_found = false;
@@ -221,7 +221,7 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
   {
     if (mFeeId2LinkID.find(i) == mFeeId2LinkID.cend())
     {
-      log_error("FeeId %d was not found in the feeId mapping for this packet", i);
+      log_error << "FeeId " << i << " was not found in the feeId mapping for this packet" << std::endl;
       assert(false);
     }
     uint32_t lnkId =  mFeeId2LinkID[i].entry;
@@ -229,8 +229,8 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
     {
       if ( mGBTLinks[lnkId].rawData.getNPieces() != mGBTLinks[lnkId].hbf_count)
       {
-        log_error("Mismatch size for HBF from hbfData: %d and link rawData Pieces: %ld",
-            mGBTLinks[lnkId].hbf_count, mGBTLinks[lnkId].rawData.getNPieces() );
+        log_error << "Mismatch size for HBF from hbfData: " << mGBTLinks[lnkId].hbf_count << " and link rawData Pieces: " \
+          << mGBTLinks[lnkId].rawData.getNPieces() << std::endl;
         assert(false);
       }
       return mGBTLinks[lnkId].hbf_count;
@@ -264,7 +264,7 @@ int oncsSub_idmvtxv3::iValue(const int i_feeid, const int idx, const char *what)
 
   if (mFeeId2LinkID.find(feeId) == mFeeId2LinkID.cend())
   {
-    log_error("FeeId %d was not found in the feeId mapping for this packet", feeId);
+    log_error << "FeeId " << feeId << " was not found in the feeId mapping for this packet" << std::endl;
     assert(false);
   }
   uint32_t lnkId =  mFeeId2LinkID[feeId].entry;
@@ -299,7 +299,7 @@ int oncsSub_idmvtxv3::iValue(const int i_feeid, const int i_trg, const int i_hit
 
   if (mFeeId2LinkID.find(feeId) == mFeeId2LinkID.cend())
   {
-    log_error("FeeId %d was not found in the feeId mapping for this packet", feeId);
+    log_error << "FeeId " << feeId << "was not found in the feeId mapping for this packet" << std::endl;
     assert(false);
   }
   uint32_t lnkId =  mFeeId2LinkID[feeId].entry;
@@ -344,7 +344,7 @@ long long int oncsSub_idmvtxv3::lValue(const int i_feeid, const int idx, const c
 
   if (mFeeId2LinkID.find(feeId) == mFeeId2LinkID.cend())
   {
-    log_error("FeeId %d was not found in the feeId mapping for this packet", feeId);
+    log_error << "FeeId " << feeId << "was not found in the feeId mapping for this packet" << std::endl;
     assert(false);
   }
   uint32_t lnkId =  mFeeId2LinkID[feeId].entry;

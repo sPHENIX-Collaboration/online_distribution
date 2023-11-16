@@ -11,7 +11,7 @@ namespace mvtx_utils
 {
 
 #define clean_errno() (errno == 0 ? "None" : strerror(errno))
-#define log_error(M, ...) fprintf(stderr, "[ERROR] (%s:%d: errno: %s) " M "\n", __FILE__, __LINE__, clean_errno(), ##__VA_ARGS__)
+#define log_error std::cerr << "[ERROR] (" << __FILE__ << ":" << __LINE__ << ":errno: " << clean_errno()
 
   constexpr uint8_t FLXWordLength = 32;
 

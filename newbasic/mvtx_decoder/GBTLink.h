@@ -295,7 +295,7 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
     {
       if ( dataOffset )
       {
-        log_error("Wrong dataOffset value %ld at the start of a HBF", dataOffset);
+        log_error << "Wrong dataOffset value " << dataOffset << " at the start of a HBF" << std::endl;
         assert(false);
       }
       statistics.clear();
@@ -314,7 +314,7 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
     {
       if (prev_evt_complete)
       {
-        log_error("Previous event was already completed");
+        log_error << "Previous event was already completed" << std::endl;
         assert(false);
       }
     }
@@ -330,8 +330,8 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
       prev_gbt_cnt = (w16 & 0x3FF);
       if (n_gbt_cnt < 1 || n_gbt_cnt > 3)
       {
-        log_error("Bad gbt counter in the flx packet. FLX: %d, Feeid: %d, n_gbt_cnt %d, prev_gbt_cnt %d, size: %d, dataOffset: %ld",
-          flxId, feeId, n_gbt_cnt, prev_gbt_cnt, currRawPiece->size, dataOffset);
+        log_error << "Bad gbt counter in the flx packet. FLX: " << flxId << ", Feeid: " << feeId << ", n_gbt_cnt: " << n_gbt_cnt \
+          << ", prev_gbt_cnt: " << prev_gbt_cnt << ", size: " << currRawPiece->size << ", dataOffset: " << dataOffset << std::endl;
         PrintBlock(std::cerr, rdh_start, nFlxWords + 2);
         std::cerr << "Full HBF" << std::endl;
         PrintBlock(std::cerr, hbf_start, (currRawPiece->size/32) );
@@ -348,8 +348,8 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
                     ((gbtWord.activeLanes >> 3) & 0x7) == 0x7 ||
                     ((gbtWord.activeLanes >> 6) & 0x7) == 0x7) )
           {
-            log_error("Expected all active lanes for links, but %d found in HBF %d, %s",
-              gbtWord.activeLanes, hbfEntry, gbtWord.asString().data());
+            log_error << "Expected all active lanes for links, but " << gbtWord.activeLanes << "found in HBF " << hbfEntry << ", " \
+              << gbtWord.asString().data() << std::endl;
             assert(false);
           }
         }
@@ -395,8 +395,8 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
             n_packet_done++;
             if (n_packet_done < n_no_continuation)
             {
-              log_error("TDT packet done before TDH no continuation %d != %d",
-                  n_no_continuation, n_packet_done);
+              log_error << "TDT packet done before TDH no continuation " << n_no_continuation \
+                << " != " << n_packet_done << std::endl;
               assert(false);
             }
           }
@@ -407,7 +407,7 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
         {
           if (! rdh.stopBit)
           {
-            log_error("");
+            log_error << "" << std::endl;
             assert(false);
           }
         }
@@ -422,7 +422,7 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
         {
           if (! header_found )
           {
-            log_error("Trigger header not found before chip data");
+            log_error << "Trigger header not found before chip data" << std::endl;
             assert(false);
           }
           auto lane = ( gbtWord.data8[9] & 0x1F ) % 3;
@@ -460,7 +460,7 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
 
   if ( buffer.getSize() < 3 )
   {
-    log_error("chip data is too short: %ld", buffer.getSize());
+    log_error << "chip data is too short: " << buffer.getSize() << std::endl;
     assert(false);
   }
 
@@ -505,7 +505,7 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
       laneId = (dataC & 0x0F) % 3;
       if ( laneId != chipId )
       {
-        log_error("Error laneId %d (%d) and chipId %d", laneId, (dataC & 0xF), chipId);
+        log_error << "Error laneId " << laneId << " (" << (dataC & 0xF) << ") and chipId " << chipId << std::endl;
         assert(false);
       }
       buffer.next(bc);
@@ -519,7 +519,7 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
         {
           if ( buffer.getUnusedSize() < 2 )
           {
-            log_error("No data short would fit (at least a data short after region header!)");
+            log_error << "No data short would fit (at least a data short after region header!)" << std::endl;
             assert(false);
           }
           // TODO: move first region header out of loop, asserting its existence
@@ -529,12 +529,12 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
         {
           if( buffer.isEmpty() )
           {
-            log_error("data short do not fit");
+            log_error << "data short do not fit" << std::endl;
             assert(false);
           }
           if ( reg == 0xFF )
           {
-            log_error("data short at %ld before region header", buffer.getOffset());
+            log_error << "data short at " << buffer.getOffset() << " before region header" << std::endl;
             assert(false);
           }
           dataS = (dataC << 8);
@@ -546,12 +546,12 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
         {
           if ( buffer.getUnusedSize() < 3 )
           {
-            log_error("No data long would fit (at least a data short after region header!)");
+            log_error << "No data long would fit (at least a data short after region header!)" << std::endl;
             assert(false);
           }
           if ( reg == 0xFF )
           {
-            log_error("data short at %ld before region header", buffer.getOffset());
+            log_error << "data short at " << buffer.getOffset() << " before region header" << std::endl;
             assert(false);
           }
           buffer.next(dataS);
@@ -560,7 +560,7 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
           uint8_t hit_map = (dataS & 0xFF);
           if ( hit_map & 0x80 )
           {
-            log_error("Wrong bit before DATA LONG bit map");
+            log_error << "Wrong bit before DATA LONG bit map" << std::endl;
             assert(false);
           }
           while( hit_map != 0x00 )
@@ -594,7 +594,7 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
           laneId = (dataC & 0x0F) % 3;
           if (laneId != chipId )
           {
-            log_error("Error laneId %d (%d) and chipId %d", laneId, (dataC & 0xF), chipId);
+            log_error << "Error laneId " << laneId << " (" << (dataC & 0xF) << ") and chipId " << chipId << std::endl;
             assert(false);
           }
           buffer.next(bc);
