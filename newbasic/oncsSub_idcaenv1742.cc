@@ -233,7 +233,7 @@ int oncsSub_idcaenv1742::iValue(const int n,const char *what)
     return freq;
   }
 
-  if ( strcmp(what,"GROUPMASK") == 0 )
+  if ( strcmp(what,"GROUPPRESENT") == 0 )
   {
     if ( n <0 || n >=4) return 0;
     return (group_mask >> n) &1;
@@ -273,10 +273,10 @@ void  oncsSub_idcaenv1742::dump ( OSTREAM& os )
     }
   os << "("<< f << ")" << std::endl;
 
-  os << "Group Mask:              ";
+  os << "Group present:           ";
   for ( i = 0; i < 4; i++)
     {
-      os<< iValue(i, "GROUPMASK") << "  ";
+      os<< iValue(i, "GROUPPRESENT") << "  ";
     }
   os << std::endl;
 
