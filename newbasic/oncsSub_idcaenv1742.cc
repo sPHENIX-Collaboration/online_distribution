@@ -233,6 +233,12 @@ int oncsSub_idcaenv1742::iValue(const int n,const char *what)
     return freq;
   }
 
+  if ( strcmp(what,"GROUPPRESENT") == 0 )
+  {
+    if ( n <0 || n >=4) return 0;
+    return (group_mask >> n) &1;
+  }
+
   return 0;
 
 }
@@ -266,6 +272,14 @@ void  oncsSub_idcaenv1742::dump ( OSTREAM& os )
       break;
     }
   os << "("<< f << ")" << std::endl;
+
+  os << "Group present:           ";
+  for ( i = 0; i < 4; i++)
+    {
+      os<< iValue(i, "GROUPPRESENT") << "  ";
+    }
+  os << std::endl;
+
 
   os << "contains trigger sample: ";
   for ( i = 0; i < 4; i++)

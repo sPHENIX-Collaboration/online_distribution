@@ -295,6 +295,17 @@ int Packet_iddigitizerv2::iValue(const int n, const char *what)
       return 0;
     }
 
+  if ( strcmp(what,"CHECKSUMOK") == 0 )
+  {
+    if (  _calculated_odd_checksum < 0 ) return -1; // cannot evaluate
+    if (  _calculated_even_checksum < 0 ) return -1; // cannot evaluate
+    if (  _even_checksum == _calculated_even_checksum  &&  _odd_checksum == _calculated_odd_checksum) return 1;
+
+    return 0;
+
+  }
+
+  
   return 0;
 
 }

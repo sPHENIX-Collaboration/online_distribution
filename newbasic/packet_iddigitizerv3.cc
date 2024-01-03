@@ -27,6 +27,7 @@ Packet_iddigitizerv3::Packet_iddigitizerv3(PACKET_ptr data)
   _detid = 0;
   _module_address  = 0;
   _xmit_clock = 0;
+  _AnyChannelisSuppressed = false;  // we use this later to see if the checksum can be calculated
   
   for ( int i = 0; i < NR_FEMS; i++)
     {
@@ -173,6 +174,7 @@ unsigned int Packet_iddigitizerv3::decode_FEM ( unsigned int *k, const int fem_n
 	{
 	  corrected_index_channel = index_channel^1;
 	  isZeroSuppressed[corrected_index_channel] = true;
+	  _AnyChannelisSuppressed = true;
 	  pre_post[0][corrected_index_channel] = (k[index] & 0x3fff);
 	  pre_post[1][corrected_index_channel] = ((k[index]>>14) & 0x3fff);
 	  // coutfl << " found a zp-word  " << hex << "0x" << k[index]  << dec << " at index " << index
@@ -353,6 +355,23 @@ int Packet_iddigitizerv3::iValue(const int n, const char *what)
     return _fem_calculated_checksum_LSB[n];
   }
 
+  // to maintain compatibility with v2, we provide those interfaces
+  // but we return -1 for "cannot be determined"
+  if ( strcmp(what,"EVENCHECKSUMOK") == 0 )
+  {
+    return -1;
+  }
+
+  if ( strcmp(what,"ODDCHECKSUMOK") == 0 )
+  {
+    return -1;
+  }
+  
+  if ( strcmp(what,"CHECKSUMOK") == 0 )
+  {
+    return -1;
+  }
+  
   if ( strcmp(what,"PRE") == 0 )
   {
     if ( n < 0 || n >= _nchannels ) return 0;

@@ -51,6 +51,7 @@ protected:
   int _is_decoded;
 
   bool isZeroSuppressed[NR_FEMS*64];
+  bool _AnyChannelisSuppressed;
 
   int adc[32][NR_FEMS*64];
   int pre_post[2][NR_FEMS*64];
