@@ -21,10 +21,10 @@
 #include <map>
 
 
-#include <Event/testEventiterator.h>
-#include <Event/fileEventiterator.h>
-#include <Event/rcdaqEventiterator.h>
-#include <Event/oncsEventiterator.h>
+#include "testEventiterator.h"
+#include "fileEventiterator.h"
+#include "rcdaqEventiterator.h"
+#include "oncsEventiterator.h"
 
 using namespace std;
 

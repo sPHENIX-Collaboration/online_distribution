@@ -404,7 +404,7 @@ prdf2prdf_LDADD = libNoRootEvent.la libmessage.la -ldl  @LZOLIB@
 prdfcheck_LDADD = libNoRootEvent.la -ldl  @LZOLIB@
 prdfsplit_LDADD = libNoRootEvent.la -ldl  @LZOLIB@
 
-eventServer_LDADD = libNoRootEvent.la -ldl  @LZOLIB@
+eventServer_LDADD = libNoRootEvent.la -ldl -lpthread  @LZOLIB@
 eventClient_LDADD = libNoRootEvent.la -ldl  @LZOLIB@
 
 

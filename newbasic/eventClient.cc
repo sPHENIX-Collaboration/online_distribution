@@ -4,7 +4,7 @@
 #include <iomanip>
 
 #include "eventReceiverClient.h"
-#include <Event/Event.h>
+#include "Event.h"
 
 #ifdef HAVE_GETOPT_H
 #include "getopt.h"
