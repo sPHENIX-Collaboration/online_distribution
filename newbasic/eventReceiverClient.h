@@ -6,9 +6,7 @@
 #include <netinet/in.h>
 
 
-#include <Event/Event.h>
-//#include <Event/oncsEvent.h>
-//#include <Event/oncsSubevent.h>
+class Event;
 
 class eventReceiverClient
 {
