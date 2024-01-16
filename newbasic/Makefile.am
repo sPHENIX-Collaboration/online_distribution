@@ -37,6 +37,7 @@ installedheaders = \
   dpipe_filter.h \
   buffer.h \
   simpleRandom.h \
+  eventReceiverClient.h \
   gzbuffer.h \
   lzobuffer.h \
   prdfBuffer.h \
@@ -224,6 +225,7 @@ allsources = \
   decoding_routines.cc \
   evt_mnemonic.cc \
   simpleRandom.cc \
+  eventReceiverClient.cc \
   testEventiterator.cc \
   fileEventiterator.cc \
   listEventiterator.cc \
@@ -366,7 +368,10 @@ bin_PROGRAMS = \
   eventcombiner \
   prdf2prdf \
   prdfcheck \
-  prdfsplit
+  prdfsplit \
+  eventServer \
+  eventClient
+
 
 
 dpipe_SOURCES = dpipe.cc
@@ -383,6 +388,8 @@ changehitformat_SOURCES	= changehitformat.cc
 prdf2prdf_SOURCES = prdf2prdf.cc
 prdfcheck_SOURCES = prdfcheck.cc
 prdfsplit_SOURCES = prdfsplit.cc
+eventServer_SOURCES = eventServer.cc
+eventClient_SOURCES = eventClient.cc
 
 
 dpipe_LDADD = libNoRootEvent.la libmessage.la  -ldl  @LZOLIB@
@@ -396,6 +403,9 @@ changehitformat_LDADD = libNoRootEvent.la libmessage.la -ldl @LZOLIB@
 prdf2prdf_LDADD = libNoRootEvent.la libmessage.la -ldl  @LZOLIB@
 prdfcheck_LDADD = libNoRootEvent.la -ldl  @LZOLIB@
 prdfsplit_LDADD = libNoRootEvent.la -ldl  @LZOLIB@
+
+eventServer_LDADD = libNoRootEvent.la -ldl -lpthread  @LZOLIB@
+eventClient_LDADD = libNoRootEvent.la -ldl  @LZOLIB@
 
 
 libmessage_la_SOURCES = \
@@ -480,6 +490,7 @@ event_Dict.C : \
   rcdaqEventiterator.h \
   packet.h \
   testEventiterator.h \
+  eventReceiverClient.h \
   eventLinkDef.h
 	rootcint -f $@ @CINTDEFS@ -c $(DEFS) $(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $^
 
