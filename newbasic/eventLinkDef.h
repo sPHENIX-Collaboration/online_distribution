@@ -7,6 +7,7 @@
 #pragma link C++ class oncsEventiterator-!;
 #pragma link C++ class rcdaqEventiterator-!;
 #pragma link C++ class Eventiterator-!;
+#pragma link C++ class eventReceiverClient-!;
 #pragma link C++ class Event-!;
 
 

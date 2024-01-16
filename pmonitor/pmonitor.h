@@ -6,6 +6,7 @@
 
 #include <Event/Event.h>
 #include <Event/EventTypes.h>
+#include <Event/eventReceiverClient.h>
 
 int pstatus ();                         
 
