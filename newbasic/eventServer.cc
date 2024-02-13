@@ -145,7 +145,7 @@ main(int argc, char *argv[])
   int c;
 
 
-  int status;
+  int status = -1;
 
   pthread_mutex_init( &MapSem, 0);
 
