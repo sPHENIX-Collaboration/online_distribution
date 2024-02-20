@@ -233,7 +233,9 @@ unsigned int Packet_iddigitizerv3::decode_FEM ( unsigned int *k, const int fem_n
 		  index++;
 		}
 	    }
-
+	    else {
+		index++; // Because sometimes data is cut short and we don't want an infinite loop
+	    }
 	  // just in case we get a zero-suppressed word, step the index_channel
 	  index_channel++;
 	}
