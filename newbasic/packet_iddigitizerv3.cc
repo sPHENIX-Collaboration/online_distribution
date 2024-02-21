@@ -128,6 +128,14 @@ int Packet_iddigitizerv3::decode ()
 	  fem_index += i;
 	  //coutfl << " fem_index now  " << fem_index << "  " << hex <<  k[fem_index] << dec << endl;
 	}
+        else {
+           coutfl << "Incorrect packet header at index " << dec << fem_index << hex << endl;
+           fem_index += 4; // jump forward to data
+           while ( (k[fem_index] >> 28) != 0xa) {
+             	fem_index++;
+             	if (fem_index > dlength) break;
+           }
+       }
     }
 
   
