@@ -31,6 +31,8 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
 
   long long int lValue(const int, const int, const char* what) final;
 
+  void * pValue(const int) final;
+
   void dump(OSTREAM &os = COUT) final;
 
  protected:
