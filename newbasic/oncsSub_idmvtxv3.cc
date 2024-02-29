@@ -368,6 +368,18 @@ long long int oncsSub_idmvtxv3::lValue(const int i_feeid, const int idx, const c
 
 
 //_________________________________________________
+void * oncsSub_idmvtxv3::pValue(const int channel)
+{
+  if (channel == getIdentifier())
+  {
+    return &SubeventHdr->data;
+  }
+
+  return nullptr;
+}
+
+
+//_________________________________________________
 void oncsSub_idmvtxv3::dump(OSTREAM &os)
 {
   identify(os);
