@@ -8,17 +8,13 @@ using namespace std;
 
 // define static references
 size_t oncsSub_idmvtxv3::mEventId = 0;
-std::unordered_map<uint32_t, oncsSub_idmvtxv3::dumpEntry> oncsSub_idmvtxv3::mSubId2Buffers = {};
-std::vector< mvtx::PayLoadCont> oncsSub_idmvtxv3::mBuffers = {};
 std::unordered_map<uint16_t, oncsSub_idmvtxv3::dumpEntry> oncsSub_idmvtxv3::mFeeId2LinkID = {};
-std::vector< mvtx::GBTLink> oncsSub_idmvtxv3::mGBTLinks = {};
+std::vector<mvtx::GBTLink> oncsSub_idmvtxv3::mGBTLinks = {};
 
 oncsSub_idmvtxv3::oncsSub_idmvtxv3(subevtdata_ptr data)
   : oncsSubevent_w4(data)
 {
   m_is_decoded = false;
-  payload = nullptr;
-  payload_position = 0;
 }
 
 //_________________________________________________
@@ -34,33 +30,34 @@ int oncsSub_idmvtxv3::decode()
 
   for (auto& link : mGBTLinks)
   {
-    link.clear(false, true); // clear data but not the statistics
+    link.clear(true, true); // clear data but not the statistics
+    link.hbf_found = false;
+    link.hbf_length = 0;
   }
 
-  short pck_id = getIdentifier();
+//  short pck_id = getIdentifier();
 
-  auto& bufref = mSubId2Buffers[pck_id];
-  if ( bufref.entry == -1 )
+  payload_start = (uint8_t *) &SubeventHdr->data;  // here begins the payload
+  payload_length = getDataLength() - getPadding(); //padding is supposed to be in units of dwords, this assumes dwords
+  payload_length *= 4;
+
+  if ( payload_length % mvtx_utils::FLXWordLength )
   {
-    bufref.entry = mBuffers.size();
-    mBuffers.push_back( {} );
+    payload_length -= payload_length % mvtx_utils::FLXWordLength;
+    COUT
+      << ENDL
+      << "!!!!!!!!!!!!!!!!!!WARNING!!!!!!!!!!!!!!!!!!!! \n"
+      << "DMA packet has incomplete FLX words, only "
+      << payload_length << " bytes(" << (payload_length / mvtx_utils::FLXWordLength)
+      << " FLX words), will be decoded. \n"
+      << "!!!!!!!!!!!!!!!!!!WARNING!!!!!!!!!!!!!!!!!!!! \n"
+      << ENDL;
   }
-  auto& buffer = mBuffers[bufref.entry];
-  loadInput(buffer);
-  setupLinks(buffer);
+  payload_position = 0;
 
-  buffer.movePtr(payload_position);
+  setupLinks();
 
-  if ( buffer.isEmpty() )
-  {
-    buffer.clear();
-  }
-  else
-  {
-    buffer.moveUnusedToHead();
-  }
-
-  for ( auto& link : mGBTLinks )
+  for (auto& link : mGBTLinks)
   {
     link.collectROFCableData();
   }
@@ -69,57 +66,26 @@ int oncsSub_idmvtxv3::decode()
   return 0;
 }
 
-
-void oncsSub_idmvtxv3::loadInput(mvtx::PayLoadCont& buffer)
-{
-  uint8_t* payload_start = (uint8_t *) &SubeventHdr->data;  // here begins the payload
-  unsigned int dlength = getDataLength() - getPadding(); //padding is supposed to be in units of dwords, this assumes dwords
-  dlength *= 4;
-
-  if ( dlength % mvtx_utils::FLXWordLength )
-  {
-    dlength -= dlength % mvtx_utils::FLXWordLength;
-    COUT
-      << ENDL
-      << "!!!!!!!!!!!!!!!!!!WARNING!!!!!!!!!!!!!!!!!!!! \n"
-      << "DMA packet has incomplete FLX words, only "
-      << dlength << " bytes(" << (dlength / mvtx_utils::FLXWordLength)
-      << " FLX words), will be decoded. \n"
-      << "!!!!!!!!!!!!!!!!!!WARNING!!!!!!!!!!!!!!!!!!!! \n"
-      << ENDL;
-  }
-
-  buffer.add(payload_start, dlength);
-  payload = buffer.getPtr();
-  payload_position = 0;
-
-  return;
-}
-
-
-void oncsSub_idmvtxv3::setupLinks(mvtx::PayLoadCont& buf)
+void oncsSub_idmvtxv3::setupLinks()
 {
   mvtx_utils::RdhExt_t rdh = {};
-  size_t dlength = buf.getUnusedSize();
   do
   {
     // Skip FLX padding
-    if ( *(reinterpret_cast<uint16_t*>(&payload[payload_position] + 30)) == 0xFFFF )
+    if ( *(reinterpret_cast<uint16_t*>(&payload_start[payload_position] + 30)) == 0xFFFF )
     {
-      while ( (*(reinterpret_cast<uint16_t*>(&payload[payload_position] + 30)) == 0xFFFF) &&\
-             payload_position < dlength)
-      {
-        payload_position += mvtx_utils::FLXWordLength;
-      }
+      payload_position += mvtx_utils::FLXWordLength;
     }
-    else if ( (dlength - payload_position) >= 2 * mvtx_utils::FLXWordLength ) // at least FLX header and RDH
+    else if ( (payload_length - payload_position) >= 2 * mvtx_utils::FLXWordLength ) // at least FLX header and RDH
     {
-      if ( *(reinterpret_cast<uint16_t*>(&payload[payload_position] + 30)) == 0xAB01 )
+      if ( *(reinterpret_cast<uint16_t*>(&payload_start[payload_position] + 30)) == 0xAB01 )
       {
-        rdh.decode(&payload[payload_position]);
+        rdh.decode(&payload_start[payload_position]);
         const size_t pageSizeInBytes = (rdh.pageSize + 1) * mvtx_utils::FLXWordLength;
-        if ( pageSizeInBytes > (dlength - payload_position) )
+        if ( pageSizeInBytes > (payload_length - payload_position) )
         {
+          std::cout << "Incomplete Felix packet, remaining data " << (payload_length - payload_position);
+          std::cout << " bytes less than " << pageSizeInBytes << " bytes"<< std::endl;
           break; // skip incomplete felix packet
         }
         else
@@ -135,41 +101,60 @@ void oncsSub_idmvtxv3::setupLinks(mvtx::PayLoadCont& buf)
 
           if ( (rdh.packetCounter) && (rdh.packetCounter != gbtLink.prev_pck_cnt + 1) )
           {
-            log_error << "Incorrect pages count " << rdh.packetCounter <<", previous page count was " \
+            log_error << "Incorrect pages count " << rdh.packetCounter <<", previous page count was "
               << gbtLink.prev_pck_cnt << std::endl;
             payload_position += pageSizeInBytes;
             continue;
           }
           gbtLink.prev_pck_cnt = rdh.packetCounter;
 
-          gbtLink.data.add((payload + payload_position), pageSizeInBytes);
+          gbtLink.data.add((payload_start + payload_position), pageSizeInBytes);
 
           if ( ! rdh.packetCounter ) // start HB
           {
-            if ( gbtLink.hbf_found )
+            if (gbtLink.hbf_found)
             {
-              log_error << "FLX: " << gbtLink.flxId << ", FeeId: " << gbtLink.feeId \
+              log_error << "FLX: " << gbtLink.flxId << ", FeeId: " << gbtLink.feeId
                 << ". Found new HBF before stop previous HBF. Previous HBF will be ignored." << std::endl;
-              gbtLink.cacheData(gbtLink.hbf_length, true);
+              if (gbtLink.hbf_length)
+              {
+                gbtLink.cacheData(gbtLink.hbf_length, true);
+              }
             }
             gbtLink.hbf_found = true;
             gbtLink.hbf_length = pageSizeInBytes;
           }
           else
           {
-            gbtLink.hbf_length += pageSizeInBytes;
+            if (! gbtLink.hbf_found)
+            {
+              log_error << "FLX: " << gbtLink.flxId << ", FeeId: " << gbtLink.feeId
+              << ". Found continuous HBF before start new HBF. data will be ignored." << std::endl;
+              gbtLink.cacheData(pageSizeInBytes, true);
+            }
+            else
+            {
+              gbtLink.hbf_length += pageSizeInBytes;
+            }
           }
 
           if ( rdh.stopBit ) // found HB end
           {
             if ( ! gbtLink.hbf_found )
             {
-              log_error << "FLX: " << gbtLink.flxId << ", FeeId: " << gbtLink.feeId \
+              log_error << "FLX: " << gbtLink.flxId << ", FeeId: " << gbtLink.feeId
                 << ". Stopping HBF without start. This block will be ignored." << std::endl;
-              gbtLink.cacheData(gbtLink.hbf_length, true);
+              if (gbtLink.hbf_length)
+              {
+                gbtLink.cacheData(gbtLink.hbf_length, true);
+              }
             }
-            gbtLink.hbf_found = false;
-            gbtLink.cacheData(gbtLink.hbf_length, false);
+            else
+            {
+              gbtLink.hbf_found = false;
+              gbtLink.cacheData(gbtLink.hbf_length, false);
+              gbtLink.hbf_length = 0;
+            }
           }
           payload_position += pageSizeInBytes;
         }
@@ -178,19 +163,21 @@ void oncsSub_idmvtxv3::setupLinks(mvtx::PayLoadCont& buf)
       {
         // skip raw data without a initial FLX header
         // (YCM)TODO: OK for OM but error otherwise
-        if ( 0 )
+        if(0)
         {
           std::cout << "Felix header: " << std::hex << "0x" << std::setfill('0') << std::setw(4);
-          std::cout << *(reinterpret_cast<uint16_t*>(&payload[payload_position] + 30)) << std::dec <<std::endl;
+          std::cout << *(reinterpret_cast<uint16_t*>(&payload_start[payload_position] + 30)) << std::dec <<std::endl;
         }
         payload_position += mvtx_utils::FLXWordLength;
       }
     }
     else
     {
+      std::cout << "Incomplete Felix header, remaining data " << (payload_length - payload_position);
+      std::cout << " bytes less than " << (2 * mvtx_utils::FLXWordLength) << std::endl;
       break; // skip incomplete flx_header
     }
-  } while (payload_position < dlength);
+  } while (payload_position < payload_length);
 
   return;
 }
