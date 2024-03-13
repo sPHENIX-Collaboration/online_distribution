@@ -658,6 +658,7 @@ Packet *A_Event::makePacket(PHDWORD *pp, const int hitFormat)
     case  IDDIGITIZERV3_8S:
     case  IDDIGITIZERV3_12S:
     case  IDDIGITIZERV3_14S:
+    case  IDDIGITIZERV3_16S:
     case  IDDIGITIZERV3_18S:
     case  IDDIGITIZERV3_20S:
     case  IDDIGITIZERV3_22S:
