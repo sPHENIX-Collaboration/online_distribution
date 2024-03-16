@@ -126,7 +126,7 @@ int oncsSubevent::convert()
 }
 
 
-// ------------------------------------------------------
+//------------------------------------------------------
 
 int   oncsSubevent::iValue(const int ich)
 {
@@ -139,7 +139,7 @@ int   oncsSubevent::iValue(const int ich)
     }
 
   // see if our array is long enough
-  if (ich > data1_length) return 0;
+  if (ich >= data1_length) return 0;
 
   return decoded_data1[ich];
 }
@@ -157,7 +157,7 @@ int   oncsSubevent::iValue(const int ich, const char *what)
     }
 
   // see if our array is long enough
-  if (ich > data1_length) return 0;
+  if (ich >= data1_length) return 0;
 
   return decoded_data1[ich];
 }
@@ -175,7 +175,7 @@ int   oncsSubevent::iValue(const int ich, const int iy)
     }
 
   // see if our array is long enough
-  if (ich > data1_length) return 0;
+  if (ich >= data1_length) return 0;
 
   return decoded_data1[ich];
 }
@@ -193,7 +193,7 @@ float oncsSubevent::rValue(const int ich)
     }
 
   // see if our array is long enough
-  if (ich > data1_length) return 0;
+  if (ich >= data1_length) return 0;
 
   return float(decoded_data1[ich]);
 }
@@ -211,7 +211,7 @@ float oncsSubevent::rValue(const int ich, const char *what)
     }
 
   // see if our array is long enough
-  if (ich > data1_length) return 0;
+  if (ich >= data1_length) return 0;
 
   return float(decoded_data1[ich]);
 }
@@ -229,7 +229,7 @@ float oncsSubevent::rValue(const int ich, const int iy)
     }
 
   // see if our array is long enough
-  if (ich > data1_length) return 0;
+  if (ich >= data1_length) return 0;
 
   return float(decoded_data1[ich]);
 }
