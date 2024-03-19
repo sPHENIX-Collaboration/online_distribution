@@ -14,6 +14,7 @@
 #include "packet_iddigitizerv2.h"
 #include "packet_iddigitizerv3.h"
 #include "packet_idll1v1.h"
+#include "packet_idll1v2.h"
 
 #include "packet_cdevpolarimeter.h"
 #include "packet_cdevir.h"

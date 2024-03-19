@@ -319,17 +319,17 @@
 #define IDDIGITIZERV3_28S     188
 #define IDDIGITIZERV3_30S     190
 
-#define IDLL1_20S             141
-#define IDLL1v2_20S           142
-
-
 #define IDDIGITIZER_CTRL     2099
 
 // LL1 
 
-#define IDLL1_20S 141
-#define IDLL1v2_20S 142
-
+#define IDLL1_20S            141
+#define IDLL1v2_20S          142
+#define IDLL1_MBD            191
+#define IDLL1_EMCAL_MON0     192
+#define IDLL1_EMCAL_MON1     193
+#define IDLL1_JET_MON0       194
+#define IDLL1_JET_MON1       195
 // EMC data header and trailer length
 
 #define EMC_SUPPRESSED_DATA_HEADER_LENGTH 8
