@@ -675,6 +675,14 @@ Packet *A_Event::makePacket(PHDWORD *pp, const int hitFormat)
       return new Packet_idll1v1(pp);
       break;
 
+    case IDLL1_MBD:
+    case IDLL1_EMCAL_MON0:
+    case IDLL1_EMCAL_MON1:
+    case IDLL1_JET_MON0:
+    case IDLL1_JET_MON1:
+      return new Packet_idll1v2(pp);
+      break;
+
     case IDGL1P:
       return new Packet_gl1p(pp);
       break;
