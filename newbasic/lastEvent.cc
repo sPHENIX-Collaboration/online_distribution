@@ -27,6 +27,7 @@ using namespace std;
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 
+#define coutfl cout << __LINE__ << "  " << __FILE__ << " "
 
 
 #define RCDAQEVENTITERATOR 1
@@ -40,14 +41,23 @@ void sig_handler(int);
 void sig_handler(...);
 #endif
 
+std::vector<int> packetSelection;
+
+
+
+int rangeParser ( const std::string string, std::vector<int> &selection);
+int subeventid=0;
+
+
+
 // we make it a global variable so the signal; handler can get at it.
 
 void dump(Event *);
-
+void dlist(Event *);
+  
 void exitmsg()
 {
-  COUT << "** usage: ddump -ecnstdfghiIFTOv datastream" << std::endl;
-  COUT << "    type  ddump -h   for more help" << std::endl;
+  COUT << "** usage: lastEvent -div file" << std::endl;
   exit(0);
 }
 
@@ -60,6 +70,16 @@ void evtcountexitmsg()
 
 void exithelp()
 {
+  COUT << std::endl;
+  COUT << "lastEvent finds the last event(s) in a given file in an efficient way." << std::endl;
+  COUT << "  List of options: " << std::endl;
+  //  COUT << " -e <event number>" << std::endl;
+  //COUT << " -c <number> get nth event (-e gives event with number n)" << std::endl;
+  COUT << "  -n <number> show the last n events. At most the number of events in the last buffer will be shown." << std::endl;
+  COUT << "  -i identify the event (default unless -d is given)" << std::endl;
+  COUT << "  -d dump this event" << std::endl;
+  COUT << "  -l list the packets (as is dlist)" << std::endl;
+  COUT << "  -p dump these packet ids - same selections as with ddump" << std::endl;
 
   exit(0);
 }
@@ -82,12 +102,54 @@ main(int argc, char *argv[])
   
   if (argc < 2) exitmsg();
 
+  int dump_flag = 0;
+  int identify_flag = 0;
+  int list_flag = 0;
+  unsigned int repeatcount=1;
+
 
   //  extern char *optarg;
-  //extern int optind;
+  extern int optind;
+  int c;
+
+  
+  while ((c = getopt(argc, argv, "hildvn:p:")) != EOF)
+    switch (c) 
+      {
+      case 'd':
+	dump_flag=1;
+        break;
+
+      case 'i':
+	identify_flag=1;
+        break;
+
+      case 'l':
+	list_flag=1;
+        break;
+
+      case 'n':
+	if ( !sscanf(optarg, "%d", &repeatcount) ) exitmsg();
+	break;
+
+      case 'p':
+	if ( rangeParser ( optarg, packetSelection) ) exitmsg();
+	subeventid=1;  // yes, select
+	break;
+
+      case 'h':
+	exithelp();
+	break;
+      }
+
+  if ( ! dump_flag) identify_flag=1;
+
+  
   PHDWORD *bp = 0;
 
-  int fd = open(argv[1], O_RDONLY | O_LARGEFILE);
+  if ( optind+1 > argc) exitmsg();
+	
+  int fd = open(argv[optind], O_RDONLY | O_LARGEFILE);
   if (fd == -1)
     {
       COUT << "Could not open input stream" << std::endl;
@@ -143,7 +205,7 @@ main(int argc, char *argv[])
 	}
       if ( buffer_size)
 	{
-	  cout << "found buffer at " << current_position << " record  " << current_position / BUFFERBLOCKSIZE << endl;
+	  //cout << "found buffer at " << current_position << " record  " << current_position / BUFFERBLOCKSIZE << endl;
 	  break;
 	}
     }
@@ -219,10 +281,18 @@ main(int argc, char *argv[])
       evt_vector.push_back(evt);
     }
 
-  if ( evt_vector.size() > 1)
+  
+  if ( evt_vector.size() > 0)
     {
-      evt_vector[evt_vector.size() -1]->identify();
-      dump(evt_vector[evt_vector.size() -2]);
+      //coutfl << "repeatcount " << repeatcount << " vector size " << evt_vector.size() << endl;
+      if ( repeatcount > evt_vector.size()) repeatcount = evt_vector.size();
+      for ( unsigned int i = evt_vector.size() - repeatcount; i< evt_vector.size(); i++)
+	{
+	  //cout << setw(4) << i << " ";
+	  if (identify_flag) evt_vector[i]->identify();
+	  if (list_flag)     dlist(evt_vector[i]);
+	  if (dump_flag)     dump(evt_vector[i]);
+	}
     }
   
   for ( unsigned int i = 0; i < evt_vector.size(); i++)
@@ -232,19 +302,83 @@ main(int argc, char *argv[])
   evt_vector.clear();
 
   
-   return 0;
+  return 0;
 }
 
 void dump(Event * evt)
 {
-  int dumpstyle = EVT_HEXADECIMAL;
-  int generic = 0;
+
+  if ( subeventid)
+    {
+      Packet *s;
+      std::vector<int>::const_iterator vit;
+      for (vit= packetSelection.begin(); vit!= packetSelection.end(); ++vit)
+	{
+	  if ( (s = evt->getPacket(*vit)) )  // get the subevent
+	    {
+	      s->dump();
+	      delete s;
+	    }
+	}
+    }
+  else
+    {
+      Packet *p[10000];
+      int nw = evt->getPacketList(p, 10000);
+      for (int i=0; i<nw; i++)
+	{
+	  p[i]->dump();
+	  delete p[i];
+	}
+      
+    }
+
+}
+
+void dlist(Event * evt)
+{
   Packet *p[10000];
   int nw = evt->getPacketList(p, 10000);
   for (int i=0; i<nw; i++)
     {
-      if (generic) p[i]->gdump(dumpstyle);
-      else p[i]->dump();
+      p[i]->identify();
       delete p[i];
     }
+  
+}
+
+
+
+int rangeParser ( const std::string string, std::vector<int> &selection)
+{
+  std::vector<std::string>::const_iterator it, itr;
+  std::vector<std::string> strs,r;
+
+//  std::vector<int>::const_iterator vit;
+  int low,high,i;
+  boost::split(strs,string, boost::is_any_of(","));
+
+  for (it= strs.begin(); it!= strs.end(); ++it)
+    {
+      boost::split(r,*it,boost::is_any_of("-"));
+
+      itr = r.begin();
+      low = high =boost::lexical_cast<int>(r[0]);
+      itr++;
+      if(itr!=r.end())
+	{
+	  high = boost::lexical_cast<int>(r[1]);
+	}
+      for(i=low;i<=high;++i)
+	{
+	  selection.push_back(i);
+	}
+    }
+
+  //  for(vit= selection.begin(); vit!= selection.end(); ++vit)
+  //  {
+  //    std::cout<<*vit<<std::endl;
+  //  }
+  return 0;
+
 }
