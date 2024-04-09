@@ -100,7 +100,8 @@ int Packet_iddigitizerv3::decode ()
   _flagword       = (k[1] & 0xffff);	    
   _detid          = (k[2] & 0xffff);	    
   _module_address = (k[3] & 0xffff);	    
-  _xmit_clock     = (k[4] & 0xffff);	    
+  //  _xmit_clock     = (k[4] & 0xffff);	    
+  _xmit_clock     = k[4];	    
  
   
   int fem_nr = 0;

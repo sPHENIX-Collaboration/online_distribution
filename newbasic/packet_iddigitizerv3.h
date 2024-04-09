@@ -32,7 +32,7 @@ protected:
   int _flagword;
   int _detid;
   int _module_address;
-  int _xmit_clock;
+  unsigned int _xmit_clock;
 
   // info per FEM
   int _fem_slot[NR_FEMS];
