@@ -145,6 +145,7 @@ main(int argc, char *argv[])
   if ( ! dump_flag) identify_flag=1;
 
   
+  unsigned int allocatedsize = 0;
   PHDWORD *bp = 0;
 
   if ( optind+1 > argc) exitmsg();
@@ -210,7 +211,6 @@ main(int argc, char *argv[])
 	}
     }
 
-  unsigned int allocatedsize;
   buffer *bptr = 0;
   
   int i;
