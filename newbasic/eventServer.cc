@@ -95,7 +95,8 @@ void * EventLoop( void *arg)
 	  return 0;
 	  
 	}
-
+      e->convert();
+	
       pthread_mutex_lock( &MapSem);
       map<int, Event*>::iterator it = EventMap.begin();
 

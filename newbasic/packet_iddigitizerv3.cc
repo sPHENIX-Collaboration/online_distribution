@@ -23,8 +23,6 @@ Packet_iddigitizerv3::Packet_iddigitizerv3(PACKET_ptr data)
   _nr_modules = 0;
   
   _evtnr = 0;
-  _flagword = 0;
-  _detid = 0;
   _module_address  = 0;
   _xmit_clock = 0;
   _AnyChannelisSuppressed = false;  // we use this later to see if the checksum can be calculated
@@ -96,13 +94,15 @@ int Packet_iddigitizerv3::decode ()
   if ( (k[3] >> 28) != 0x9)  return 1;
   if ( (k[4] >> 28) != 0x9)  return 1;
 
-  _evtnr          = (k[0] & 0xffff);	    
-  _flagword       = (k[1] & 0xffff);	    
-  _detid          = (k[2] & 0xffff);	    
-  _module_address = (k[3] & 0xffff);	    
-  _xmit_clock     = (k[4] & 0xffff);	    
- 
-  
+  _evtnr          = (k[0] & 0xffff);
+  _clock_rollover = (k[1] & 0xffff);
+  _evtrollover    = (k[2] & 0xffff);
+  _module_address = (k[3] & 0xffff);
+  _xmit_clock     = (k[4] & 0xffff);
+
+  _evtnr = (_evtrollover << 16) + _evtnr;
+  _xmit_clock = (_clock_rollover << 16) + _xmit_clock;
+
   int fem_nr = 0;
   
   for (int fem_index = 5; fem_index < dlength ; )  // we hop from FEM to FEM here
@@ -302,11 +302,6 @@ int Packet_iddigitizerv3::iValue(const int n, const char *what)
     return _nchannels;
   }
 
-  if ( strcmp(what,"DETID") == 0 )
-  {
-    return _detid;
-  }
-
   if ( strcmp(what,"MODULEADDRESS") == 0 )
   {
     return _module_address;
@@ -411,7 +406,7 @@ void  Packet_iddigitizerv3::dump ( OSTREAM& os )
   os << "Nr Modules:  " << iValue(0,"NRMODULES") << std::endl;
   os << "Channels:    " << iValue(0,"CHANNELS") << std::endl;
   os << "Samples:     " << iValue(0,"SAMPLES") << std::endl;
-  os << "Det. ID:     " << hex << "0x" << iValue(0,"DETID") << dec <<  std::endl;
+  //os << "Det. ID:     " << hex << "0x" << iValue(0,"DETID") << dec <<  std::endl;
   os << "Mod. Addr:   " << hex << "0x" << iValue(0,"MODULEADDRESS") << dec << std::endl;
 
   os << "FEM Slot:    ";

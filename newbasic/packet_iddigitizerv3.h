@@ -28,18 +28,19 @@ protected:
 #define NR_FEMS 4
 
   // header info per packet
+ 
   int _evtnr;
-  int _flagword;
-  int _detid;
+  int _clock_rollover;
+  int _evtrollover;
   int _module_address;
-  int _xmit_clock;
+  unsigned int _xmit_clock;
 
   // info per FEM
   int _fem_slot[NR_FEMS];
   int _fem_evtnr[NR_FEMS];
   int _fem_clock[NR_FEMS];
 
-    int _fem_checksum_MSB[NR_FEMS];
+  int _fem_checksum_MSB[NR_FEMS];
   int _fem_checksum_LSB[NR_FEMS];
   int _fem_calculated_checksum_MSB[NR_FEMS];
   int _fem_calculated_checksum_LSB[NR_FEMS];
