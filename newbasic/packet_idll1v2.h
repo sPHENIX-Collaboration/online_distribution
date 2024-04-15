@@ -29,14 +29,23 @@ protected:
     JET = 3
   };
 
+  enum DETECTORTYPE {
+    dNONE = 0,
+    dEMCAL = 1,
+    dHCAL = 2,
+    dMBD = 3
+  };
+
   TRIGGERTYPE _trigger_type;
+  DETECTORTYPE _detector_type;
+
   int _monitor;
   int _evt_nr;
   int _clock;
 
   int _slot_nr;
   int _card_nr;
-
+  int _ntrigger_words;
   int _nsamples;
 
   int _nfibers;
@@ -45,10 +54,15 @@ protected:
   int _nchannels;
   int _is_decoded;
 
-  int array[256][32] = {0};
+  int array[256][20] = {0};
 
-  int itrig_sums[24][16][40] = {0};
+  int itrig_sums[24][16][20] = {0};
 
+  int itrig_emcal_8x8map[2][12][20] = {0};
+  int itrig_emcal_2x2map[128][20] = {0};
+  int itrig_emcal_2x2sum[64][20] = {0};
+  int jet_map[32][12][20] = {0};
+  int jet_sum_result[32][9][20] = {0};
 };
 
 

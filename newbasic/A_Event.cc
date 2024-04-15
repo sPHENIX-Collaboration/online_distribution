@@ -678,8 +678,19 @@ Packet *A_Event::makePacket(PHDWORD *pp, const int hitFormat)
     case IDLL1_MBD:
     case IDLL1_EMCAL_MON0:
     case IDLL1_EMCAL_MON1:
-    case IDLL1_JET_MON0:
-    case IDLL1_JET_MON1:
+    case IDLL1_EMCAL_MON2:
+    case IDLL1_EMCAL_MON3:
+    case IDLL1_JET_EMCAL_MON0:
+    case IDLL1_JET_EMCAL_MON1:
+    case IDLL1_JET_EMCAL_MON2:
+    case IDLL1_JET_EMCAL_MON3:
+    case IDLL1_JET_EMCAL_MON4:
+    case IDLL1_JET_HCAL_MON0:
+    case IDLL1_JET_HCAL_MON1:
+    case IDLL1_JET_HCAL_MON2:
+    case IDLL1_JET_HCAL_MON3:
+    case IDLL1_JET_HCAL_MON4:
+
       return new Packet_idll1v2(pp);
       break;
 

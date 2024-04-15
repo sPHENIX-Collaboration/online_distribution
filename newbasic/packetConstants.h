@@ -328,8 +328,19 @@
 #define IDLL1_MBD            191
 #define IDLL1_EMCAL_MON0     192
 #define IDLL1_EMCAL_MON1     193
-#define IDLL1_JET_MON0       194
-#define IDLL1_JET_MON1       195
+#define IDLL1_EMCAL_MON2     194
+#define IDLL1_EMCAL_MON3     195
+#define IDLL1_JET_EMCAL_MON0       196
+#define IDLL1_JET_EMCAL_MON1       198
+#define IDLL1_JET_EMCAL_MON2       200
+#define IDLL1_JET_EMCAL_MON3       202
+#define IDLL1_JET_EMCAL_MON4       204
+#define IDLL1_JET_HCAL_MON0       197
+#define IDLL1_JET_HCAL_MON1       199
+#define IDLL1_JET_HCAL_MON2       201
+#define IDLL1_JET_HCAL_MON3       203
+#define IDLL1_JET_HCAL_MON4       205
+
 // EMC data header and trailer length
 
 #define EMC_SUPPRESSED_DATA_HEADER_LENGTH 8
