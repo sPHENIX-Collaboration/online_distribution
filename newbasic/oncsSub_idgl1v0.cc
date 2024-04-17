@@ -63,10 +63,10 @@ int oncsSub_idgl1v0::decode ()
   tag<<=16;
   tag |= buffer[12];
 
-  if ( tag != 0x1234567)
-    {
-      cout << " wrong tag " << hex << "0x" << tag << dec << endl;
-    }
+  // if ( tag != 0x1234567)
+  //   {
+  //     cout << " wrong tag" << hex << "0x" << tag << dec << endl;
+  //   }
 
   GTM_BusyVector = buffer[13];
   GTM_BusyVector <<= 16;
@@ -107,10 +107,10 @@ int oncsSub_idgl1v0::decode ()
     }
   tag |= buffer[i+3];
 
-  if ( tag != 0xdeadbeefba5eba11)
-    {
-      cout << " wrong tag " << hex << "0x" << tag << dec << endl;
-    }
+  // if ( tag != 0xdeadbeefba5eba11)
+  //   {
+  //     cout << endl << " wrong tag " << hex << "0x" << tag << dec << endl;
+  //   }
   
   
   int index = 0;
