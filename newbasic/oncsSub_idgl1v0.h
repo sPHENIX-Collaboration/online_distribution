@@ -14,7 +14,6 @@ public:
 
   int    iValue(const int dummy);
 
-  
   long long  lValue(const int hit,const char * what);
 
   long long  lValue(const int channel, const int iy);
@@ -31,10 +30,13 @@ protected:
   unsigned long long BunchNumber;
   unsigned long long TriggerInput;
   unsigned long long TriggerVector;
+
+  unsigned int GTM_BusyVector;
       
   unsigned int packet_nr;
 
   unsigned long long scalers[3*64];
+  unsigned int gl1p_scalers[3*16];
 
 
 
