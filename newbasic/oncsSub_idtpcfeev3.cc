@@ -196,8 +196,8 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 	      sampa_waveform *sw = new sampa_waveform;
 	  
 	      sw->fee           = ifee;
-	      sw->pkt_length    = header[0];
-	      sw->adc_length    = header[5];
+	      sw->pkt_length    = header[0]; // this is indeed the number of 10-bit words + 5 in this packet
+	      sw->adc_length    = header[0]-5; // this is indeed the number of 10-bit words in this packet
 	      sw->sampa_address = (header[1] >> 5) & 0xf;
 	      sw->sampa_channel = header[1] & 0x1f;
 	      sw->channel       = header[1] & 0x1ff;
@@ -466,7 +466,8 @@ int oncsSub_idtpcfeev3::find_header ( const unsigned int yy,  const std::vector<
     {
       //      coutfl << " current pos is  " << pos  << "  vector length " << orig.size()  << endl;
 	    
-      if (header_candidate[4] == MAGIC_KEY_0 && header_candidate[6] == MAGIC_KEY_1 && (header_candidate[0] - header_candidate[5] == HEADER_LENGTH))
+//      if (header_candidate[4] == MAGIC_KEY_0 && header_candidate[6] == MAGIC_KEY_1 && (header_candidate[0] - header_candidate[5] == HEADER_LENGTH))
+      if (header_candidate[4] == MAGIC_KEY_0)
 	{
 	  // found it!
             found = true;
