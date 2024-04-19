@@ -11,7 +11,8 @@ Packet_iddigitizerv2::Packet_iddigitizerv2(PACKET_ptr data)
  _nsamples = 0;
 
  _evtnr = 0;
- _detid = 0;
+ _clock_rollover = 0;
+ _evtrollover = 0;
  _module_address  = 0;
  _clock = 0;
  for ( int i = 0; i < 4; i++)
@@ -80,14 +81,17 @@ int Packet_iddigitizerv2::decode ()
 
 
   _evtnr           =  SubeventData[0]  & 0xffff;
-  _detid           =  SubeventData[2]  & 0xffff;
-
+  _clock_rollover  =  SubeventData[1]  & 0xffff;
+  _evtrollover     =  SubeventData[2]  & 0xffff;
   _module_address  = SubeventData[3] & 0xffff;
   _clock           = SubeventData[4] & 0xffff;
 
   _fem_slot[0]        = SubeventData[6] & 0xffff;
   _fem_evtnr[0]       = SubeventData[7] & 0xffff;
   _fem_clock[0]       = SubeventData[8] & 0xffff;
+  
+  _evtnr = (_evtrollover << 16) + _evtnr;
+  _clock = (_clock_rollover << 16) + _clock;
 
   //  _l1_delay    = (SubeventData[0] >> 16 ) & 0xff;
   _nr_modules =  0;
@@ -232,11 +236,6 @@ int Packet_iddigitizerv2::iValue(const int n, const char *what)
     return _nchannels;
   }
 
-  if ( strcmp(what,"DETID") == 0 )
-  {
-    return _detid;
-  }
-
   if ( strcmp(what,"MODULEADDRESS") == 0 )
   {
     return _module_address;
@@ -319,7 +318,7 @@ void  Packet_iddigitizerv2::dump ( OSTREAM& os )
   os << "Nr Modules:  " << iValue(0,"NRMODULES") << std::endl;
   os << "Channels:    " << iValue(0,"CHANNELS") << std::endl;
   os << "Samples:     " << iValue(0,"SAMPLES") << std::endl;
-  os << "Det. ID:     " << hex << "0x" << iValue(0,"DETID") << dec <<  std::endl;
+//  os << "Det. ID:     " << hex << "0x" << iValue(0,"DETID") << dec <<  std::endl;
   os << "Mod. Addr:   " << hex << "0x" << iValue(0,"MODULEADDRESS") << dec << std::endl;
 
   os << "FEM Slot:    ";
