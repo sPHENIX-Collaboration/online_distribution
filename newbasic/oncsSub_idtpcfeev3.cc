@@ -206,17 +206,33 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 		| (header[1] >> 9);	  
 
 	      // now we add the actual waveform
-	      unsigned short data_size = header[5] -1 ;
+	     // unsigned short data_size = header[5] -1 ;
+	      short data_size_counter = header[0]-5;
 
 	     //  coutfl << " Fee: " << ifee << " Sampa " << sw->sampa_address
 	     //  	 << " sampa channel: " << sw->sampa_channel
 	     //  	 << " channel: " << sw->channel
 	     //  	 << "  waveform length: " << data_size  << endl;
 
-	      for (int i = 0 ; i < data_size ; i++)
+	     // for (int i = 0 ; i < data_size ; i++)
+	      // First fill -100 for all time samples
+	      for (int i = 0 ; i < 1024 ; i++)
 		{
-		  sw->waveform.push_back( fee_data[ifee][pos++]);
+		  sw->waveform.push_back(-100);
 		}
+
+	      // Format is (N sample) (start time), (1st sample)... (Nth sample)
+	      for (int i = 0 ; i < header[0]-5 ; i++)
+		{
+		  int nsamp = fee_data[ifee][pos++];
+		  int start_t = fee_data[ifee][pos++];
+		  data_size_counter-=2;
+		  for (int j=0; j<nsamp;j++){
+		      sw->waveform[start_t+j]= fee_data[ifee][pos++]; 
+		      data_size_counter--;
+		  }
+		}
+	      if (data_size_counter<0) cout <<" error in datasize"<<endl;
 	      
 	      // we calculate the checksum here because "pos" is at the right place
 	      unsigned short crc = crc16(ifee, startpos, header[0]-1);
