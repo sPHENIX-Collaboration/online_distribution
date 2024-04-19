@@ -25,9 +25,10 @@ protected:
 
 
   int _evtnr;
-  int _detid;
+  int _evtrollover;
   int _module_address;
   int _clock;
+  int _clock_rollover;
 
   int _fem_slot[4];
   int _fem_evtnr[4];
