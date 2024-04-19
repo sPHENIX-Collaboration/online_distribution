@@ -188,6 +188,7 @@ allheaders = \
   packet_iddigitizerv2.h \
   packet_iddigitizerv3.h \
   packet_idll1v1.h \
+  packet_idll1v2.h \
   packet_w124.h \
   packet_cdevpolarimeter.h \
   packet_cdevir.h \
@@ -287,6 +288,7 @@ allsources = \
   packet_iddigitizerv2.cc \
   packet_iddigitizerv3.cc \
   packet_idll1v1.cc \
+  packet_idll1v2.cc \
   packet_mnemonic.cc \
   packet_w124.cc \
   packet_cdevpolarimeter.cc \
