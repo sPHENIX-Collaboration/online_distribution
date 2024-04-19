@@ -47,6 +47,9 @@ void exitmsg()
   exit(0);
 }
 
+float requested = 0; 
+float sent = 0; 
+
 void exithelp()
 {
 
@@ -85,7 +88,7 @@ void * EventLoop( void *arg)
 {
 
   if ( identify) it->identify();
-
+  
   while ( go_on)
     {
       Event *e = it->getNextEvent();
@@ -96,7 +99,7 @@ void * EventLoop( void *arg)
 	  
 	}
       e->convert();
-	
+
       pthread_mutex_lock( &MapSem);
       map<int, Event*>::iterator it = EventMap.begin();
 
@@ -104,6 +107,8 @@ void * EventLoop( void *arg)
       if ( old_runnumber != e->getRunNumber())
 	{
 	  old_runnumber = e->getRunNumber();
+	  requested = 0;
+	  sent = 0;
 	  for ( ; it != EventMap.end(); ++it)
 	    {
 	      delete it->second;
@@ -294,9 +299,10 @@ main(int argc, char *argv[])
       n = recvfrom(sockfd, (char *)recbuffer, 2*sizeof(int), 
 		   MSG_WAITALL, ( struct sockaddr *) &cliaddr, 
 		   &len);
+      requested += 1;
       if ( verbose )
 	{
-	  cout << "request from " << inet_ntoa(cliaddr.sin_addr) << " requesting " << recbuffer[0] << endl;
+	  cout << "request from " << inet_ntoa(cliaddr.sin_addr) << " requesting " << recbuffer[0];
 	}
       
      pthread_mutex_lock( &MapSem);
@@ -310,6 +316,12 @@ main(int argc, char *argv[])
 	 sendto(sockfd, (const char *) buffer, sizeof(int), 
 		MSG_CONFIRM, (const struct sockaddr *) &cliaddr, 
 		len);
+	 if ( verbose )
+	   {
+	     cout << " Event not delievered";
+	     if ( requested > 0) cout << " " << 100 * sent/requested << "%" << endl;
+	     else cout << endl;
+	   }
 	}
      else
        {
@@ -319,6 +331,12 @@ main(int argc, char *argv[])
 	 sendto(sockfd, (const char *) buffer, nw*sizeof(int), 
 		MSG_CONFIRM, (const struct sockaddr *) &cliaddr, 
 		len); 
+	 sent += 1;
+	 if ( verbose )
+	   {
+	     cout << " Event sent";
+	     if ( requested > 0) cout << " " << 100 * sent/requested << "%" << endl;
+	   }
        }
     }
   return 0; 
