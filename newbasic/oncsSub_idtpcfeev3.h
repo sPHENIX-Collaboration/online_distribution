@@ -40,7 +40,7 @@ protected:
 
   static const unsigned short  MAX_FEECOUNT = 26;   // that many FEEs
   static const unsigned short  MAX_CHANNELS   = 8*32; // that many channels per FEE
-  static const unsigned short  HEADER_LENGTH  = 7;
+  static const unsigned short  HEADER_LENGTH  = 5;
   
   unsigned short reverseBits(const unsigned short x) const;
   unsigned short crc16(const unsigned int fee, const unsigned int index, const int  l) const;
