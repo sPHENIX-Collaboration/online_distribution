@@ -219,18 +219,24 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 	      for (int i = 0 ; i < 1024 ; i++)
 		{
 		  sw->waveform.push_back(-100);
+//		cout <<"Initializing waveform "<<i<<endl;
 		}
 
 	      // Format is (N sample) (start time), (1st sample)... (Nth sample)
-	      for (int i = 0 ; i < header[0]-5 ; i++)
+	      //for (int i = 0 ; i < header[0]-5 ; i++)
+	      while(data_size_counter>0)
 		{
 		  int nsamp = fee_data[ifee][pos++];
 		  int start_t = fee_data[ifee][pos++];
 		  data_size_counter-=2;
+                  cout<<"nsamp: "<<nsamp<<" ";
+                  cout<<"start_t: "<<start_t<<" ";
+		  if(nsamp>data_size_counter+2){ cout<<"format error"<<endl; break;}
 		  for (int j=0; j<nsamp;j++){
 		      sw->waveform[start_t+j]= fee_data[ifee][pos++]; 
 		      data_size_counter--;
 		  }
+                  cout<<"data_size_counter: "<<data_size_counter<<" "<<endl;
 		}
 	      if (data_size_counter<0) cout <<" error in datasize"<<endl;
 	      
