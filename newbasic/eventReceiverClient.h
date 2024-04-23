@@ -18,6 +18,9 @@ class eventReceiverClient
   void setVerbosity(const int v) { _verbosity = v;};
   int getVerbosity() const { return _verbosity;};
   int getStatus() const { return _broken;};
+  int setUserTimeout(const int t) { _user_timeout = t; return 0;};
+  int getUserTimeout() const { return _user_timeout;};
+  int hadTimeout() const { return _had_timeout;};
   
  protected:
 
@@ -25,6 +28,9 @@ class eventReceiverClient
   int _flags;
   int _broken;
   int _verbosity;
+  int _timeout;
+  int _user_timeout;
+  int _had_timeout;
   
   std::string _hostname;
   struct sockaddr_in _serveraddr; 
