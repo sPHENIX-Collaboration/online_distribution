@@ -12,22 +12,64 @@
 
 using namespace std;
 
+
+void exitmsg()
+{
+  cout << " usage:   eventClient [-t <timeout in s> -v ]   event_nr [hostname] " << endl;
+  exit(1);
+}
+
+
+void exithelp()
+{
+
+  cout << std::endl;
+  cout << "eventClient receives events from the eventServer process" << std::endl;
+  cout << "  usage:   eventClient [-t <timeout in s> -v ]   event_nr [hostname] " << endl;
+  cout << std::endl;
+  cout << "  List of options: " << std::endl;
+  cout << " -t <s> timeout" << std::endl;
+  cout << " -v verbose" << std::endl;
+  exit(0);
+}
+
+
+
 // Driver code 
 int 
 main(int argc, char *argv[])
 { 
 
+  int verbosity = 0;
+  int timeout = 0;
 
-  if ( argc < 2)
-    {
-      cout << " usage: " << argv[0] << "  event_nr [hostname] " << endl;
-      return 1;
-    }
-  int evtnr = atoi(argv[1]);
+  int c;
+
+  while ((c = getopt(argc, argv, "t:v")) != EOF)
+    switch (c) 
+      {
+      case 't':
+	if ( !sscanf(optarg, "%d", &timeout) ) exitmsg();
+	break;
+
+      case 'v':   // verbose
+	verbosity++;
+	break;
+
+      case 'h':
+	exithelp();
+	break;
+      }
+
+  if ( optind  >= argc) exitmsg(); 
+ 
+
+  int evtnr = atoi(argv[optind]);
+
   string host;
-  if ( argc >= 3)
+  if ( optind+1 > argc)
     {
-      host = argv[2];
+      host = argv[optind+1];
     }
   else
     {
@@ -41,6 +83,10 @@ main(int argc, char *argv[])
       return 1;
     }
 
+  if (timeout) erc->setUserTimeout(timeout);
+
+  erc->setVerbosity(verbosity);
+
   Event *e = erc->getEvent(evtnr);
   if (e)
     {
@@ -49,7 +95,7 @@ main(int argc, char *argv[])
     }
   else
     {
-      cout << "event " << evtnr << " not received" << endl;
+      cout << "event " << evtnr << " not received, timeout = "<< erc->hadTimeout() << endl;
     }
   delete erc;
       

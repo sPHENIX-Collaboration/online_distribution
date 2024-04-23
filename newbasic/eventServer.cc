@@ -68,6 +68,7 @@ void exithelp()
   cout << " -s <number> sleep so many ticks (in units of usleep)" << std::endl;
   cout << " -i <print event identity>" << std::endl;
   cout << " -v verbose" << std::endl;
+  cout << " -c count  print -v -or -i messages only every <count> occurences " << std::endl;
   exit(0);
 }
 
@@ -79,6 +80,7 @@ int repeatcount =1;
 int ittype = RCDAQEVENTITERATOR;
 int sleeptime = 0;
 int old_runnumber = -9999;
+int msgfrequency =1;
 
 pthread_mutex_t MapSem;
 
@@ -88,7 +90,8 @@ void * EventLoop( void *arg)
 {
 
   if ( identify) it->identify();
-  
+  int current_count = 0;
+
   while ( go_on)
     {
       Event *e = it->getNextEvent();
@@ -131,9 +134,12 @@ void * EventLoop( void *arg)
       // and unlock the map
       pthread_mutex_unlock( &MapSem);
 
-      if ( identify )
+      current_count++;
+
+      if ( current_count >= msgfrequency && identify )
 	{
 	  e->identify();
+	  current_count = 0;
 	}
 
       if (sleeptime) usleep(sleeptime);
@@ -155,7 +161,7 @@ main(int argc, char *argv[])
 
   pthread_mutex_init( &MapSem, 0);
 
-  while ((c = getopt(argc, argv, "d:s:ifTrOvh")) != EOF)
+  while ((c = getopt(argc, argv, "d:s:c:ifTrOvh")) != EOF)
     switch (c) 
       {
       case 'd':
@@ -164,6 +170,10 @@ main(int argc, char *argv[])
 
       case 's':
 	if ( !sscanf(optarg, "%d", &sleeptime) ) exitmsg();
+	break;
+
+      case 'c':
+	if ( !sscanf(optarg, "%d", &msgfrequency) ) exitmsg();
 	break;
 
       case 'i':
@@ -289,6 +299,7 @@ main(int argc, char *argv[])
 	
   socklen_t len;
   int n; 
+  int current_count = 0;
 
   len = sizeof(cliaddr); //len is value/result 
 
@@ -300,7 +311,7 @@ main(int argc, char *argv[])
 		   MSG_WAITALL, ( struct sockaddr *) &cliaddr, 
 		   &len);
       requested += 1;
-      if ( verbose )
+      if ( verbose && ++current_count >= msgfrequency)
 	{
 	  cout << "request from " << inet_ntoa(cliaddr.sin_addr) << " requesting " << recbuffer[0];
 	}
@@ -316,11 +327,12 @@ main(int argc, char *argv[])
 	 sendto(sockfd, (const char *) buffer, sizeof(int), 
 		MSG_CONFIRM, (const struct sockaddr *) &cliaddr, 
 		len);
-	 if ( verbose )
+	 if ( verbose && current_count >= msgfrequency)
 	   {
 	     cout << " Event not delievered";
 	     if ( requested > 0) cout << " " << 100 * sent/requested << "%" << endl;
 	     else cout << endl;
+	     current_count = 0;
 	   }
 	}
      else
@@ -332,10 +344,11 @@ main(int argc, char *argv[])
 		MSG_CONFIRM, (const struct sockaddr *) &cliaddr, 
 		len); 
 	 sent += 1;
-	 if ( verbose )
+	 if ( verbose && current_count >= msgfrequency )
 	   {
 	     cout << " Event sent";
 	     if ( requested > 0) cout << " " << 100 * sent/requested << "%" << endl;
+	     current_count = 0;
 	   }
        }
     }
