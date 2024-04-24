@@ -65,7 +65,7 @@ int Packet_idll1v2::decode ()
       _trigger_type = TRIGGERTYPE::EMCAL;
       _detector_type = DETECTORTYPE::dEMCAL;
       _monitor = 0;
-      _ntrigger_words = 24;
+      _ntrigger_words = 32;
       break;
 
     case IDLL1_EMCAL_MON1:
@@ -79,7 +79,7 @@ int Packet_idll1v2::decode ()
       _trigger_type = TRIGGERTYPE::EMCAL;
       _detector_type = DETECTORTYPE::dEMCAL;
       _monitor = 2;
-      _ntrigger_words = 128;
+      _ntrigger_words = 24;
       break;
 
     case IDLL1_EMCAL_MON3:
@@ -204,11 +204,22 @@ int Packet_idll1v2::decode ()
   for (int is=0; is< _nsamples; is++ ) {
     
     for (int ch=0; ch< 256/2; ch++) {
-      array[(ch*2)][is] = k[2*(ch*_nsamples)+2*is+4] & 0xffff;
-      array[((ch*2+1))][is] = k[2*(ch*_nsamples)+2*is + 1 + 4] & 0xffff;
+      if (ch == 95 && is >= _nsamples - 2){
+	array[(ch*2)][is] = k[2*(127*_nsamples)+2*is+4] & 0xffff;
+	array[((ch*2+1))][is] = k[2*(127*_nsamples)+2*is + 1 + 4] & 0xffff;
+      }
+      else if(ch == 127 && is >= _nsamples - 2){
+	array[(ch*2)][is] = k[2*(95*_nsamples)+2*is+4] & 0xffff;
+	array[((ch*2+1))][is] = k[2*(95*_nsamples)+2*is + 1 + 4] & 0xffff;
+      }
+      else{
+	array[(ch*2)][is] = k[2*(ch*_nsamples)+2*is+4] & 0xffff;
+	array[((ch*2+1))][is] = k[2*(ch*_nsamples)+2*is + 1 + 4] & 0xffff;
+      }
     }
-    
   }
+
+  
   
   if (_trigger_type == TRIGGERTYPE::EMCAL)
     { 
@@ -399,8 +410,9 @@ void  Packet_idll1v2::dump ( OSTREAM& os )
   std::cout <<" "<<std::endl;
   
   std::cout << std::dec << std::setprecision(2) << "Trigger Module = " << iValue(0, "SLOTNR") * 2 + iValue(0, "CARDNR") << std::endl;
-  std::cout << std::dec << std::setprecision(4) << "Trigger Number = " << iValue(0, "EVTNR") <<std::endl; 
-  std::cout << std::dec << std::setprecision(4) << "Beam Crossing Number = " << iValue(0, "CLOCK") <<std::endl; 
+  std::cout << std::dec << std::setprecision(4) << "Evt Nr = " << iValue(0, "EVTNR") <<std::endl; 
+  std::cout << std::dec << std::setprecision(4) << "Clock = " << iValue(0, "CLOCK") <<std::endl; 
+  std::cout << std::dec << std::setprecision(4) << "Monitor = " << iValue(0, "MONITOR") <<std::endl; 
 
   if (_trigger_type == TRIGGERTYPE::EMCAL)
     {  
