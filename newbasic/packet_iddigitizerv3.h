@@ -29,9 +29,9 @@ protected:
 
   // header info per packet
  
-  int _evtnr;
-  int _clock_rollover;
-  int _evtrollover;
+  unsigned int _evtnr;
+  unsigned int _clock_rollover;
+  unsigned int _evtrollover;
   int _module_address;
   unsigned int _xmit_clock;
 
