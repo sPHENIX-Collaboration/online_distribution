@@ -218,7 +218,7 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 	      // First fill -100 for all time samples
 	      for (int i = 0 ; i < 1024 ; i++)
 		{
-		  sw->waveform.push_back(-100);
+		  sw->waveform.push_back(65000);
 //		cout <<"Initializing waveform "<<i<<endl;
 		}
 
@@ -229,27 +229,43 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 		  int nsamp = fee_data[ifee][pos++];
 		  int start_t = fee_data[ifee][pos++];
 		  data_size_counter-=2;
-                  cout<<"nsamp: "<<nsamp<<" ";
-                  cout<<"start_t: "<<start_t<<" ";
-		  if(nsamp>data_size_counter+2){ cout<<"format error"<<endl; break;}
+//                  cout<<"nsamp: "<<nsamp<<" ";
+//                  cout<<"start_t: "<<start_t<<" ";
+		  if(nsamp>data_size_counter){ cout<<"nsamp: "<<nsamp<<", size: "<<data_size_counter<<", format error"<<endl; break;}
 		  for (int j=0; j<nsamp;j++){
 		      sw->waveform[start_t+j]= fee_data[ifee][pos++]; 
+//                   cout<<"data: "<< sw->waveform[start_t+j]<<endl;
 		      data_size_counter--;
+
+	      //
+	      // This line is inserted to accommodate the "wrong format issue", which is the
+	      // last sample from the data is missing. This issue should be fixed and eventually
+	      // the following two lines will be removed
+	      //
+		      if(data_size_counter==1) break;
 		  }
-                  cout<<"data_size_counter: "<<data_size_counter<<" "<<endl;
+//                  cout<<"data_size_counter: "<<data_size_counter<<" "<<endl;
+		      if(data_size_counter==1) break;
 		}
 	      if (data_size_counter<0) cout <<" error in datasize"<<endl;
+
 	      
 	      // we calculate the checksum here because "pos" is at the right place
 	      unsigned short crc = crc16(ifee, startpos, header[0]-1);
 	      // coutfl << "fee " << setw(3) << sw->fee
 	      // 	     << " sampla channel " << setw(3) <<  sw->channel
 	      // 	     << " crc and value " << hex << setw(5) << crc << " " << setw(5) << fee_data[ifee][pos] << dec;
-	      // if (  crc != fee_data[ifee][pos] ) cout << "  *********";
-	      // cout << endl;
+//	       if (  crc != fee_data[ifee][pos] ) cout << "  *********";
+
+//	       if (  crc != fee_data[ifee][pos-1] ) cout << "crc: "<<crc<<", fee: "<<fee_data[ifee][pos-1]<<endl;
+	       if (  crc != fee_data[ifee][pos] ) cout << "crc: "<<crc<<", fee: "<<fee_data[ifee][pos]<<endl;
+
 	      
 	      sw->checksum = crc;
+
 	      sw->valid = ( crc == fee_data[ifee][pos]);
+
+//	      sw->valid = ( crc == fee_data[ifee][pos-1]);
 	      
 	      waveforms.insert(sw);
 	    }
