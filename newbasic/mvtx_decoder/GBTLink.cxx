@@ -40,16 +40,7 @@ GBTLink::GBTLink(uint16_t _flx, uint16_t _fee) : flxId(_flx), feeId(_fee)
 /// reset link
 void GBTLink::clear(bool resetStat, bool resetTFRaw)
 {
-  if ( data.isEmpty() )
-  {
-    data.clear();
-  }
-  else
-  {
-    data.moveUnusedToHead();
-//    std::cout << "Link: " << feeID << " buffer Size: " << data.getSize() << std::endl;
-  }
-
+  data.clear();
   if (resetTFRaw)
   {
     rawData.clear();

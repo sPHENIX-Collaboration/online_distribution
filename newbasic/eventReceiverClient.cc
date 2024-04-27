@@ -25,7 +25,11 @@ eventReceiverClient::eventReceiverClient( const std::string hostname, const int 
   _hostname = hostname;
   _flags = flags;
   _broken = 0;
-  
+  _had_timeout = 0;
+
+  _timeout = 300000;  // 300ms default timeout
+  _user_timeout = 0;  // 300ms default timeout
+ 
   //int  buffer[MAXSIZE];
 
   struct addrinfo hints;
@@ -105,21 +109,54 @@ Event *eventReceiverClient::getEvent(const int eventnumber, const int flag )
 	 0, (const struct sockaddr *) &_serveraddr, 
 	 sizeof(_serveraddr)); 
 
-  socklen_t len; 
-  int n = recvfrom(_sockfd, (char *)buffer, MAXSIZE*sizeof(int), 
-		   MSG_WAITALL, (struct sockaddr *) &_serveraddr, 
-		   &len);
-  
-  if (_verbosity) cout << " received " << n << " bytes" << std::endl;
-  if ( buffer[0] == 0)
+
+  struct timeval tv;
+  fd_set myset;
+
+  if ( _user_timeout )
     {
-      if (_verbosity) std::cout << "Event " << sendbuffer[0] << " not found"  << endl;
-      return NULL;
+      tv.tv_sec = _user_timeout;
+      tv.tv_usec = 0;
+    }
+  else
+    {
+      tv.tv_sec = 0;
+      tv.tv_usec = _timeout;
     }
 
-  Event *e = new oncsEvent(buffer);
-  e->convert();
-  if (_verbosity) e->identify();
-  return e;
-}
+  FD_ZERO(&myset);
+  FD_SET(_sockfd, &myset);
 
+  
+  //coutfl << "waiting for data, highest_fd =  " << _sockfd << endl;
+  int retval = select(_sockfd+1, &myset, 0, 0, &tv);
+
+  if (retval <=0)
+    {
+      if (_verbosity) cout << "timeout receiving event " << eventnumber << endl;
+      _had_timeout = 1;
+      return 0;
+    }
+  else
+    {
+
+      socklen_t len; 
+      int n = recvfrom(_sockfd, (char *)buffer, MAXSIZE*sizeof(int), 
+		       MSG_WAITALL, (struct sockaddr *) &_serveraddr, 
+		       &len);
+      _had_timeout = 0;
+  
+      if (_verbosity) cout << " received " << n << " bytes" << std::endl;
+      if ( buffer[0] == 0)
+	{
+	  if (_verbosity) std::cout << "Event " << sendbuffer[0] << " not found"  << endl;
+	  return NULL;
+	}
+
+      Event *e = new oncsEvent(buffer);
+      e->convert();
+      if (_verbosity) e->identify();
+      return e;
+    }
+  return 0;
+}
