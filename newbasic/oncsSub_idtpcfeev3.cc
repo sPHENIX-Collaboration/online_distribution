@@ -240,12 +240,12 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 	      //
 	      // This line is inserted to accommodate the "wrong format issue", which is the
 	      // last sample from the data is missing. This issue should be fixed and eventually
-	      // the following two lines will be removed
+	      // the following two lines will be removed. Apr 30. by TS
 	      //
 		      if(data_size_counter==1) break;
-		  }
+		    }
 //                  cout<<"data_size_counter: "<<data_size_counter<<" "<<endl;
-		      if(data_size_counter==1) break;
+	          if(data_size_counter==1) break;
 		}
 	      if (data_size_counter<0) cout <<" error in datasize"<<endl;
 
@@ -258,6 +258,7 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 //	       if (  crc != fee_data[ifee][pos] ) cout << "  *********";
 
 //	       if (  crc != fee_data[ifee][pos-1] ) cout << "crc: "<<crc<<", fee: "<<fee_data[ifee][pos-1]<<endl;
+
 	       if (  crc != fee_data[ifee][pos] ) cout << "crc: "<<crc<<", fee: "<<fee_data[ifee][pos]<<endl;
 
 	      
@@ -265,8 +266,6 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 
 	      sw->valid = ( crc == fee_data[ifee][pos]);
 
-//	      sw->valid = ( crc == fee_data[ifee][pos-1]);
-	      
 	      waveforms.insert(sw);
 	    }
 	  
