@@ -196,8 +196,8 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 	      sampa_waveform *sw = new sampa_waveform;
 	  
 	      sw->fee           = ifee;
-	      sw->pkt_length    = header[0];
-	      sw->adc_length    = header[5];
+	      sw->pkt_length    = header[0]; // this is indeed the number of 10-bit words + 5 in this packet
+	      sw->adc_length    = header[0]-5; // this is indeed the number of 10-bit words in this packet
 	      sw->sampa_address = (header[1] >> 5) & 0xf;
 	      sw->sampa_channel = header[1] & 0x1f;
 	      sw->channel       = header[1] & 0x1ff;
@@ -206,29 +206,66 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 		| (header[1] >> 9);	  
 
 	      // now we add the actual waveform
-	      unsigned short data_size = header[5] -1 ;
+	     // unsigned short data_size = header[5] -1 ;
+	      short data_size_counter = header[0]-5;
 
 	     //  coutfl << " Fee: " << ifee << " Sampa " << sw->sampa_address
 	     //  	 << " sampa channel: " << sw->sampa_channel
 	     //  	 << " channel: " << sw->channel
 	     //  	 << "  waveform length: " << data_size  << endl;
 
-	      for (int i = 0 ; i < data_size ; i++)
+	     // for (int i = 0 ; i < data_size ; i++)
+	      // First fill -100 for all time samples
+	      for (int i = 0 ; i < 1024 ; i++)
 		{
-		  sw->waveform.push_back( fee_data[ifee][pos++]);
+		  sw->waveform.push_back(65000);
+//		cout <<"Initializing waveform "<<i<<endl;
 		}
+
+	      // Format is (N sample) (start time), (1st sample)... (Nth sample)
+	      //for (int i = 0 ; i < header[0]-5 ; i++)
+	      while(data_size_counter>0)
+		{
+		  int nsamp = fee_data[ifee][pos++];
+		  int start_t = fee_data[ifee][pos++];
+		  data_size_counter-=2;
+//                  cout<<"nsamp: "<<nsamp<<" ";
+//                  cout<<"start_t: "<<start_t<<" ";
+		  if(nsamp>data_size_counter){ cout<<"nsamp: "<<nsamp<<", size: "<<data_size_counter<<", format error"<<endl; break;}
+		  for (int j=0; j<nsamp;j++){
+		      sw->waveform[start_t+j]= fee_data[ifee][pos++]; 
+//                   cout<<"data: "<< sw->waveform[start_t+j]<<endl;
+		      data_size_counter--;
+
+	      //
+	      // This line is inserted to accommodate the "wrong format issue", which is the
+	      // last sample from the data is missing. This issue should be fixed and eventually
+	      // the following two lines will be removed. Apr 30. by TS
+	      //
+		      if(data_size_counter==1) break;
+		    }
+//                  cout<<"data_size_counter: "<<data_size_counter<<" "<<endl;
+	          if(data_size_counter==1) break;
+		}
+	      if (data_size_counter<0) cout <<" error in datasize"<<endl;
+
 	      
 	      // we calculate the checksum here because "pos" is at the right place
 	      unsigned short crc = crc16(ifee, startpos, header[0]-1);
 	      // coutfl << "fee " << setw(3) << sw->fee
 	      // 	     << " sampla channel " << setw(3) <<  sw->channel
 	      // 	     << " crc and value " << hex << setw(5) << crc << " " << setw(5) << fee_data[ifee][pos] << dec;
-	      // if (  crc != fee_data[ifee][pos] ) cout << "  *********";
-	      // cout << endl;
+//	       if (  crc != fee_data[ifee][pos] ) cout << "  *********";
+
+//	       if (  crc != fee_data[ifee][pos-1] ) cout << "crc: "<<crc<<", fee: "<<fee_data[ifee][pos-1]<<endl;
+
+	       if (  crc != fee_data[ifee][pos] ) cout << "crc: "<<crc<<", fee: "<<fee_data[ifee][pos]<<endl;
+
 	      
 	      sw->checksum = crc;
+
 	      sw->valid = ( crc == fee_data[ifee][pos]);
-	      
+
 	      waveforms.insert(sw);
 	    }
 	  
@@ -466,7 +503,8 @@ int oncsSub_idtpcfeev3::find_header ( const unsigned int yy,  const std::vector<
     {
       //      coutfl << " current pos is  " << pos  << "  vector length " << orig.size()  << endl;
 	    
-      if (header_candidate[4] == MAGIC_KEY_0 && header_candidate[6] == MAGIC_KEY_1 && (header_candidate[0] - header_candidate[5] == HEADER_LENGTH))
+//      if (header_candidate[4] == MAGIC_KEY_0 && header_candidate[6] == MAGIC_KEY_1 && (header_candidate[0] - header_candidate[5] == HEADER_LENGTH))
+      if (header_candidate[4] == MAGIC_KEY_0)
 	{
 	  // found it!
             found = true;
