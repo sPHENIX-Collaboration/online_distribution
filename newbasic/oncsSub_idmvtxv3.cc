@@ -234,6 +234,16 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
     {
       return mGBTLinks[lnkId].hit_vector.size();
     }
+    else if ( strcmp(what, "tdt_lanestatus_error") == 0 )  // the number of datasets
+    {
+      int error = -1;
+      if(!mGBTLinks[lnkId].tdt_lanestatus_error_vector.empty())
+      {
+        error = static_cast<int>(mGBTLinks[lnkId].tdt_lanestatus_error_vector.back());
+        mGBTLinks[lnkId].tdt_lanestatus_error_vector.pop_back();
+      }
+      return error;
+    }
     else
     {
       std::cout << "Unknow option " << what << std::endl;
@@ -321,6 +331,38 @@ int oncsSub_idmvtxv3::iValue(const int i_feeid, const int i_trg, const int i_hit
   return 0;
 }
 
+long long int oncsSub_idmvtxv3::lValue(const int i_feeid, const char *what)
+{
+  decode();
+
+  uint32_t feeId = i_feeid;
+  
+  if (mFeeId2LinkID.find(feeId) == mFeeId2LinkID.cend())
+  {
+    log_error << "FeeId " << feeId << "was not found in the feeId mapping for this packet" << std::endl;
+    assert(false);
+  }
+  uint32_t lnkId =  mFeeId2LinkID[feeId].entry;
+
+  if ( strcmp(what, "decoder_error") == 0 )  // the number of datasets
+    {
+      long long int error = -1;
+      if(!mGBTLinks[lnkId].decoder_error_vector.empty())
+      {
+        std::pair<int,int> pop = mGBTLinks[lnkId].decoder_error_vector.back();
+        error = (long long int) pop.first << 32 | pop.second;
+        mGBTLinks[lnkId].decoder_error_vector.pop_back();
+      }
+      return error;
+    }
+  else
+  {
+    std::cout << "Unknow option " << what << std::endl;
+    return -1;
+  }
+
+  return 0;
+}
 
 long long int oncsSub_idmvtxv3::lValue(const int i_feeid, const int idx, const char *what)
 {

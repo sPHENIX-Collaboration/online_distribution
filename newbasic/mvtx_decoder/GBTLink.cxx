@@ -51,6 +51,8 @@ void GBTLink::clear(bool resetStat, bool resetTFRaw)
       delete hit;
     }
     hit_vector.clear();
+    tdt_lanestatus_error_vector.clear();
+    decoder_error_vector.clear();
     dataOffset = 0;
     hbf_count = 0;
   }
