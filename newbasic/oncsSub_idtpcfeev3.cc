@@ -233,7 +233,8 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 //                  cout<<"start_t: "<<start_t<<" ";
 		  if(nsamp>data_size_counter){ cout<<"nsamp: "<<nsamp<<", size: "<<data_size_counter<<", format error"<<endl; break;}
 		  for (int j=0; j<nsamp;j++){
-		      sw->waveform[start_t+j]= fee_data[ifee][pos++]; 
+                      if(start_t+j<1024){ sw->waveform[start_t+j]= fee_data[ifee][pos++]; }
+                      else { pos++; }
 //                   cout<<"data: "<< sw->waveform[start_t+j]<<endl;
 		      data_size_counter--;
 
