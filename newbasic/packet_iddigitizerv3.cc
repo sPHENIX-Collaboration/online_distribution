@@ -280,6 +280,12 @@ long long Packet_iddigitizerv3::lValue(const int n, const char *what)
   {
     return _xmit_clock;
   }
+
+  if ( strcmp(what,"EVTNR") == 0 )
+  {
+    return _evtnr;
+  }
+
   return 0;
 }
 
@@ -414,7 +420,7 @@ void  Packet_iddigitizerv3::dump ( OSTREAM& os )
       return;
     }
   
-  os << "Evt Nr:      " << iValue(0,"EVTNR") << std::endl;
+  os << "Evt Nr:      " << lValue(0,"EVTNR") << std::endl;
   os << "Clock:       " << lValue(0,"CLOCK") << std::endl;
   os << "Nr Modules:  " << iValue(0,"NRMODULES") << std::endl;
   os << "Channels:    " << iValue(0,"CHANNELS") << std::endl;
