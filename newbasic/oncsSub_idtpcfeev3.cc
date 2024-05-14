@@ -209,6 +209,7 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 	     // unsigned short data_size = header[5] -1 ;
 	      short data_size_counter = header[0]-5;
 
+	      short actual_data_size = 0;
 	     //  coutfl << " Fee: " << ifee << " Sampa " << sw->sampa_address
 	     //  	 << " sampa channel: " << sw->sampa_channel
 	     //  	 << " channel: " << sw->channel
@@ -228,10 +229,15 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 		{
 		  int nsamp = fee_data[ifee][pos++];
 		  int start_t = fee_data[ifee][pos++];
+
 		  data_size_counter-=2;
-//                  cout<<"nsamp: "<<nsamp<<" ";
-//                  cout<<"start_t: "<<start_t<<" ";
-		  if(nsamp>data_size_counter){ cout<<"nsamp: "<<nsamp<<", size: "<<data_size_counter<<", format error"<<endl; break;}
+
+                  actual_data_size += nsamp;
+                  actual_data_size += 2;
+
+// We decided to suppress errors (May 13, 2024)
+//		  if(nsamp>data_size_counter){ cout<<"nsamp: "<<nsamp<<", size: "<<data_size_counter<<", format error"<<endl; break;}
+
 		  for (int j=0; j<nsamp;j++){
                       if(start_t+j<1024){ sw->waveform[start_t+j]= fee_data[ifee][pos++]; }
                       else { pos++; }
@@ -248,11 +254,20 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 //                  cout<<"data_size_counter: "<<data_size_counter<<" "<<endl;
 	          if(data_size_counter==1) break;
 		}
-	      if (data_size_counter<0) cout <<" error in datasize"<<endl;
 
+// We decided to suppress errors (May 13, 2024)
+//	      if (data_size_counter<0) cout <<" error in datasize"<<endl;
+
+//              if(header[0]-5 != actual_data_size){ cout <<header[0]-5<<", "<<actual_data_size-1<<endl; cout<<"Error size"<<endl;}
 	      
+	      //
+	      // If the size defined by SAMPA is consitent with what the header says, we keep that data.
+	      //
+              if(header[0]-5 == actual_data_size){
+// cout <<header[0]-5<<", "<<actual_data_size-1<<endl; cout<<"Error size"<<endl;
+
 	      // we calculate the checksum here because "pos" is at the right place
-	      unsigned short crc = crc16(ifee, startpos, header[0]-1);
+  	         unsigned short crc = crc16(ifee, startpos, header[0]-1);
 	      // coutfl << "fee " << setw(3) << sw->fee
 	      // 	     << " sampla channel " << setw(3) <<  sw->channel
 	      // 	     << " crc and value " << hex << setw(5) << crc << " " << setw(5) << fee_data[ifee][pos] << dec;
@@ -260,14 +275,15 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 
 //	       if (  crc != fee_data[ifee][pos-1] ) cout << "crc: "<<crc<<", fee: "<<fee_data[ifee][pos-1]<<endl;
 
-	       if (  crc != fee_data[ifee][pos] ) cout << "crc: "<<crc<<", fee: "<<fee_data[ifee][pos]<<endl;
+//	          if (  crc != fee_data[ifee][pos] ) cout << "crc: "<<crc<<", fee: "<<fee_data[ifee][pos]<<endl;
 
 	      
-	      sw->checksum = crc;
+	          sw->checksum = crc;
 
-	      sw->valid = ( crc == fee_data[ifee][pos]);
+	          sw->valid = ( crc == fee_data[ifee][pos]);
 
-	      waveforms.insert(sw);
+	          waveforms.insert(sw);
+	       }
 	    }
 	  
 	  //coutfl << "inserting at " << ifee*MAX_CHANNELS + sw->channel << " size is " << waveforms.size() << endl;
