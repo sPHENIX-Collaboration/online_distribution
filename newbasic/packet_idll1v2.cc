@@ -199,7 +199,12 @@ int Packet_idll1v2::decode ()
 
   int dlength = getDataLength() - 2; // 9 header words and 2 checksums + 1 more word at the end
 
-  _nsamples =  (dlength - 4)/256;
+  _nsamples = (dlength - 4)/256;
+  if (_trigger_type == TRIGGERTYPE::MBD)
+    {
+      _nsamples = 5;
+    }
+  int ijk, count, ib, iturn, iw;
 
   for (int is=0; is< _nsamples; is++ ) {
     
@@ -301,7 +306,67 @@ int Packet_idll1v2::decode ()
 	  }	  
 	} 
     } 
-  
+  else if (_trigger_type == TRIGGERTYPE::MBD)
+    {
+      for (int is=0; is< _nsamples; is++ ) 
+	{   
+
+	  for (int ia=0; ia<4; ia++) {
+	    ijk = ia*8;
+	    itrig_charge[ia][0][is] = array[ijk][is] & 0x1ff;          //8-0
+	    itrig_charge[ia][1][is] = ((array[ijk][is] & 0xfe00) >>9) + ((array[ijk+1][is] & 0x3)<<7) ;  //17-9
+	    itrig_charge[ia][2][is] = ((array[ijk+1][is] & 0x7fc) >>2) ;                                  //26-18
+	    itrig_charge[ia][3][is] = ((array[ijk+1][is] & 0xf800) >>11) + ((array[ijk+2][is] & 0xf)<<5) ;  //35-27
+	    itrig_charge[ia][4][is] = ((array[ijk+2][is] & 0x1ff0) >>4) ;                                 //44-36
+	    itrig_charge[ia][5][is] = ((array[ijk+2][is] & 0xe000) >>13) + ((array[ijk+3][is] & 0x3f)<<3) ;  //53-45
+	    itrig_charge[ia][6][is] = ((array[ijk+3][is] & 0x7fc0) >>6) ;                                   //62-54
+	    itrig_charge[ia][7][is] = ((array[ijk+3][is] & 0x8000) >>15) + ((array[ijk+4][is] & 0xff)<<1) ;  //71-63
+	    itrig_nhit[ia][is] = (array[ijk+4][is] & 0xff00) >> 8;
+	    itrig_time[ia][0][is] = array[ijk+5][is] & 0xfff;          //91-80
+	    itrig_time[ia][1][is] = ((array[ijk+5][is] & 0xf000) >>12) + ((array[ijk+6][is] & 0xff)<<4) ;  //103-92
+	    itrig_time[ia][2][is] = ((array[ijk+6][is] & 0xff00) >>8) + ((array[ijk+7][is] & 0xf)<<8) ;  //115- 104
+	    itrig_time[ia][3][is] = (array[ijk+7][is] & 0xfff0)>>4;                                      //127-116
+	  }
+	  ijk = 32;
+	  ib = 0;
+	  iturn = 0;
+	  count = 0;
+	  for (int ia = 0; ia < 8; ia++)
+	    {
+	      triggerwords[ia][is] = 0;
+	      for (iw = 0 ; iw < upperbits[ia] ; iw++)
+		{
+		  if (iw+ib == 16)
+		    {
+		      ib = iw;
+		      ijk++;
+		      iturn = 1 - iturn;
+		      
+		    }
+		  
+		  if (!iturn) triggerwords[ia][is] += ((array[ijk][is] & (0x1 << (ib+iw))) >> ib);
+		  else triggerwords[ia][is] += ((array[ijk][is] & (0x1 << (iw - ib))) << ib);
+		  
+		  //	    if (is == 8 || is == 9 ) cout << dec<< count << "= ia: "<<ia<<" , sample "<<is<<", iw/ib/turn: "<<iw<<"/"<<ib<<"/"<<iturn<<" --> "<< hex<<triggerwords[ia][is]<<endl;
+		  
+		  count++;
+		}
+	      ib = (iturn? iw-ib: iw+ib);
+	      iturn = 0;
+	    }
+    
+	  // triggerwords[0][is] = array[32][is] & 0x7fff;
+	  // triggerwords[1][is] = ((array[32][is] & 0x8000)>>15)+((array[33][is] & 0x3fff) <<1);
+	  // triggerwords[2][is] = ((array[33][is] & 0xc000)>>14)+((array[34][is] & 0xf) <<2);
+	  // triggerwords[3][is] = ((array[34][is] & 0x03f0)>>4);
+	  // triggerwords[4][is] = ((array[34][is] & 0xfc00)>>10);
+	  // triggerwords[5][is] = (array[35][is] & 0x3f);
+	  // triggerwords[6][is] = ((array[35][is] & 0x7fc0)>>6);
+	  // triggerwords[7][is] = ((array[35][is] & 0x8000)>>15)+((array[36][is] & 0x1ff) <<1);
+
+	}
+
+    }  
   return 0;
 }
 
@@ -349,6 +414,31 @@ int Packet_idll1v2::iValue(const int sample, const int isum)
       int iisum = isum - _nfibers*_nsums;
       return jet_sum_result[iisum%32][iisum/32][sample];
     }
+  else if (_trigger_type == TRIGGERTYPE::MBD)
+    {
+      if ( sample >= _nsamples || sample < 0 
+	   || isum >= _nfibers*_nsums + _ntrigger_words || isum < 0) return 0;
+
+      if (isum < _nfibers*_nsums)
+	{
+
+	  if (isum%13 < 8)
+	    {
+	      return itrig_charge[isum/13][isum%13][sample];
+	    }
+	  else if (isum%13 == 8)
+	    {
+	      return itrig_nhit[isum/13][sample];
+	    }
+	  else
+	    {
+	      return itrig_time[isum/13][(isum - 9)%13][sample];
+	    }
+	}
+
+      return triggerwords[isum - 52][sample];
+    }
+
   return 0;
 }
 
@@ -482,5 +572,51 @@ void  Packet_idll1v2::dump ( OSTREAM& os )
 	}
 
     }
+  else if (_trigger_type == TRIGGERTYPE::MBD)
+    {
+      for (int ifem = 0; ifem < 4 ; ifem++)
+	{      
+	  std::cout << std::dec<<"FEM : "<<ifem<<std::endl;
+	  for (int iq = 0 ; iq < 8; iq++)
+	    {
+	      std::cout<<std::dec<<"Q" << iq << "\t||  \t";
+	      for (int is=0; is<iValue(0, "SAMPLES"); is++)
+		{
+		  std::cout << std::hex << iValue(is, ifem*13 + iq)<<"\t";
+		}
+	      std::cout <<" |"<<endl;
+	    }
+	  std::cout<<std::dec<<"NH \t||  \t";
+	  for (int is=0; is<iValue(0, "SAMPLES"); is++)
+	    {
+	      std::cout << std::hex << iValue(is, ifem*13 + 8)<<"\t";
+	    }
+	  std::cout <<" |"<<endl;
+
+	  for (int iq = 0 ; iq < 4; iq++)
+	    {
+	      std::cout<<std::dec<<"T" << iq << "\t||  \t";
+	      for (int is=0; is<iValue(0, "SAMPLES"); is++)
+		{
+		  std::cout << std::hex <<iValue(is, ifem*13 + 9 + iq)<<"\t";
+		}
+	      std::cout <<" |"<<endl;
+	    }
+	  std::cout << " "<<std::endl;
+	}
+
+	for (int iw = 0; iw < iValue(0,"TRIGGERWORDS"); iw++)
+	{      
+	  std::cout<<std::dec<< "W "<<iw << "\t||  \t";
+	  for (int is=0; is<iValue(0,"SAMPLES"); is++) 
+	    {
+	      std::cout << std::hex<<iValue(is, 52 + iw) << "\t";
+	    }
+	
+	  std::cout <<" |"<<endl;
+	}
+  
+    }
+
   return;
 }

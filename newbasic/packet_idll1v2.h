@@ -55,6 +55,16 @@ protected:
   int _is_decoded;
 
   int array[256][20] {{0}};
+  int upperbits[10] = { 15, 
+			15,
+			7,
+			7,
+			7, 
+			7,
+			9,
+			10,
+			16,
+			25};
 
   int itrig_sums[24][16][20] {{{0}}};
 
@@ -63,6 +73,11 @@ protected:
   int itrig_emcal_2x2sum[64][20] {{0}};
   int jet_map[32][12][20] {{{0}}};
   int jet_sum_result[32][9][20] {{{0}}};
+  int itrig_charge[4][8][32];
+  int itrig_nhit[4][32];
+  int itrig_time[4][4][32];
+  int triggerwords[8][32];
+
 };
 
 
