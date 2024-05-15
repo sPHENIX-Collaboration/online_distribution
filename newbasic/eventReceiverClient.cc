@@ -26,6 +26,7 @@ eventReceiverClient::eventReceiverClient( const std::string hostname, const int 
   _flags = flags;
   _broken = 0;
   _had_timeout = 0;
+  _verbosity = 0;
 
   _timeout = 300000;  // 300ms default timeout
   _user_timeout = 0;  // 300ms default timeout

@@ -271,7 +271,7 @@ int Packet_iddigitizerv3::iValue(const int sample, const int ch)
   return 0;
 }
 
-int Packet_iddigitizerv3::iValue(const int n, const char *what)
+long long Packet_iddigitizerv3::lValue(const int n, const char *what)
 {
 
   decode();
@@ -280,6 +280,25 @@ int Packet_iddigitizerv3::iValue(const int n, const char *what)
   {
     return _xmit_clock;
   }
+
+  if ( strcmp(what,"EVTNR") == 0 )
+  {
+    return _evtnr;
+  }
+
+  return 0;
+}
+
+
+int Packet_iddigitizerv3::iValue(const int n, const char *what)
+{
+
+  decode();
+
+  // if ( strcmp(what,"CLOCK") == 0 )
+  // {
+  //   return _xmit_clock;
+  // }
 
   if ( strcmp(what,"EVTNR") == 0 )
   {
@@ -401,8 +420,8 @@ void  Packet_iddigitizerv3::dump ( OSTREAM& os )
       return;
     }
   
-  os << "Evt Nr:      " << iValue(0,"EVTNR") << std::endl;
-  os << "Clock:       " << iValue(0,"CLOCK") << std::endl;
+  os << "Evt Nr:      " << lValue(0,"EVTNR") << std::endl;
+  os << "Clock:       " << lValue(0,"CLOCK") << std::endl;
   os << "Nr Modules:  " << iValue(0,"NRMODULES") << std::endl;
   os << "Channels:    " << iValue(0,"CHANNELS") << std::endl;
   os << "Samples:     " << iValue(0,"SAMPLES") << std::endl;
