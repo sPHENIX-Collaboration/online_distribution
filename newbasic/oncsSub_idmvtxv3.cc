@@ -31,8 +31,8 @@ int oncsSub_idmvtxv3::decode()
   for (auto& link : mGBTLinks)
   {
     link.clear(true, true); // clear data but not the statistics
-    link.hbf_found = false;
     link.hbf_length = 0;
+    link.prev_pck_cnt = 0;
   }
 
 //  short pck_id = getIdentifier();
@@ -99,7 +99,7 @@ void oncsSub_idmvtxv3::setupLinks()
           }
           auto& gbtLink = mGBTLinks[lnkref.entry];
 
-          if ( (rdh.packetCounter) && (rdh.packetCounter != gbtLink.prev_pck_cnt + 1) )
+          if ( (rdh.packetCounter) && (gbtLink.rawData.getNPieces()) && (rdh.packetCounter != gbtLink.prev_pck_cnt + 1) )
           {
             log_error << "Incorrect pages count " << rdh.packetCounter <<", previous page count was "
               << gbtLink.prev_pck_cnt << std::endl;
@@ -112,47 +112,27 @@ void oncsSub_idmvtxv3::setupLinks()
 
           if ( ! rdh.packetCounter ) // start HB
           {
-            if (gbtLink.hbf_found)
+            if ( gbtLink.hbf_length )
             {
               log_error << "FLX: " << gbtLink.flxId << ", FeeId: " << gbtLink.feeId
                 << ". Found new HBF before stop previous HBF. Previous HBF will be ignored." << std::endl;
-              if (gbtLink.hbf_length)
-              {
                 gbtLink.cacheData(gbtLink.hbf_length, true);
-              }
             }
-            gbtLink.hbf_found = true;
             gbtLink.hbf_length = pageSizeInBytes;
+            gbtLink.hbf_error = false;
           }
           else
           {
-            if (! gbtLink.hbf_found)
+            if ( (! gbtLink.hbf_length) && (gbtLink.rawData.getNPieces()) )
             {
               log_error << "FLX: " << gbtLink.flxId << ", FeeId: " << gbtLink.feeId
               << ". Found continuous HBF before start new HBF. data will be ignored." << std::endl;
-              gbtLink.cacheData(pageSizeInBytes, true);
+              gbtLink.hbf_error = true;
             }
-            else
+            gbtLink.hbf_length += pageSizeInBytes;
+            if ( rdh.stopBit ) // found HB end
             {
-              gbtLink.hbf_length += pageSizeInBytes;
-            }
-          }
-
-          if ( rdh.stopBit ) // found HB end
-          {
-            if ( ! gbtLink.hbf_found )
-            {
-              log_error << "FLX: " << gbtLink.flxId << ", FeeId: " << gbtLink.feeId
-                << ". Stopping HBF without start. This block will be ignored." << std::endl;
-              if (gbtLink.hbf_length)
-              {
-                gbtLink.cacheData(gbtLink.hbf_length, true);
-              }
-            }
-            else
-            {
-              gbtLink.hbf_found = false;
-              gbtLink.cacheData(gbtLink.hbf_length, false);
+              gbtLink.cacheData(gbtLink.hbf_length, gbtLink.hbf_error);
               gbtLink.hbf_length = 0;
             }
           }
@@ -336,7 +316,7 @@ long long int oncsSub_idmvtxv3::lValue(const int i_feeid, const char *what)
   decode();
 
   uint32_t feeId = i_feeid;
-  
+
   if (mFeeId2LinkID.find(feeId) == mFeeId2LinkID.cend())
   {
     log_error << "FeeId " << feeId << "was not found in the feeId mapping for this packet" << std::endl;
