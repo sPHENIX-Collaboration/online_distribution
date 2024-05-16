@@ -284,6 +284,7 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 
 	          waveforms.insert(sw);
 	       }
+               else{ delete sw; }
 	    }
 	  
 	  //coutfl << "inserting at " << ifee*MAX_CHANNELS + sw->channel << " size is " << waveforms.size() << endl;
