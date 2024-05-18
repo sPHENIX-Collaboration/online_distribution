@@ -153,6 +153,12 @@ Event *eventReceiverClient::getEvent(const int eventnumber, const int flag )
 	  if (_verbosity) std::cout << "Event " << sendbuffer[0] << " not found"  << endl;
 	  return NULL;
 	}
+      
+      if ( n < 4*buffer[0] ) // idiot check - we have received fewer data than the event says it has
+	{
+	  if (_verbosity) std::cout << " corrupt Event, need " << sendbuffer[0]*4  << " bytes but got " << n << endl;
+	  return NULL;
+	}	  
 
       Event *e = new oncsEvent(buffer);
       e->convert();

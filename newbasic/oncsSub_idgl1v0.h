@@ -38,6 +38,7 @@ protected:
   unsigned long long scalers[3*64];
   unsigned int gl1p_scalers[3*16];
 
+  int _broken;
 
 
 };
