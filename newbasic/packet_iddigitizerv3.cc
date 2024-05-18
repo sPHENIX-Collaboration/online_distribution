@@ -254,6 +254,11 @@ unsigned int Packet_iddigitizerv3::decode_FEM ( unsigned int *k, const int fem_n
 	    }
 	  if ( index >= len) break;
 	}
+      else
+	{
+	  coutfl << "unknown word classifier " << hex << "0x" << word_classifier << dec << endl;
+	  return index;
+	}
     }
   return index;
 }
