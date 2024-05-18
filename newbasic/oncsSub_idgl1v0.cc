@@ -15,6 +15,7 @@ oncsSub_idgl1v0::oncsSub_idgl1v0(subevtdata_ptr data)
   memset (gl1p_scalers, 0, sizeof(gl1p_scalers) );
   is_decoded = 0;
   GTM_BusyVector = 0;
+  _broken = 0;
 }
   
 int oncsSub_idgl1v0::decode ()
@@ -22,6 +23,14 @@ int oncsSub_idgl1v0::decode ()
   if (is_decoded) return 0;
   is_decoded = 1;
   
+  //we get 2000bytes= 500 words + 4 works header
+  if ( SubeventHdr->sub_length < 504  ||  SubeventHdr->sub_id != 14001)
+    {
+      _broken = 1;
+      return 1;
+    }
+
+
   unsigned short *buffer = ( unsigned short *)  &SubeventHdr->data;
 
   
@@ -153,12 +162,14 @@ int oncsSub_idgl1v0::decode ()
 int oncsSub_idgl1v0::iValue(const int i)
 {
   decode();
+  if ( _broken) return 0;
   return packet_nr;
 }
 
 long long oncsSub_idgl1v0::lValue(const int i, const int k)
 {
   decode();
+  if ( _broken) return 0;
   if ( i < 0 || i >=64 || k < 0 || k >2) return 0;
   return scalers[3*i + k];
 }
@@ -166,6 +177,7 @@ long long oncsSub_idgl1v0::lValue(const int i, const int k)
 long long oncsSub_idgl1v0::lValue(const int i, const char *what)
 {
   decode();
+  if ( _broken) return 0;
   
   if ( strcmp(what,"BCO") == 0)
     {
@@ -238,6 +250,12 @@ long long oncsSub_idgl1v0::lValue(const int i, const char *what)
 void oncsSub_idgl1v0::dump(std::ostream &os)
 {
   identify(os);
+  if ( _broken) 
+    {
+      os << " ** corrupt packet **" << endl;
+      return;
+    }
+  
   os << "packet nr:       " << iValue(0) << endl;
   os << "Beam Clock:      " << "0x" << hex << lValue(0, "BCO") << dec  << "   "  << lValue(0, "BCO") << endl;
   os << "Trigger Input:   " << "0x" << hex <<  lValue(0, "TriggerInput")  << dec << "   " << lValue(0, "TriggerInput") << endl;
@@ -246,7 +264,7 @@ void oncsSub_idgl1v0::dump(std::ostream &os)
   os << "Bunch Number:    " << lValue(0, "BunchNumber") << endl << endl;
   os << "Trg #                  raw              live              scaled" << endl;
   os << "----------------------------------------------------------------" << endl;
-
+  
   int i;
   
   for (i = 0; i< 64; i++)
