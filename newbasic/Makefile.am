@@ -172,6 +172,7 @@ allheaders = \
   oncsSub_idmvtxv2.h \
   oncsSub_idmvtxv3.h \
   oncsSub_idgl1v0.h \
+  oncsSub_idgl1v1.h \
   oncsSubevent.h \
   packet.h \
   packetConstants.h \
@@ -274,6 +275,7 @@ allsources = \
   oncsSub_idmvtxv2.cc \
   oncsSub_idmvtxv3.cc \
   oncsSub_idgl1v0.cc \
+  oncsSub_idgl1v1.cc \
   oncsSubevent.cc \
   oncs_mnemonic.cc \
   packet_A.cc \
