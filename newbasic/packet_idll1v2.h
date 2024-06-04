@@ -67,7 +67,6 @@ protected:
 			25};
 
   int itrig_sums[24][16][20] {{{0}}};
-
   int itrig_emcal_8x8map[2][12][20] {{{0}}};
   int itrig_emcal_2x2map[128][20] {{0}};
   int itrig_emcal_2x2sum[64][20] {{0}};
