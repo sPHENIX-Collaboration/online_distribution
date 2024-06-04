@@ -53,6 +53,7 @@ int Packet_idll1v2::decode ()
       _nfibers = 4;
       _nsums = 13;
       _ntrigger_words = 8;
+      _monitor = 0;
       break;
       
       // EMCAL decoder :
@@ -482,11 +483,11 @@ int Packet_idll1v2::iValue(const int n, const char *what)
   {
     return _nfibers*_nsums;
   }
-  if ( strcmp(what,"NFIBERS") == 0 )
+  if ( strcmp(what,"FIBERS") == 0 )
   {
     return _nfibers;
   }
-  if ( strcmp(what,"NSUMS") == 0 )
+  if ( strcmp(what,"SUMS") == 0 )
   {
     return _nsums;
   }
@@ -520,13 +521,13 @@ void  Packet_idll1v2::dump ( OSTREAM& os )
   if (_trigger_type == TRIGGERTYPE::EMCAL)
     {  
       os <<"-------------------------------------------------------------- "<<std::endl;
-      for (int ch = 0; ch < iValue(0, "NFIBERS"); ch++)
+      for (int ch = 0; ch < iValue(0, "FIBERS"); ch++)
 	{      
 	  os << std::dec<<"Fiber: "<<ch<<std::endl;
-	  for (int ic=0; ic<iValue(0, "NSUMS"); ic++) {
+	  for (int ic=0; ic<iValue(0, "SUMS"); ic++) {
 	    os<<std::dec<<" Sum " << ic<<" |";
 	    for (int is=0; is< iValue(0, "SAMPLES"); is++) {
-	      os << std::hex<< " "<<iValue(is, ch*iValue(0, "NSUMS") + ic);
+	      os << std::hex<< " "<<iValue(is, ch*iValue(0, "SUMS") + ic);
 	    }
 	
 	    os <<" |"<<endl;
@@ -538,7 +539,7 @@ void  Packet_idll1v2::dump ( OSTREAM& os )
 	{      
 	  os << std::dec<<"SUM "<<ic<<std::endl;
 	  for (int is=0; is<iValue(0,"SAMPLES"); is++) {
-	    os << std::hex<< " "<<iValue(is, iValue(0,"NFEMWORDS") + ic);
+	    os << std::hex<< " "<<iValue(is, iValue(0,"FEMWORDS") + ic);
 	  }
 	  os <<" |"<<endl;
 	  os <<"-------------------------------------------------------------- "<<std::endl;
@@ -572,7 +573,7 @@ void  Packet_idll1v2::dump ( OSTREAM& os )
 	  os << std::dec<<"Sample: "<<is<<std::endl;
 	  for (int ic=0; ic<9; ic++) {
 	    for (int ie=0; ie<32; ie++) {
-	      os << std::hex<< " "<<iValue(is, iValue(0,"NFEMWORDS") + ic*32 + ie);
+	      os << std::hex<< " "<<iValue(is, iValue(0,"FEMWORDS") + ic*32 + ie);
 	    }
 	
 	    os <<" |"<<endl;
@@ -584,7 +585,7 @@ void  Packet_idll1v2::dump ( OSTREAM& os )
     }
   else if (_trigger_type == TRIGGERTYPE::MBD)
     {
-      for (int ifem = 0; ifem < iValue(0, "NFIBERS"); ifem++)
+      for (int ifem = 0; ifem < iValue(0, "FIBERS"); ifem++)
 	{      
 	  os << std::dec<<"FEM : "<<ifem<<std::endl;
 	  for (int iq = 0 ; iq < 8; iq++)
@@ -592,23 +593,23 @@ void  Packet_idll1v2::dump ( OSTREAM& os )
 	      os<<std::dec<<"Q" << iq << "\t||  \t";
 	      for (int is=0; is<iValue(0, "SAMPLES"); is++)
 		{
-		  os << std::hex << iValue(is, ifem*iValue(0,"NSUMS") + iq)<<"\t";
+		  os << std::hex << iValue(is, ifem*iValue(0,"SUMS") + iq)<<"\t";
 		}
 	      os <<" |"<<endl;
 	    }
 	  os<<std::dec<<"NH \t||  \t";
 	  for (int is=0; is<iValue(0, "SAMPLES"); is++)
 	    {
-	      os << std::hex << iValue(is, ifem*iValue(0,"NSUMS") + 8)<<"\t";
+	      os << std::hex << iValue(is, ifem*iValue(0,"SUMS") + 8)<<"\t";
 	    }
 	  os <<" |"<<endl;
 
-	  for (int iq = 0 ; iq < iValue(0,"NFIBERS"); iq++)
+	  for (int iq = 0 ; iq < iValue(0,"FIBERS"); iq++)
 	    {
 	      os<<std::dec<<"T" << iq << "\t||  \t";
 	      for (int is=0; is<iValue(0, "SAMPLES"); is++)
 		{
-		  os << std::hex <<iValue(is, ifem*iValue(0,"NSUMS") + 9 + iq)<<"\t";
+		  os << std::hex <<iValue(is, ifem*iValue(0,"SUMS") + 9 + iq)<<"\t";
 		}
 	      os <<" |"<<endl;
 	    }
