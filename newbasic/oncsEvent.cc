@@ -276,6 +276,11 @@ Packet *oncsEvent::makePacket(PHDWORD *pp, const int hitFormat)
 	oncsSub_idtpcfeev3( sevt_ptr );
       break;
 
+    case (IDTPCFEEV4):
+      return new
+	oncsSub_idtpcfeev4( sevt_ptr );
+      break;
+
     case (IDINTTV0):
       return new
 	oncsSub_idinttv0( sevt_ptr );

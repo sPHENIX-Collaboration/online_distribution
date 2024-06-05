@@ -166,6 +166,7 @@ allheaders = \
   oncsSub_idtpcfeev1.h \
   oncsSub_idtpcfeev2.h \
   oncsSub_idtpcfeev3.h \
+  oncsSub_idtpcfeev4.h \
   oncsSub_idinttv0.h \
   oncsSub_iddreamv0.h \
   oncsSub_idmvtxv1.h \
@@ -269,6 +270,7 @@ allsources = \
   oncsSub_idtpcfeev1.cc \
   oncsSub_idtpcfeev2.cc \
   oncsSub_idtpcfeev3.cc \
+  oncsSub_idtpcfeev4.cc \
   oncsSub_idinttv0.cc \
   oncsSub_iddreamv0.cc \
   oncsSub_idmvtxv1.cc \
