@@ -258,7 +258,7 @@ int oncsSub_idtpcfeev4::tpc_decode ()
 	      
 	          sw->checksum = crc;
 
-	          sw->valid = ( crc == fee_data[ifee][pos+1]);
+	          sw->valid = ( crc == fee_data[ifee][pos]);
     	          sw->parity_valid = ((!parity) == sw->data_parity); 
 
 	          waveforms.insert(sw);
@@ -588,7 +588,7 @@ void  oncsSub_idtpcfeev4::dump ( OSTREAM& os )
     
   for ( int i = 0; i < iValue(0, "NR_WF") ; i++) // go through the datasets
     {
-      os << "  FEE   Channel   Sampachannel   Samples     BCO     CRC_ERR" << endl;
+      os << "  FEE   Channel   Sampachannel   Samples     BCO    CRC_ERR   PARITY_ERR  DATA_TYPE  USERWORD" << endl;
 
       os << setw(5) << iValue(i, "FEE")  << " "
 	 << setw(9) << iValue(i, "CHANNEL")  << " "
@@ -597,6 +597,9 @@ void  oncsSub_idtpcfeev4::dump ( OSTREAM& os )
 	 <<  "     0x" << setw(5) << hex << iValue(i, "BCO") << dec
 	//	 << " 0x" << setw(4) << hex << iValue(i, "CHECKSUM") << dec
 	 <<  setw(4) << iValue(i, "CHECKSUMERROR")
+	 <<  setw(10) << iValue(i, "DATAPARITYERROR")
+	 <<  setw(12) << iValue(i, "TYPE")
+	 <<  setw(12) << iValue(i, "USERWORD")
 	 << endl;
       
       for (int j = 0; j  < iValue(i, "SAMPLES") ; j += 10)
