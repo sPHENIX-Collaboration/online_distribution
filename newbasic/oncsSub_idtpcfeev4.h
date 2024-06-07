@@ -38,6 +38,7 @@ protected:
   static const unsigned short GTM_MAGIC_KEY = 0xbb00;
   static const unsigned short GTM_LVL1_ACCEPT_MAGIC_KEY = 0xbbf0;
   static const unsigned short GTM_ENDAT_MAGIC_KEY = 0xbbf1;
+  static const unsigned short GTM_MODEBIT_MAGIC_KEY = 0xbbf2;
 
   static const unsigned short  MAX_FEECOUNT = 26;   // that many FEEs
   static const unsigned short  MAX_CHANNELS   = 8*32; // that many channels per FEE
@@ -77,11 +78,13 @@ protected:
       unsigned short pkt_type;
       bool is_endat;
       bool is_lvl1;
+      bool is_modebit;
       unsigned long long bco;
       unsigned int lvl1_count;
       unsigned int endat_count;
       unsigned long long last_bco;
       unsigned char modebits;
+      unsigned char userbits;
   };
   
   // once vector per possible channel 16 cards * 256 channels
