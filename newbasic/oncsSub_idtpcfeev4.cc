@@ -67,7 +67,8 @@ int oncsSub_idtpcfeev4::decode_gtm_data(unsigned short dat[16])
     gtm_payload *payload = new gtm_payload;
 
     payload->pkt_type = gtm[0] | ((unsigned short)gtm[1] << 8);
-    if (payload->pkt_type != GTM_LVL1_ACCEPT_MAGIC_KEY && payload->pkt_type != GTM_ENDAT_MAGIC_KEY)
+//    if (payload->pkt_type != GTM_LVL1_ACCEPT_MAGIC_KEY && payload->pkt_type != GTM_ENDAT_MAGIC_KEY)
+    if (payload->pkt_type != GTM_LVL1_ACCEPT_MAGIC_KEY && payload->pkt_type != GTM_ENDAT_MAGIC_KEY && payload->pkt_type != GTM_MODEBIT_MAGIC_KEY)
       {
 	delete payload;
 	return -1;
@@ -75,6 +76,7 @@ int oncsSub_idtpcfeev4::decode_gtm_data(unsigned short dat[16])
 
     payload->is_lvl1 = payload->pkt_type == GTM_LVL1_ACCEPT_MAGIC_KEY;
     payload->is_endat = payload->pkt_type == GTM_ENDAT_MAGIC_KEY;
+    payload->is_modebit = payload->pkt_type == GTM_MODEBIT_MAGIC_KEY;
 
     payload->bco = ((unsigned long long)gtm[2] << 0)
       | ((unsigned long long)gtm[3] << 8)
@@ -97,6 +99,7 @@ int oncsSub_idtpcfeev4::decode_gtm_data(unsigned short dat[16])
       | ((unsigned long long)gtm[20] << 32)
       | (((unsigned long long)gtm[21]) << 40);
     payload->modebits = gtm[22];
+    payload->userbits = gtm[23];
 
     this->gtm_data.push_back(payload);
 
@@ -313,6 +316,14 @@ long long oncsSub_idtpcfeev4::lValue(const int n, const char *what)
     }
   }
 
+  else if (strcmp(what, "IS_MODEBIT") == 0 )
+  {
+    if (i < gtm_data.size())
+    {
+      return gtm_data[i]->is_modebit;
+    }
+  }
+
   else if (strcmp(what, "BCO") == 0 )
   {
     if (i < gtm_data.size())
@@ -350,6 +361,14 @@ long long oncsSub_idtpcfeev4::lValue(const int n, const char *what)
     if (i < gtm_data.size())
     {
       return gtm_data[i]->modebits;
+    }
+  }
+
+  else if (strcmp(what, "FEMUSERBITS") == 0 )
+  {
+    if (i < gtm_data.size())
+    {
+      return gtm_data[i]->userbits;
     }
   }
 
@@ -566,18 +585,20 @@ void  oncsSub_idtpcfeev4::dump ( OSTREAM& os )
     os << "  No lvl1 and Endat taggers" << endl;
   else
   {
-    os << "  TAGGER_TYPE    BCO          LEVEL1 CNT  ENDAT CNT     LAST_BCO     MODEBITS" << endl;
+    os << "  TAGGER_TYPE       BCO       LEVEL1 CNT  ENDAT CNT     LAST_BCO  MODE/USERBIT" << endl;
 
     for (int i = 0; i < lValue(0, "N_TAGGER"); ++i)  // go through the datasets
     {
       os << "  0x" << setw(4) << hex << lValue(i, "TAGGER_TYPE") << dec
-         << " (" << (lValue(i, "IS_ENDAT") ? "ENDAT" : "") << (lValue(i, "IS_LEVEL1_TRIGGER") ? "LVL1 " : "")
+//         << " (" << (lValue(i, "IS_ENDAT") ? "ENDAT" : "") << (lValue(i, "IS_LEVEL1_TRIGGER") ? "LVL1 " : "")
+         << " (" << (lValue(i, "IS_ENDAT") ? "ENDAT" : "") << (lValue(i, "IS_LEVEL1_TRIGGER") ? "LVL1 " : "") << (lValue(i, "IS_MODEBIT") ? "MDBIT" : "")
          << ") "
          << setw(12) << hex << lValue(i, "BCO") << dec << " "
          << setw(10) << lValue(i, "LEVEL1_COUNT") << " "
          << setw(10) << lValue(i, "ENDAT_COUNT") << " "
          << setw(12) << hex << lValue(i, "LAST_BCO") << dec
-         << "     0x" << std::setfill('0') << setw(2) << hex << lValue(i, "MODEBITS") << std::setfill(' ')<< dec
+         << "   0x" << std::setfill('0') << setw(2) << hex << lValue(i, "MODEBITS") << std::setfill(' ')<< dec
+         << " / 0x" << std::setfill('0') << setw(2) << hex << lValue(i, "FEMUSERBITS") << std::setfill(' ')<< dec
          << endl;
     }
 
