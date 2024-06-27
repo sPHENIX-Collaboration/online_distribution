@@ -329,7 +329,7 @@ main(int argc, char *argv[])
 		len);
 	 if ( verbose && current_count >= msgfrequency)
 	   {
-	     cout << " Event not delievered";
+	     cout << " Event not delivered";
 	     if ( requested > 0) cout << " " << 100 * sent/requested << "%" << endl;
 	     else cout << endl;
 	     current_count = 0;
