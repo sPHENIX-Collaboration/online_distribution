@@ -25,6 +25,7 @@
 #include "fileEventiterator.h"
 #include "rcdaqEventiterator.h"
 #include "oncsEventiterator.h"
+#include "listEventiterator.h"
 
 using namespace std;
 
@@ -39,6 +40,7 @@ Eventiterator *it;
 #define FILEEVENTITERATOR 2
 #define TESTEVENTITERATOR 3
 #define ONCSEVENTITERATOR 4
+#define LISTEVENTITERATOR 5
 
 void exitmsg()
 {
@@ -62,6 +64,9 @@ void exithelp()
   cout << " -T (stream is a test stream)" << std::endl;
   cout << " -r (stream is a rcdaq monitoring stream)" << std::endl;
   cout << " -O (stream is a legacy ONCS format file)" << std::endl;
+  cout << " -L (stream is a file list)" << std::endl;
+  cout << " -x act as a one-event-at-a-time server (depth is irrelevant)" << std::endl;
+  
   cout << " -h this message" << std::endl;
   cout << endl;
   cout << " debug options" << endl;
@@ -81,6 +86,7 @@ int ittype = RCDAQEVENTITERATOR;
 int sleeptime = 0;
 int old_runnumber = -9999;
 int msgfrequency =1;
+int one_at_a_time = 0;
 
 pthread_mutex_t MapSem;
 
@@ -147,6 +153,17 @@ void * EventLoop( void *arg)
   return 0;
 }
 
+int send_not_found (int sockfd, const struct sockaddr * cliaddr, socklen_t len)
+{
+  int  buffer[2] = {0};
+
+  sendto(sockfd, (const char *) buffer, sizeof(int), 
+	 MSG_CONFIRM, cliaddr, 
+	 len);
+
+  return 0;
+}
+
 
 int 
 main(int argc, char *argv[])
@@ -161,7 +178,7 @@ main(int argc, char *argv[])
 
   pthread_mutex_init( &MapSem, 0);
 
-  while ((c = getopt(argc, argv, "d:s:c:ifTrOvh")) != EOF)
+  while ((c = getopt(argc, argv, "d:s:c:ifTrOLxvh")) != EOF)
     switch (c) 
       {
       case 'd':
@@ -180,6 +197,10 @@ main(int argc, char *argv[])
 	identify = 1;
 	break;
 
+      case 'x':
+	one_at_a_time = 1;
+	break;
+
       case 'T':
 	ittype = TESTEVENTITERATOR;
 	break;
@@ -194,6 +215,10 @@ main(int argc, char *argv[])
 
       case 'O':
 	ittype = ONCSEVENTITERATOR;
+	break;
+
+      case 'L':
+	ittype = LISTEVENTITERATOR;
 	break;
 
       case 'v':   // verbose
@@ -241,6 +266,11 @@ main(int argc, char *argv[])
       it = new oncsEventiterator(argv[optind], status);
       break;
 
+    case  LISTEVENTITERATOR:
+      if ( optind+1>argc) exitmsg();
+      it = new listEventiterator(argv[optind], status);
+      break;
+
       status = 1;
       break;
       
@@ -257,19 +287,22 @@ main(int argc, char *argv[])
       exit(1);
     }
 
+  Event *e = 0;
 
-  pthread_t ThreadEvt;
+  pthread_t ThreadEvt = 0;
 
-  status = pthread_create(&ThreadEvt, NULL, 
-			  EventLoop, 
-			  (void *) 0);
-   
-  if (status ) 
+  if ( one_at_a_time == 0)
     {
-      cout << "error in event thread create " << status << endl;
-      exit(0);
+      status = pthread_create(&ThreadEvt, NULL, 
+			      EventLoop, 
+			      (void *) 0);
+   
+      if (status ) 
+	{
+	  cout << "error in event thread create " << status << endl;
+	  exit(0);
+	}
     }
-
   
   
   struct sockaddr_in servaddr, cliaddr; 
@@ -316,41 +349,112 @@ main(int argc, char *argv[])
 	  cout << "request from " << inet_ntoa(cliaddr.sin_addr) << " requesting " << recbuffer[0];
 	}
       
-     pthread_mutex_lock( &MapSem);
-     
-     map<int, Event*>::iterator it = EventMap.find(recbuffer[0]);
-     if ( it == EventMap.end() )
-       {
-	 pthread_mutex_unlock( &MapSem);
+      
+      if (one_at_a_time == 0)
+	{
+	  pthread_mutex_lock( &MapSem);
+	  map<int, Event*>::iterator it = EventMap.find(recbuffer[0]);
+	  if ( it == EventMap.end() )
+	    {
+	      pthread_mutex_unlock( &MapSem);
+	      
+	      send_not_found(sockfd, (const struct sockaddr *) &cliaddr, len);
 
-	 buffer[0] = 0;
-	 sendto(sockfd, (const char *) buffer, sizeof(int), 
-		MSG_CONFIRM, (const struct sockaddr *) &cliaddr, 
-		len);
-	 if ( verbose && current_count >= msgfrequency)
-	   {
-	     cout << " Event not delivered";
-	     if ( requested > 0) cout << " " << 100 * sent/requested << "%" << endl;
-	     else cout << endl;
-	     current_count = 0;
-	   }
+	      if ( verbose && current_count >= msgfrequency)
+		{
+		  cout << " Event not delivered";
+		  if ( requested > 0) cout << " " << 100 * sent/requested << "%" << endl;
+		  else cout << endl;
+		  current_count = 0;
+		}
+	    }
+	  else
+	    {
+	      int nw;
+	      (it->second)->Copy(buffer,MAXSIZE,&nw,"");
+	      pthread_mutex_unlock( &MapSem);
+	      sendto(sockfd, (const char *) buffer, nw*sizeof(int), 
+		     MSG_CONFIRM, (const struct sockaddr *) &cliaddr, 
+		     len); 
+	      sent += 1;
+	      if ( verbose && current_count >= msgfrequency )
+		{
+		  cout << " Event sent";
+		  if ( requested > 0) cout << " " << 100 * sent/requested << "%" << endl;
+		  current_count = 0;
+		}
+	    }
 	}
-     else
-       {
-	 int nw;
-	 (it->second)->Copy(buffer,MAXSIZE,&nw,"");
-	 pthread_mutex_unlock( &MapSem);
-	 sendto(sockfd, (const char *) buffer, nw*sizeof(int), 
-		MSG_CONFIRM, (const struct sockaddr *) &cliaddr, 
-		len); 
-	 sent += 1;
-	 if ( verbose && current_count >= msgfrequency )
-	   {
-	     cout << " Event sent";
-	     if ( requested > 0) cout << " " << 100 * sent/requested << "%" << endl;
-	     current_count = 0;
-	   }
-       }
+
+      else   // we go one at a time
+	{
+	  // let's stick with the event that we have, if any, first. We get one if we don't.
+	  if (!e) 
+	    {
+	      e = it->getNextEvent();
+	    }
+
+	  // so if the stream is exhausted, we end
+	  if ( !e) 
+	    {
+	      send_not_found(sockfd, (const struct sockaddr *) &cliaddr, len);
+	      if ( verbose && ++current_count >= msgfrequency) 
+		{
+		  cout << " end of stream" << endl;  // clean up the output
+		}
+	      return 0;
+	    }
+
+	  // if we request an event that's in the past, we say "sorry"
+	  if ( recbuffer[0] < e->getEvtSequence()) 
+	    {
+
+	      send_not_found(sockfd, (const struct sockaddr *) &cliaddr, len);
+
+	      if ( verbose && current_count >= msgfrequency)
+		{
+		  cout << " Event not delivered";
+		  if ( requested > 0) cout << " " << 100 * sent/requested << "%" << endl;
+		  else cout << endl;
+		  current_count = 0;
+		}
+	    }
+	  else if ( recbuffer[0] >= e->getEvtSequence() )
+	    {
+
+	      // we ask for a valid event. If we don't have it, we skip until we have it, or find the end of the stream
+	      while (recbuffer[0] != e->getEvtSequence() )
+		{
+		  if ( e) delete e;
+		  e = it->getNextEvent();
+		  // if this is 0 we have arrived at the end of the stream
+		  if ( !e) 
+		    {
+		      send_not_found(sockfd, (const struct sockaddr *) &cliaddr, len);
+		      if ( verbose && ++current_count >= msgfrequency) 
+			{
+			  cout << " end of stream" << endl;  // clean up the output
+			}
+		      return 0;
+		    }
+		}
+
+	      int nw;
+	  
+	      e->Copy(buffer,MAXSIZE,&nw,"");
+	      sendto(sockfd, (const char *) buffer, nw*sizeof(int), 
+		     MSG_CONFIRM, (const struct sockaddr *) &cliaddr, 
+		     len); 
+	      sent += 1;
+	      if ( verbose && current_count >= msgfrequency )
+		{
+		  cout << " Event sent";
+		  if ( requested > 0) cout << " " << 100 * sent/requested << "%" << endl;
+		  current_count = 0;
+		}
+	      if ( identify) e->identify();
+	    }
+	}
     }
   return 0; 
 }
