@@ -257,7 +257,8 @@ unsigned int Packet_iddigitizerv3::decode_FEM ( unsigned int *k, const int fem_n
       else
 	{
 	  coutfl << "unknown word classifier " << hex << "0x" << word_classifier << dec << endl;
-	  return index;
+	  _broken = 2;
+	  return 0;
 	}
     }
   return index;
@@ -268,6 +269,7 @@ int Packet_iddigitizerv3::iValue(const int sample, const int ch)
 {
   decode();
 
+  if (_broken) return 0; 
   
   if ( sample >= _nsamples || sample < 0 
        || ch >= _nchannels || ch < 0 ) return 0;
@@ -281,6 +283,8 @@ long long Packet_iddigitizerv3::lValue(const int n, const char *what)
 
   decode();
 
+  if (_broken) return 0; 
+  
   if ( strcmp(what,"CLOCK") == 0 )
   {
     return _xmit_clock;
@@ -299,6 +303,8 @@ int Packet_iddigitizerv3::iValue(const int n, const char *what)
 {
 
   decode();
+
+  if (_broken) return 0; 
 
   // if ( strcmp(what,"CLOCK") == 0 )
   // {
@@ -419,6 +425,8 @@ void  Packet_iddigitizerv3::dump ( OSTREAM& os )
 {
   identify(os);
 
+  decode();
+  
   if ( _broken)
     {
       os << " *** Corrupt packet "  << std::endl;
