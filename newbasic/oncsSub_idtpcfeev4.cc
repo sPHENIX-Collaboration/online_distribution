@@ -245,8 +245,8 @@ int oncsSub_idtpcfeev4::tpc_decode ()
 
           if (pos>= fee_data[ifee].size())
           {
-            std::cout<<__PRETTY_FUNCTION__<<" : warning - sampa data wavelet loss at the end of fee_data.for fee "<<ifee<<std::endl;
-            continue;
+            // std::cout<<__PRETTY_FUNCTION__<<" : warning - sampa data wavelet loss at the end of fee_data for fee "<<ifee<<std::endl;
+            break;
           }
                       if(start_t+j<1024){ sw->waveform[start_t+j]= fee_data[ifee][pos++]; }
                       else { pos++; }

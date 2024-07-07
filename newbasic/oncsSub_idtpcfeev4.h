@@ -6,6 +6,7 @@
 #include <set>
 #include <algorithm>
 #include <functional>
+#include <limits>
 
 #ifndef __CINT__
 class WINDOWSEXPORT oncsSub_idtpcfeev4 : public  oncsSubevent_w2 {
@@ -58,20 +59,20 @@ protected:
   int _is_decoded;
 
   struct sampa_waveform {
-    unsigned short fee;
-    unsigned short pkt_length;
-    unsigned short channel;
-    unsigned short sampa_channel;
-    unsigned short sampa_address;
-    unsigned int bx_timestamp;
+    unsigned short fee = std::numeric_limits<unsigned short>::max();
+    unsigned short pkt_length = std::numeric_limits<unsigned short>::max();
+    unsigned short channel = std::numeric_limits<unsigned short>::max();
+    unsigned short sampa_channel = std::numeric_limits<unsigned short>::max();
+    unsigned short sampa_address = std::numeric_limits<unsigned short>::max();
+    unsigned int bx_timestamp = 0;
     std::vector<unsigned short> waveform;
-    unsigned short adc_length;
-    unsigned short checksum;
-    unsigned short user_word;
-    unsigned short type;
-    unsigned short data_parity;
-    bool     valid;
-    bool     parity_valid;
+    unsigned short adc_length = std::numeric_limits<unsigned short>::max();
+    unsigned short checksum = std::numeric_limits<unsigned short>::max();
+    unsigned short user_word = std::numeric_limits<unsigned short>::max();
+    unsigned short type = std::numeric_limits<unsigned short>::max();
+    unsigned short data_parity = std::numeric_limits<unsigned short>::max();
+    bool     valid = false;
+    bool     parity_valid = false;
   };
 
   struct gtm_payload {
