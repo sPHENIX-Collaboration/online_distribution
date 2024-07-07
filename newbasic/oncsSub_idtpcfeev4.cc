@@ -186,7 +186,7 @@ int oncsSub_idtpcfeev4::tpc_decode ()
 	  unsigned int startpos = pos;
 
 	  // first the check if our vector cuts off before the fixed-length header, then we are already done
-	  if ( startpos + HEADER_LENGTH >= fee_data[ifee].size() || startpos + fee_data[ifee][startpos] > fee_data[ifee].size())
+	  if ( startpos + HEADER_LENGTH >= fee_data[ifee].size() || startpos + fee_data[ifee][startpos] >= fee_data[ifee].size())
 	    {
 	      pos = fee_data[ifee].size() + 1; // make sure we really terminate the loop
 	    }
