@@ -242,11 +242,21 @@ int oncsSub_idtpcfeev4::tpc_decode ()
 //		  if(nsamp>data_size_counter){ cout<<"nsamp: "<<nsamp<<", size: "<<data_size_counter<<", format error"<<endl; break;}
 
 		  for (int j=0; j<nsamp;j++){
+
+          if (pos>= fee_data[ifee].size())
+          {
+            std::cout<<__PRETTY_FUNCTION__<<" : warning - sampa data wavelet loss at the end of fee_data.for fee "<<ifee<<std::endl;
+            continue;
+          }
                       if(start_t+j<1024){ sw->waveform[start_t+j]= fee_data[ifee][pos++]; }
                       else { pos++; }
 //                   cout<<"data: "<< sw->waveform[start_t+j]<<endl;
 		      data_size_counter--;
 		    }
+          if (pos>= fee_data[ifee].size())
+          {
+            continue;
+          }
 		}
 
 	      //
