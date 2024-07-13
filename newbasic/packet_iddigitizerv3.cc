@@ -128,6 +128,11 @@ int Packet_iddigitizerv3::decode ()
 	  fem_index += i;
 	  //coutfl << " fem_index now  " << fem_index << "  " << hex <<  k[fem_index] << dec << endl;
 	}
+      else
+	{
+	  _broken = 4;
+	  return 1;
+	}
     }
 
   
