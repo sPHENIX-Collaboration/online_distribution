@@ -67,7 +67,7 @@ main(int argc, char *argv[])
   int evtnr = atoi(argv[optind]);
 
   string host;
-  if ( optind+1 > argc)
+  if ( argc > optind+1)
     {
       host = argv[optind+1];
     }
