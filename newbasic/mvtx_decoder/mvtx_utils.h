@@ -62,6 +62,49 @@ namespace mvtx_utils
       priority      = *(reinterpret_cast<const uint8_t*>(rdh_ptr + 59) ) & 0xFF;
       rdhGBTcounter = *(reinterpret_cast<const uint16_t*>(rdh_ptr + 62) ) & 0xFFFF;
     }
+
+    bool checkRDH( const bool verbose )
+    {
+      // check if rdh conform with RDH8 fields
+      bool ok = true;
+      if ( flxHdrSize != 0x20 )
+      {
+        if ( verbose )
+        {
+          std::cout << "RDH FLX Header Size 0x20 is expected instead of " << int(flxHdrSize) << std::endl;
+        }
+        ok = false;
+      }
+
+      if ( flxHdrVersion != 0xAB01 )
+      {
+      if ( verbose )
+        {
+          std::cout << "RDH FLX Header version 0x01AB is expected instead of " << int(flxHdrVersion) << std::endl;
+        }
+        ok = false;
+      }
+
+      if ( rdhVersion != 0x08 )
+      {
+        if ( verbose )
+        {
+          std::cout << "RDH version 8 is expected instead of " << int(rdhVersion) << std::endl;
+        }
+        ok = false;
+      }
+
+      if ( rdhSize != 32 )
+      {
+      if ( verbose )
+        {
+          std::cout << "RDH with header size of 64 B is expected instead of " << int(rdhSize) << std::endl;
+        }
+        ok = false;
+      }
+
+      return ok;
+    }
   };
 
   template < typename A, typename B >
