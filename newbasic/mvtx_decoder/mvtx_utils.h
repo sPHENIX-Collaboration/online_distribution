@@ -6,6 +6,8 @@
 
 #include <cstdint>
 #include <cassert>
+#include <iostream>
+#include <ostream>
 
 namespace mvtx_utils
 {
