@@ -309,6 +309,12 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
     RdhExt_t rdh = {};
     uint8_t* rdh_start = data.getPtr() + dataOffset;
     rdh.decode(rdh_start);
+    if (! rdh.checkRDH(true) )
+    {
+      dataOffset = currRawPiece->size;
+      ++hbf_count;
+      continue;
+    }
 
     size_t pagesize = (rdh.pageSize + 1) * FLXWordLength;
     const size_t nFlxWords = (pagesize - (2 * FLXWordLength)) / FLXWordLength;
@@ -357,9 +363,11 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
         log_error << "Bad gbt counter in the flx packet. FLX: " << flxId << ", Feeid: " << feeId << ", n_gbt_cnt: " << n_gbt_cnt \
           << ", prev_gbt_cnt: " << prev_gbt_cnt << ", size: " << currRawPiece->size << ", dataOffset: " << dataOffset << std::endl;
         decoder_error_vector.push_back(std::make_pair(-1,4));
-        PrintBlock(std::cerr, rdh_start, nFlxWords + 2);
+        //PrintBlock(std::cerr, rdh_start, nFlxWords + 2);
+        log_error << "rdh_start length: " << (nFlxWords + 2) << std::endl;
         std::cerr << "Full HBF" << std::endl;
-        PrintBlock(std::cerr, hbf_start, (currRawPiece->size/32) );
+        //PrintBlock(std::cerr, hbf_start, (currRawPiece->size/32) );
+        log_error << "hbf_start length: " << (currRawPiece->size/32) << std::endl;
         break;
       }
       for ( int i = 0; i < n_gbt_cnt; ++i )
