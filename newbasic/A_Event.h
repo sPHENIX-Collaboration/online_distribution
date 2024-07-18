@@ -20,36 +20,37 @@ public:
   // constructors and destructors
   A_Event( PHDWORD *);
   A_Event( int *);
-  virtual ~A_Event();
+  ~A_Event();
 
   // info & debug utils
 
-  virtual unsigned int getEvtLength () const;
-  virtual int getEvtType() const;
-  virtual int getEvtSequence() const;
-  virtual int getRunNumber() const;
+  unsigned int getEvtLength () const;
+  int getEvtType() const;
+  int getEvtSequence() const;
+  int getRunNumber() const;
 
-  virtual void identify(std::ostream& os = std::cout) const;
+  void identify(std::ostream& os = std::cout) const;
 
-  virtual void listFrame( const int id=0, OSTREAM& os=COUT ) const;
+  void listFrame( const int id=0, OSTREAM& os=COUT ) const;
 
-  virtual void listHistory( const int id=0, OSTREAM& os=COUT ) const;
+  void listHistory( const int id=0, OSTREAM& os=COUT ) const;
 
-  virtual void listError( const int id=0, OSTREAM& os=COUT ) const;
+  void listError( const int id=0, OSTREAM& os=COUT ) const;
 
   unsigned int getFrameEntry(  const char *what, const int id=0, const int index =0) const;
 
   // packet handling
-  virtual Packet* getPacket(const int);
+  Packet* getPacket(const int);
 
-  virtual Packet* getPacket(const int, const int hitFormat);
+  Packet* getPacket(const int, const int hitFormat);
 
-  virtual int getPacketList(Packet*[], const int);
+  int getPacketList(Packet*[], const int);
+  std::vector<Packet *> getPacketVector();
 
-  virtual int existPacket (const int);
+  int existPacket (const int);
 
   //event copying
-  virtual int Copy ( int *, const unsigned int, int *, const char *what ="");
+  int Copy ( int *, const unsigned int, int *, const char *what ="");
 
 
 
@@ -60,16 +61,16 @@ public:
       return EventData->reserved[0]; 
     };
 
-  virtual int is_pointer_type() const;
-  virtual int convert ();
+  int is_pointer_type() const;
+  int convert ();
 
   static void dumpFrame(PHDWORD *fp, OSTREAM &os = COUT);
   static void dumpErrorBlock(PHDWORD *fp, OSTREAM &os = COUT);
 
   static void dumpBlock(PHDWORD *p, UINT len, OSTREAM &os = COUT, const int how=EVT_HEXADECIMAL);
 
-  virtual int getDate() { return 0;};
-  virtual time_t getTime() const;
+  int getDate() { return 0;};
+  time_t getTime() const;
 
   static Packet *makePacket(PHDWORD *pp, const int hitformat=0);
 

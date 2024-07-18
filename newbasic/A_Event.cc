@@ -554,6 +554,61 @@ A_Event::getPacketList( Packet* sl[], const int ne)
   return entries;
 }
 
+std::vector<Packet*>  A_Event::getPacketVector()
+{
+  int i = 0;
+  PHDWORD *fp;
+  PHDWORD *pp;
+
+  std::vector<Packet *> v;
+
+  if (!hasMap) createMap();
+  if ( errorcode) return v;
+
+
+
+  while ( (fp = framelist[i++]) )
+    {
+
+      pp = findFramePacketIndex (fp, 0);
+
+      while ( pp  !=  ptrFailure) 
+	{
+	  if (getPacketStructure(pp) == Unstructured)
+	    {
+	      v.push_back( makePacket(pp,0) );
+		  //  sl[entries-1]->identify();
+		  
+	    }
+	  
+	  if ( (pp =  findNextFramePacket(fp, pp)) == ptrFailure)
+            {
+              break;
+            }
+	  if (*pp > getEvtLength()) 
+	    {
+	      std::cout << "Found wrong packet length " << *pp << std::endl;
+	      break;
+	    }
+	  if ( pp != 0 && *pp == 0) 
+	    {
+	      std::cout << "found 0-length packet" << std::endl;
+	      //  PHDWORD *x = pp - 10;
+	      // std::cout << "--------------------------" << std::endl;
+	      // for (i=0; i< 20; i++)
+	      //	{
+	      //	  std::cout << i << "  " << x << "  " << std::hex <<*x++ << std::dec << std::endl;
+	      //	}
+	      // std::cout << "--------------------------" << std::endl;
+ 
+
+	      break;
+	    }
+	}
+    }
+  return v;
+}
+
 
 
 

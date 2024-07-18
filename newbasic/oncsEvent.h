@@ -18,30 +18,31 @@ public:
   oncsEvent(int *);
   ~oncsEvent();
 
-  virtual unsigned int getEvtLength() const;
-  virtual int getEvtType() const;
-  virtual int getEvtSequence() const;
-  virtual int getRunNumber() const;
-  //virtual PHTimeStamp * getTimeStamp() const;
+  unsigned int getEvtLength() const;
+  int getEvtType() const;
+  int getEvtSequence() const;
+  int getRunNumber() const;
+  //PHTimeStamp * getTimeStamp() const;
   
-  virtual void identify(std::ostream& os = std::cout) const;
+  void identify(std::ostream& os = std::cout) const;
 
 
-  virtual Packet* getPacket(const int);
-  virtual Packet* getPacket(const int, const int hitFormat);
+  Packet* getPacket(const int);
+  Packet* getPacket(const int, const int hitFormat);
 
-  virtual int getPacketList(Packet*[], const int);
+  int getPacketList(Packet*[], const int);
+  std::vector<Packet *> getPacketVector();
 
-  virtual int existPacket (const int packetid);
+  int existPacket (const int packetid);
 
-  virtual int Copy ( int *destination, const unsigned int length, int *nw, const char *what="");
+  int Copy ( int *destination, const unsigned int length, int *nw, const char *what="");
 
-  virtual int is_pointer_type() const;
-  virtual int convert ();
+  int is_pointer_type() const;
+  int convert ();
 
-  virtual int getDate() { return 0;};
-  virtual time_t getTime() const;
-  virtual Packet * makePacket(PHDWORD *pp, const int hitFormat = 0);
+  int getDate() { return 0;};
+  time_t getTime() const;
+  Packet * makePacket(PHDWORD *pp, const int hitFormat = 0);
 
   void setOriginBuffer(const int n) {originBuffer =n;};
   int getOriginBuffer() const {return originBuffer;};

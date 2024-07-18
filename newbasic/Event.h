@@ -3,6 +3,7 @@
 #define __EVENT_H__
 
 //#include <stddef.h>
+#include <vector>
 
 #include "packet.h"
 #include <ctime>
@@ -127,6 +128,11 @@ public:
     the packet how long the array is.
   */
   virtual int getPacketList(Packet*[], const int /*length*/) =0;
+
+  /**
+    getPacketVector returns a stdd:vector of the packet pointers. 
+  */
+  virtual std::vector<Packet *> getPacketVector() =0;
 
   /**
    existPacket returns 1 if such a packet exists in the

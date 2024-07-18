@@ -364,6 +364,29 @@ int oncsEvent::getPacketList( Packet* sl[], const int ne)
   return entries;
 }
 
+std::vector<Packet *>  oncsEvent::getPacketVector()
+{
+
+  std::vector<Packet *> v;
+
+  if (!hasMap) createMap();
+  if ( errorcode) return v;
+
+
+  std::map <int, PHDWORD *>::const_iterator it;
+
+
+  for ( it = pmap.begin() ; it != pmap.end(); ++it)
+    {
+      PHDWORD *p = it->second;
+      //std::cout << __FILE__ << "  " << __LINE__ << " subid, adr " << it->first << "  " << it->second << "  " << *(it->second) << std::endl;
+
+      v.push_back(makePacket(p));
+    }
+
+  return v;
+}
+
 
 
 
