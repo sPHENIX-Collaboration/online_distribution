@@ -33,6 +33,8 @@ public:
   int *getEventData() { return 0;};
   int isGood() const { return 1;};
 
+  int getBufferSequence() const;
+
   static int i4swap (const int in);
   static int i22swap (const int in);
   static short i2swap (const short in);

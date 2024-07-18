@@ -89,6 +89,13 @@ Event * lzobuffer::getEvent()
 }
 
 // ---------------------------------------------------------
+int lzobuffer::getBufferSequence() const
+{
+  if ( !theBuffer) return 0;
+  return theBuffer->getBufferSequence();
+}
+
+// ---------------------------------------------------------
 
 lzobuffer::~lzobuffer()
 {

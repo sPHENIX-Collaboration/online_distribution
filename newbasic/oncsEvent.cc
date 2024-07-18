@@ -12,6 +12,7 @@ oncsEvent::oncsEvent (int *data)
   hasMap = 0;
   errorcode = 0;
   EventData = (oncsevtdata_ptr) data;
+  originBuffer = 0;
 }
 
 oncsEvent::~oncsEvent ()
@@ -21,19 +22,19 @@ oncsEvent::~oncsEvent ()
 
 // the info-type calls
 unsigned int
-oncsEvent::getEvtLength()
+oncsEvent::getEvtLength() const
 {
   return EventData->evt_length;
 }
 
 int
-oncsEvent::getEvtType()
+oncsEvent::getEvtType() const
 {
   return EventData->evt_type;
 }
 
 int
-oncsEvent::getEvtSequence()
+oncsEvent::getEvtSequence() const
 {
   return EventData->evt_sequence;
 }
@@ -45,7 +46,7 @@ oncsEvent::getTime () const
 }
 
 int
-oncsEvent::getRunNumber()
+oncsEvent::getRunNumber() const
 {
   return EventData->run_number;
 }
@@ -361,6 +362,29 @@ int oncsEvent::getPacketList( Packet* sl[], const int ne)
     }
 
   return entries;
+}
+
+std::vector<Packet *>  oncsEvent::getPacketVector()
+{
+
+  std::vector<Packet *> v;
+
+  if (!hasMap) createMap();
+  if ( errorcode) return v;
+
+
+  std::map <int, PHDWORD *>::const_iterator it;
+
+
+  for ( it = pmap.begin() ; it != pmap.end(); ++it)
+    {
+      PHDWORD *p = it->second;
+      //std::cout << __FILE__ << "  " << __LINE__ << " subid, adr " << it->first << "  " << it->second << "  " << *(it->second) << std::endl;
+
+      v.push_back(makePacket(p));
+    }
+
+  return v;
 }
 
 

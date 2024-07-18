@@ -131,6 +131,7 @@ Event * fileEventiterator::getNextEvent()
       if (bptr) evt =  bptr->getEvent();
       if (evt) 
 	{
+	  //evt->setOriginBuffer(bptr->getBufferSequence());
 	  events_so_far++;
 	  return evt;
 	}

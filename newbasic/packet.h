@@ -191,7 +191,7 @@ class  Packet
   // some more header fields which are not yet implemented, marked "//*"
   //* virtual int   gethdrVersion() const = 0; // Version of header definition
   //* virtual int   getHdrLength() const = 0;     // inclusive of alignment data
-  //* virtual int   getStatus() const = 0;	       // Status bits describe frame errors/other
+  virtual int   getStatus() const = 0;	       // returns 0 for all ok 
 
   virtual int   getErrorLength() const = 0;    // Length of error block in Dwords
 

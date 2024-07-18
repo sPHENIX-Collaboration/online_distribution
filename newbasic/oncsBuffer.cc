@@ -28,6 +28,15 @@ oncsBuffer::oncsBuffer (PHDWORD *array , const PHDWORD length )
   
 }
 
+
+// ---------------------------------------------------------
+int oncsBuffer::getBufferSequence() const
+{
+  if ( !bptr) return 0;
+  return bptr->Bufseq;
+}
+
+
 int oncsBuffer::buffer_swap()
 {
 
@@ -169,6 +178,7 @@ Event * oncsBuffer::getEvent()
 
   Event *evt;
   evt =  new oncsEvent( &bptr->data[current_index]);
+  evt->setOriginBuffer(getBufferSequence());
 
   
   int l =  evt->getEvtLength();

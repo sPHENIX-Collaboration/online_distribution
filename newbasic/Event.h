@@ -3,6 +3,7 @@
 #define __EVENT_H__
 
 //#include <stddef.h>
+#include <vector>
 
 #include "packet.h"
 #include <ctime>
@@ -36,7 +37,7 @@ public:
    in longwords (32bit). If you want to copy the event somewhere,
    you can find out whether or not you have enough space left.
   */
-  virtual unsigned int getEvtLength() =0;
+  virtual unsigned int getEvtLength() const =0;
 
   /**
       getEvtType() returns the type of the event. Most of the
@@ -44,7 +45,7 @@ public:
    BEGRUNEVENT, SPILLONEVENT, SPILLOFFEVENT, ENDRUNEVENT,
    and so on.
   */
-  virtual int getEvtType() =0;
+  virtual int getEvtType() const =0;
 
   /**
    getEvtSequence() returns the number of the event in a 
@@ -52,13 +53,13 @@ public:
    sequence number uniquely indentify an event. It has nothing to do with the position
    of the event in any given data file.
   */
-  virtual int getEvtSequence()  =0;
+  virtual int getEvtSequence() const =0;
   
   /**
    getRunNumber() returns the number of the run to which this
    event belongs.
   */
-  virtual int getRunNumber() =0;
+  virtual int getRunNumber() const =0;
 
   /**
    identify will write a short identification message to 
@@ -129,6 +130,11 @@ public:
   virtual int getPacketList(Packet*[], const int /*length*/) =0;
 
   /**
+    getPacketVector returns a stdd:vector of the packet pointers. 
+  */
+  virtual std::vector<Packet *> getPacketVector() =0;
+
+  /**
    existPacket returns 1 if such a packet exists in the
    event. 0 else.
   */
@@ -175,6 +181,11 @@ public:
 
   virtual int getDate() = 0;
   virtual time_t getTime() const = 0;
+
+  virtual void setOriginBuffer(const int n) = 0;
+  virtual int getOriginBuffer() const =0;
+
+
 };
 
 #endif /* __EVENT_H__ */
