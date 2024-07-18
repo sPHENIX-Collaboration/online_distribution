@@ -19,10 +19,11 @@ using namespace std;
 #define PORT	 8080 
 #define MAXSIZE 1024*1024
 
-eventReceiverClient::eventReceiverClient( const std::string hostname, const int flags)
+eventReceiverClient::eventReceiverClient( const std::string hostname, const int flags, const int port)
 {
 
   _hostname = hostname;
+  _port = port;
   _flags = flags;
   _broken = 0;
   _had_timeout = 0;
@@ -40,7 +41,7 @@ eventReceiverClient::eventReceiverClient( const std::string hostname, const int 
   struct addrinfo *result;
 
   char port_str[512];
-  sprintf(port_str, "%d", PORT);
+  sprintf(port_str, "%d", _port);
 
   int status = getaddrinfo(_hostname.c_str(), port_str,
 			   &hints,
@@ -84,7 +85,7 @@ eventReceiverClient::eventReceiverClient( const std::string hostname, const int 
   //   }
 
   _serveraddr.sin_family = AF_INET; 
-  _serveraddr.sin_port = htons(PORT); 
+  _serveraddr.sin_port = htons(_port); 
 
 }
 
