@@ -81,6 +81,12 @@ void oncsSub_idmvtxv3::setupLinks()
       if ( *(reinterpret_cast<uint16_t*>(&payload_start[payload_position] + 30)) == 0xAB01 )
       {
         rdh.decode(&payload_start[payload_position]);
+        if ( ! rdh.checkRDH(true) )
+        {
+          // In case of corrupt RDH, skip felix word and continue to next
+          payload_position += mvtx_utils::FLXWordLength;
+          continue;
+        }
         const size_t pageSizeInBytes = (rdh.pageSize + 1) * mvtx_utils::FLXWordLength;
         if ( pageSizeInBytes > (payload_length - payload_position) )
         {
