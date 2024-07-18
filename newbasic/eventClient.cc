@@ -28,6 +28,7 @@ void exithelp()
   cout << "  usage:   eventClient [-t <timeout in s> -v ]   event_nr [hostname] " << endl;
   cout << std::endl;
   cout << "  List of options: " << std::endl;
+  cout << " -p <port number>  (default 8080)" << std::endl;
   cout << " -t <s> timeout" << std::endl;
   cout << " -v verbose" << std::endl;
   exit(0);
@@ -39,17 +40,22 @@ void exithelp()
 int 
 main(int argc, char *argv[])
 { 
+  int ThePort = 8080;
 
   int verbosity = 0;
   int timeout = 0;
 
   int c;
 
-  while ((c = getopt(argc, argv, "t:v")) != EOF)
+  while ((c = getopt(argc, argv, "t:p:v")) != EOF)
     switch (c) 
       {
       case 't':
 	if ( !sscanf(optarg, "%d", &timeout) ) exitmsg();
+	break;
+
+      case 'p':
+	if ( !sscanf(optarg, "%d", &ThePort) ) exitmsg();
 	break;
 
       case 'v':   // verbose
@@ -76,7 +82,7 @@ main(int argc, char *argv[])
       host = "localhost";
     }
   
-  eventReceiverClient *erc = new eventReceiverClient(host);
+  eventReceiverClient  *erc = new eventReceiverClient(host,0,ThePort);
   if ( erc->getStatus())
     {
       delete erc;
