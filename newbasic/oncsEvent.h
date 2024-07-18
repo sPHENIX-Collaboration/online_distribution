@@ -18,10 +18,10 @@ public:
   oncsEvent(int *);
   ~oncsEvent();
 
-  virtual unsigned int getEvtLength();
-  virtual int getEvtType();
-  virtual int getEvtSequence();
-  virtual int getRunNumber();
+  virtual unsigned int getEvtLength() const;
+  virtual int getEvtType() const;
+  virtual int getEvtSequence() const;
+  virtual int getRunNumber() const;
   //virtual PHTimeStamp * getTimeStamp() const;
   
   virtual void identify(std::ostream& os = std::cout) const;
@@ -43,6 +43,10 @@ public:
   virtual time_t getTime() const;
   virtual Packet * makePacket(PHDWORD *pp, const int hitFormat = 0);
 
+  void setOriginBuffer(const int n) {originBuffer =n;};
+  int getOriginBuffer() const {return originBuffer;};
+
+
 protected:
   int is_data_type;  // 0 is pointer based --  1 is data based
 
@@ -52,6 +56,8 @@ protected:
   int errorcode;
   virtual int createMap();
   std::map <int, PHDWORD *> pmap;
+
+  int originBuffer;
 };
 
 #endif

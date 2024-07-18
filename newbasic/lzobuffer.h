@@ -20,6 +20,7 @@ public:
 
   Event * getEvent();
 
+  int getBufferSequence() const;
 
 protected:
   static int lzo_initialized;

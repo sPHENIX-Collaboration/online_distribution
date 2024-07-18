@@ -6,7 +6,6 @@
 #include "Event.h"
 
 
-
 #ifndef __CINT__
 class WINDOWSEXPORT buffer {
 #else
@@ -26,6 +25,8 @@ public:
   virtual int * getEventData() = 0;
 
   virtual int isGood() const = 0;
+
+  virtual int getBufferSequence() const = 0;
 
   static int makeBuffer( PHDWORD *bp, const int allocatedsize, buffer **bptr);
   static int i4swap (const int in);

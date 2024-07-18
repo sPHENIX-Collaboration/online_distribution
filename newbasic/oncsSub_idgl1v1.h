@@ -35,6 +35,7 @@ protected:
   unsigned int GTM_BusyVector;
       
   unsigned int packet_nr;
+  unsigned int tag;
 
   unsigned long long scalers[3*64];
   unsigned int gl1p_scalers[3*16];

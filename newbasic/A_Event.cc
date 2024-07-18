@@ -35,6 +35,7 @@ A_Event::A_Event (PHDWORD *data)
     {
       errorcode = updateFramelist();
     }
+  originBuffer = 0;
 }
 
 A_Event::A_Event (int *data)
@@ -71,25 +72,25 @@ A_Event::~A_Event()
 
 // the info-type calls
 unsigned int 
-A_Event::getEvtLength()
+A_Event::getEvtLength() const
 {
   return EventData->evt_length;
 }
 
 int 
-A_Event::getEvtType()
+A_Event::getEvtType() const
 {
   return EventData->evt_type;
 }
 
 int 
-A_Event::getEvtSequence()
+A_Event::getEvtSequence() const
 {
   return EventData->evt_sequence;
 }
 
 int 
-A_Event::getRunNumber()
+A_Event::getRunNumber() const
 {
   return EventData->run_number;
 }

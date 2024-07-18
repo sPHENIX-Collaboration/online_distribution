@@ -12,6 +12,7 @@ oncsSub_idgl1v1::oncsSub_idgl1v1(subevtdata_ptr data)
 
   BCO = 0;
   packet_nr = 0;
+  tag = 0;
 
   memset (scalers, 0, sizeof(scalers) );
   memset (gl1p_scalers, 0, sizeof(gl1p_scalers) );
@@ -66,7 +67,6 @@ int oncsSub_idgl1v1::decode ()
   
   //cout << "bunch number " << BunchNumber << endl;
 
-  unsigned int tag = 0;
 
   // 11,12,13,14 are 0x12345678ab - let's check
   i = 11;
@@ -159,7 +159,9 @@ int oncsSub_idgl1v1::iValue(const int i)
 {
   decode();
   if ( _broken) return 0;
-  return packet_nr;
+  if ( i == 0)   return packet_nr;
+  if ( i == 1)   return tag;
+  return 0;
 }
 
 long long oncsSub_idgl1v1::lValue(const int i, const int k)

@@ -128,6 +128,12 @@ int prdfBuffer::buffer_swap()
 }
 
 
+int prdfBuffer::getBufferSequence() const
+{
+  if ( !bptr) return 0;
+  return bptr->Bufseq;
+}
+
 int prdfBuffer::frame_swap(PHDWORD * fp, const int eventlength)
 {
   int swapped_length = i4swap(*fp);
@@ -196,6 +202,7 @@ Event * prdfBuffer::getEvent()
 
   // none of the above, just return
   evt =  new A_Event( &bptr->data[current_index]);
+  evt->setOriginBuffer(getBufferSequence());
   current_index += len;
   return evt;
 

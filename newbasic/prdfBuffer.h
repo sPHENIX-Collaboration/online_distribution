@@ -25,6 +25,8 @@ public:
   //  this creates a new event on the next address
   Event * getEvent();
 
+  int getBufferSequence() const; 
+ 
   int * getEventData();
 
   int isGood() const { return is_good; } ;

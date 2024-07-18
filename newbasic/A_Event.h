@@ -24,11 +24,10 @@ public:
 
   // info & debug utils
 
-  virtual unsigned int getEvtLength();
-  virtual int getEvtType();
-  virtual int getEvtSequence();
-  virtual int getRunNumber();
-  // virtual PHTimeStamp * getTimeStamp() const;
+  virtual unsigned int getEvtLength () const;
+  virtual int getEvtType() const;
+  virtual int getEvtSequence() const;
+  virtual int getRunNumber() const;
 
   virtual void identify(std::ostream& os = std::cout) const;
 
@@ -74,6 +73,9 @@ public:
 
   static Packet *makePacket(PHDWORD *pp, const int hitformat=0);
 
+  void setOriginBuffer(const int n) {originBuffer =n;};
+  int getOriginBuffer() const {return originBuffer;};
+
 protected:
   virtual int updateFramelist();
 
@@ -89,6 +91,7 @@ protected:
   int NumberFrames;
   int hasMap;
   int errorcode;
+  int originBuffer;
 
 #if !defined(SunOS) && !defined(OSF1)
   std::map <int, PHDWORD *> pmap;
