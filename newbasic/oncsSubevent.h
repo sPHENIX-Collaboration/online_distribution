@@ -23,20 +23,21 @@ public:
   virtual ~oncsSubevent();
 
   // access to information 
-  virtual int   getLength() const;
-  virtual int   getIdentifier() const;
-  virtual int   getHitFormat() const;
-  virtual int   getPadding() const;
+  int   getLength() const;
+  int   getIdentifier() const;
+  int   getHitFormat() const;
+  int   getPadding() const;
 
-  virtual int	getDataLength() const;
-  virtual int	getStructure() const { return 0;};
-  virtual int	getDebugLength() const { return 0;};
-  virtual int	getErrorLength() const { return 0;};
+  int	getDataLength() const;
+  int	getStructure() const { return 0;};
+  int	getDebugLength() const { return 0;};
+  int	getErrorLength() const { return 0;};
+  int   getStatus() const { return 0;};
 
   // debugging-type information
-  virtual void  identify( OSTREAM& =COUT) const;
+  void  identify( OSTREAM& =COUT) const;
 
-  virtual int setIdentifier(const int newid);
+  int setIdentifier(const int newid);
   
   // getting decoded values
   int    iValue(const int);
@@ -48,20 +49,20 @@ public:
 
   int    iValue(const int channel,const int iy, const int iz, const char *what) {return 0;};
 
-  virtual float  rValue(const int);
-  virtual float  rValue(const int,const char *);
-  virtual float  rValue(const int,const int);
+  float  rValue(const int);
+  float  rValue(const int,const char *);
+  float  rValue(const int,const int);
 
-  virtual int    getArraylength(const char *);
-  virtual int    fillIntArray (int [], const int, int *,const char *what="");
-  virtual int    fillFloatArray (float [], const int, int *,const char *what="");
-  virtual int*   getIntArray (int *,const char *what="");
-  virtual float* getFloatArray (int *,const char *what="");
+  int    getArraylength(const char *);
+  int    fillIntArray (int [], const int, int *,const char *what="");
+  int    fillFloatArray (float [], const int, int *,const char *what="");
+  int*   getIntArray (int *,const char *what="");
+  float* getFloatArray (int *,const char *what="");
 
   // pointer or data based handling
-  virtual int is_pointer_type() const;
-  virtual int convert();
-  virtual int   copyMe(int [],  const int maxlength) const;
+  int is_pointer_type() const;
+  int convert();
+  int   copyMe(int [],  const int maxlength) const;
 
   int setInternalParameter ( const int p1=0, const int p2=0, const char *what = "") {return 0;};
 
