@@ -198,7 +198,9 @@ unsigned int Packet_iddigitizerv3::decode_FEM ( unsigned int *k, const int fem_n
 	  //	  coutfl << "new NFEM and channel - " << NFEM << " " << CHNL << "   "  << hex << k[index] << dec << endl;
 	  if (NFEM != fem_nr || NFEM >= NR_FEMS)
 	    {
-	      coutfl << "NFEM and fem_nr differ - " << NFEM << " " << fem_nr << "  " << hex << k[index] << dec << endl;
+	      //cerrfl << "NFEM and fem_nr differ - " << NFEM << " " << fem_nr << "  " << hex << k[index] << dec << endl;
+	      _broken = 5;
+	      return 0;
 	    }
 	  // we have a new channel. reset the sample and parity index, and set the channel index
 	  index_sample = 0;

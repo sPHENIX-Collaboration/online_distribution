@@ -18,7 +18,7 @@ public:
   int    iValue(const int ,const char * what);
   long long   lValue(const int ,const char * what);
   void  dump ( OSTREAM& os = COUT) ;
-
+  int getStatus() const { return _broken;};
 
 protected:
   int decode ();
