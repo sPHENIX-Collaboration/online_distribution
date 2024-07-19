@@ -7,7 +7,6 @@
 #include <cstdint>
 #include <cassert>
 #include <iostream>
-#include <ostream>
 
 namespace mvtx_utils
 {
@@ -23,7 +22,7 @@ namespace mvtx_utils
     uint8_t flxId;    // [23]
     uint16_t pageSize; // [25]
     uint16_t gbtLink;
-    uint16_t flxHdrSize;
+    uint8_t  flxHdrSize;
     uint16_t flxHdrVersion;
     // RU header
     uint8_t rdhVersion;
@@ -48,7 +47,7 @@ namespace mvtx_utils
       flxId         = *(reinterpret_cast<const uint8_t*>(rdh_ptr +  23) ) & 0xFF;
       pageSize      = *(reinterpret_cast<const uint16_t*>(rdh_ptr + 25) ) & 0x7FF;
       gbtLink       = *(reinterpret_cast<const uint16_t*>(rdh_ptr + 28) ) & 0x7FF;
-      flxHdrSize    = *(reinterpret_cast<const uint16_t*>(rdh_ptr + 29) ) & 0x7FF;
+      flxHdrSize    = *(reinterpret_cast<const uint8_t*>(rdh_ptr  + 29) ) & 0xFF;
       flxHdrVersion = *(reinterpret_cast<const uint16_t*>(rdh_ptr + 30) ) & 0xFFFF;
       // RU header
       rdhVersion    = *(reinterpret_cast<const uint8_t*>(rdh_ptr + 32) ) & 0xFF;
