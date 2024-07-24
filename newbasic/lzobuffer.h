@@ -3,6 +3,7 @@
 
 #include "prdfBuffer.h"
 #include <lzo/lzo1x.h>
+#include <lzo/lzo1c.h>
 
 
 #ifndef __CINT__
