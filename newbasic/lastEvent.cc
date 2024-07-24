@@ -192,14 +192,14 @@ main(int argc, char *argv[])
 
       // get the buffer length into a dedicated variable
       if (initialbuffer[1] == BUFFERMARKER || initialbuffer[1]== GZBUFFERMARKER 
-	  ||  initialbuffer[1]== LZO1XBUFFERMARKER || initialbuffer[1]== ONCSBUFFERMARKER) 
+	  ||  initialbuffer[1]== LZO1XBUFFERMARKER || initialbuffer[1]== LZO1CBUFFERMARKER ||initialbuffer[1]== ONCSBUFFERMARKER) 
 	{
 	  buffer_size = initialbuffer[0];
 	}
       else
 	{
 	  unsigned int  marker = buffer::u4swap(initialbuffer[1]);
-	  if (marker == BUFFERMARKER || marker == GZBUFFERMARKER || marker ==  LZO1XBUFFERMARKER || marker == ONCSBUFFERMARKER)
+	  if (marker == BUFFERMARKER || marker == GZBUFFERMARKER || marker ==  LZO1XBUFFERMARKER || initialbuffer[1]== LZO1CBUFFERMARKER || marker == ONCSBUFFERMARKER)
 	    {
 	      buffer_size = buffer::u4swap(initialbuffer[0]);
 	    }

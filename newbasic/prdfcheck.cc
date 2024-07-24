@@ -54,14 +54,17 @@ main(int argc, char *argv[])
 	   buffer[1] == GZBUFFERMARKER || 
 	   buffer::u4swap(buffer[1]) ==  GZBUFFERMARKER ||
 	   buffer[1] == LZO1XBUFFERMARKER || 
-	   buffer::u4swap(buffer[1]) == LZO1XBUFFERMARKER )
+	   buffer::u4swap(buffer[1]) == LZO1XBUFFERMARKER ||
+	   buffer[1] == LZO1CBUFFERMARKER || 
+	   buffer::u4swap(buffer[1]) == LZO1CBUFFERMARKER )
 	{
 
 
 	  if ( buffer::u4swap(buffer[1]) == BUFFERMARKER || 
 	       buffer::u4swap(buffer[1]) == ONCSBUFFERMARKER ||
 	       buffer::u4swap(buffer[1]) == GZBUFFERMARKER ||
-	       buffer::u4swap(buffer[1]) == LZO1XBUFFERMARKER )
+	       buffer::u4swap(buffer[1]) == LZO1XBUFFERMARKER ||
+	       buffer::u4swap(buffer[1]) == LZO1CBUFFERMARKER )
 	    {
 	      needs_swap = 1;
 	    }
@@ -97,7 +100,9 @@ main(int argc, char *argv[])
  	  else if ( buffer[1] == GZBUFFERMARKER || 
 		    buffer::u4swap(buffer[1]) == GZBUFFERMARKER ) std::cout << "GZIP Marker" << std::endl;
 	  else if ( buffer[1] == LZO1XBUFFERMARKER || 
-		    buffer::u4swap(buffer[1]) == LZO1XBUFFERMARKER ) 
+		    buffer::u4swap(buffer[1]) == LZO1XBUFFERMARKER ||
+		    buffer[1] == LZO1CBUFFERMARKER || 
+		    buffer::u4swap(buffer[1]) == LZO1CBUFFERMARKER ) 
 	    {
 	      std::cout << "LZO Marker ";
 	      std::cout << " Or.length: " << buffer[3];

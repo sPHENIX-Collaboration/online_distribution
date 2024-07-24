@@ -30,14 +30,16 @@ int check_buffermarker ( const unsigned int bm)
   
   if ( bm == BUFFERMARKER || 
        bm == GZBUFFERMARKER || 
-       bm == LZO1XBUFFERMARKER )
+       bm == LZO1XBUFFERMARKER ||
+       bm == LZO1CBUFFERMARKER )
     {
       return 1;
     }
   
   else if ( buffer::u4swap(bm) == BUFFERMARKER || 
 	    buffer::u4swap(bm) == GZBUFFERMARKER ||
-	    buffer::u4swap(bm) == LZO1XBUFFERMARKER )
+	    buffer::u4swap(bm) == LZO1XBUFFERMARKER ||
+	    buffer::u4swap(bm) == LZO1CBUFFERMARKER )
     {
       return -1;
     }
