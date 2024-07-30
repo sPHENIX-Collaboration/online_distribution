@@ -46,6 +46,7 @@ void GBTLink::clear(bool resetStat, bool resetTFRaw)
     rawData.clear();
     mL1TrgTime.clear();
     mTrgData.clear();
+    RDHErrors = 0;
     for ( auto&& hit : hit_vector )
     {
       delete hit;

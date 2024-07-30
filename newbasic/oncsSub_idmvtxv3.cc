@@ -31,6 +31,7 @@ int oncsSub_idmvtxv3::decode()
   for (auto& link : mGBTLinks)
   {
     link.clear(true, true); // clear data but not the statistics
+    link.RDHErrors = 0;
     link.hbf_length = 0;
     link.prev_pck_cnt = 0;
   }
@@ -81,12 +82,6 @@ void oncsSub_idmvtxv3::setupLinks()
       if ( *(reinterpret_cast<uint16_t*>(&payload_start[payload_position] + 30)) == 0xAB01 )
       {
         rdh.decode(&payload_start[payload_position]);
-        if ( ! rdh.checkRDH(true) )
-        {
-          // In case of corrupt RDH, skip felix word and continue to next
-          payload_position += mvtx_utils::FLXWordLength;
-          continue;
-        }
         const size_t pageSizeInBytes = (rdh.pageSize + 1) * mvtx_utils::FLXWordLength;
         if ( pageSizeInBytes > (payload_length - payload_position) )
         {
@@ -104,6 +99,14 @@ void oncsSub_idmvtxv3::setupLinks()
             mGBTLinks.emplace_back(rdh.flxId, rdh.feeId);
           }
           auto& gbtLink = mGBTLinks[lnkref.entry];
+
+          if ( ! rdh.checkRDH(true) )
+          {
+            // In case of corrupt RDH, skip felix word and continue to next
+            payload_position += mvtx_utils::FLXWordLength;
+            gbtLink.RDHErrors++;
+            continue;
+          }
 
           if ( (rdh.packetCounter) && (gbtLink.rawData.getNPieces()) && (rdh.packetCounter != gbtLink.prev_pck_cnt + 1) )
           {
@@ -215,6 +218,10 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
     else if ( strcmp(what, "NR_STROBES") == 0 )
     {
     return mGBTLinks[lnkId].mTrgData.size();
+    }
+    else if ( strcmp(what, "RDH_ERRORS") == 0 )
+    {
+    return mGBTLinks[lnkId].RDHErrors;
     }
     else if ( strcmp(what, "NR_HITS") == 0 )  // the number of datasets
     {
