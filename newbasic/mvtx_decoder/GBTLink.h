@@ -115,6 +115,7 @@ struct GBTLink
   size_t dataOffset = 0;     //
   std::vector<InteractionRecord> mL1TrgTime;
   std::vector<TRGData> mTrgData;
+  int RDHErrors = 0;
 
   std::vector<mvtx_hit *> hit_vector = {};
 
