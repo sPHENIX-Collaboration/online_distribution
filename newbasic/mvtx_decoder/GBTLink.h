@@ -230,6 +230,7 @@ struct GBTLink
   {
     uint8_t dataC = 0;
 
+    std::cerr << "AlpideByteError: " << std::endl;
     std::cerr << "Link: " << feeId << ", Chip: " << (int)chipId;
     std::cerr << " invalid byte 0x" << std::hex << (int)(dataC) << std::endl;
     decoder_error_vector.push_back(std::make_pair(static_cast<int>(chipId),10));
@@ -326,7 +327,7 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
       {
         log_error << "Wrong dataOffset value " << dataOffset << " at the start of a HBF" << std::endl;
         decoder_error_vector.push_back(std::make_pair(-1,2));
-        assert(false);
+        // assert(false);
       }
       statistics.clear();
       //TODO: initialize/clear alpide data buffer
@@ -346,7 +347,7 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
       {
         log_error << "Previous event was already completed" << std::endl;
         decoder_error_vector.push_back(std::make_pair(-1,3));
-        assert(false);
+        // assert(false);
       }
     }
 
@@ -385,7 +386,7 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
             log_error << "Expected all active lanes for links, but " << gbtWord.activeLanes << "found in HBF " << hbfEntry << ", " \
               << gbtWord.asString().data() << std::endl;
             decoder_error_vector.push_back(std::make_pair(-1,5));
-            assert(false);
+            // assert(false);
           }
         }
         else if ( gbtWord.isTDH() ) // TRIGGER DATA HEADER (TDH)
@@ -433,7 +434,7 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
               log_error << "TDT packet done before TDH no continuation " << n_no_continuation \
                 << " != " << n_packet_done << std::endl;
                 decoder_error_vector.push_back(std::make_pair(-1,6));
-              assert(false);
+              // assert(false);
             }
           }
 
@@ -448,7 +449,7 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
           {
             log_error << "" << std::endl;
             decoder_error_vector.push_back(std::make_pair(-1,7));
-            assert(false);
+            // assert(false);
           }
         }
         else if ( gbtWord.isDiagnosticIB() ) // IB DIAGNOSTIC DATA
@@ -464,7 +465,7 @@ inline GBTLink::CollectedDataStatus GBTLink::collectROFCableData(/*const Mapping
           {
             log_error << "Trigger header not found before chip data" << std::endl;
             decoder_error_vector.push_back(std::make_pair(-1,8));
-            assert(false);
+            // assert(false);
           }
           auto lane = ( gbtWord.data8[9] & 0x1F ) % 3;
           cableData[lane].add(gbtWord.getW8(), 9);
@@ -502,7 +503,7 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
   {
     log_error << "chip data is too short: " << buffer.getSize() << std::endl;
     decoder_error_vector.push_back(std::make_pair(static_cast<int>(chipId),9));
-    assert(false);
+    // assert(false);
   }
 
   uint8_t dataC = 0;
@@ -549,7 +550,7 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
       {
         log_error << "Error laneId " << laneId << " (" << (dataC & 0xF) << ") and chipId " << chipId << std::endl;
         decoder_error_vector.push_back(std::make_pair(static_cast<int>(chipId),24));
-        assert(false);
+        // assert(false);
       }
       buffer.next(bc);
       busy_on = busy_off = false;
@@ -564,7 +565,7 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
           {
             log_error << "No data short would fit (at least a data short after region header!)" << std::endl;
             decoder_error_vector.push_back(std::make_pair(static_cast<int>(chipId),25));
-            assert(false);
+            // assert(false);
           }
           // TODO: move first region header out of loop, asserting its existence
           reg = dataC & 0x1F;
@@ -574,13 +575,13 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
           if( buffer.isEmpty() )
           {
             log_error << "data short do not fit" << std::endl;
-            assert(false);
+            // assert(false);
           }
           if ( reg == 0xFF )
           {
             log_error << "data short at " << buffer.getOffset() << " before region header" << std::endl;
             decoder_error_vector.push_back(std::make_pair(static_cast<int>(chipId),26));
-            assert(false);
+            // assert(false);
           }
           dataS = (dataC << 8);
           buffer.next(dataC);
@@ -593,13 +594,13 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
           {
             log_error << "No data long would fit (at least a data short after region header!)" << std::endl;
             decoder_error_vector.push_back(std::make_pair(static_cast<int>(chipId),27));
-            assert(false);
+            // assert(false);
           }
           if ( reg == 0xFF )
           {
             log_error << "data short at " << buffer.getOffset() << " before region header" << std::endl;
             decoder_error_vector.push_back(std::make_pair(static_cast<int>(chipId),28));
-            assert(false);
+            // assert(false);
           }
           buffer.next(dataS);
           uint16_t addr = ((dataC & 0x3F) << 8) | ( (dataS >> 8) & 0xFF );
@@ -609,7 +610,7 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
           {
             log_error << "Wrong bit before DATA LONG bit map" << std::endl;
             decoder_error_vector.push_back(std::make_pair(static_cast<int>(chipId),29));
-            assert(false);
+            // assert(false);
           }
           while( hit_map != 0x00 )
           {
@@ -645,7 +646,7 @@ inline int GBTLink::decode_lane( const uint8_t chipId, PayLoadCont& buffer)
           {
             log_error << "Error laneId " << laneId << " (" << (dataC & 0xF) << ") and chipId " << chipId << std::endl;
             decoder_error_vector.push_back(std::make_pair(static_cast<int>(chipId),23));
-            assert(false);
+            // assert(false);
           }
           buffer.next(bc);
           reg = 0xFF;
