@@ -230,7 +230,6 @@ struct GBTLink
   {
     uint8_t dataC = 0;
 
-    std::cerr << "AlpideByteError: " << std::endl;
     std::cerr << "Link: " << feeId << ", Chip: " << (int)chipId;
     std::cerr << " invalid byte 0x" << std::hex << (int)(dataC) << std::endl;
     decoder_error_vector.push_back(std::make_pair(static_cast<int>(chipId),10));
