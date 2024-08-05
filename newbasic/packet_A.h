@@ -38,7 +38,7 @@ public:
   // some more header fields which are not yet implemented, marked "//*"
   //* int   gethdrVersion() const; // Version of header definition                    
   //* int   getHdrLength() const;     // inclusive of alignment data 
-  //* int   getStatus() const;	       // Status bits describe frame errors/other 
+  int   getStatus() const { return 0;};
   int   getErrorLength() const;    // Length of error block in Dwords
   int	getDebugLength() const;// Length of debug block in Dwords
 

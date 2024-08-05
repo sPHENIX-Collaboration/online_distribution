@@ -31,6 +31,10 @@ int oncsSub_idmvtxv3::decode()
   for (auto& link : mGBTLinks)
   {
     link.clear(true, true); // clear data but not the statistics
+<<<<<<< HEAD
+=======
+    link.RDHErrors = 0;
+>>>>>>> d6020f56b203a7ff638bcd2600480c8c501d9d3d
     link.hbf_length = 0;
     link.prev_pck_cnt = 0;
   }
@@ -99,6 +103,17 @@ void oncsSub_idmvtxv3::setupLinks()
           }
           auto& gbtLink = mGBTLinks[lnkref.entry];
 
+<<<<<<< HEAD
+=======
+          if ( ! rdh.checkRDH(true) )
+          {
+            // In case of corrupt RDH, skip felix word and continue to next
+            payload_position += mvtx_utils::FLXWordLength;
+            gbtLink.RDHErrors++;
+            continue;
+          }
+
+>>>>>>> d6020f56b203a7ff638bcd2600480c8c501d9d3d
           if ( (rdh.packetCounter) && (gbtLink.rawData.getNPieces()) && (rdh.packetCounter != gbtLink.prev_pck_cnt + 1) )
           {
             log_error << "Incorrect pages count " << rdh.packetCounter <<", previous page count was "
@@ -209,6 +224,10 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
     else if ( strcmp(what, "NR_STROBES") == 0 )
     {
     return mGBTLinks[lnkId].mTrgData.size();
+    }
+    else if ( strcmp(what, "RDH_ERRORS") == 0 )
+    {
+    return mGBTLinks[lnkId].RDHErrors;
     }
     else if ( strcmp(what, "NR_HITS") == 0 )  // the number of datasets
     {

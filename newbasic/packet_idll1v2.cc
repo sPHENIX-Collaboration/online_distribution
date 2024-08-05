@@ -52,7 +52,8 @@ int Packet_idll1v2::decode ()
       _trigger_type = TRIGGERTYPE::MBD;
       _nfibers = 4;
       _nsums = 13;
-     _ntrigger_words = 8;
+      _ntrigger_words = 8;
+      _monitor = 0;
       break;
       
       // EMCAL decoder :
@@ -467,9 +468,10 @@ int Packet_idll1v2::iValue(const int n, const char *what)
     return _nsamples;
   }
 
+
   if ( strcmp(what,"CHANNELS") == 0 )
   {
-    return _nfibers*_nsums;
+    return _nfibers*_nsums + _ntrigger_words;
   }
 
   if ( strcmp(what,"TRIGGERWORDS") == 0 )
@@ -477,6 +479,18 @@ int Packet_idll1v2::iValue(const int n, const char *what)
     return _ntrigger_words;
   }
 
+  if ( strcmp(what,"FEMWORDS") == 0 )
+  {
+    return _nfibers*_nsums;
+  }
+  if ( strcmp(what,"FIBERS") == 0 )
+  {
+    return _nfibers;
+  }
+  if ( strcmp(what,"SUMS") == 0 )
+  {
+    return _nsums;
+  }
   if ( strcmp(what,"SLOTNR") == 0 )
   {
     return _slot_nr;
@@ -497,76 +511,73 @@ void  Packet_idll1v2::dump ( OSTREAM& os )
   identify(os);
 
 
-  std::cout <<" "<<std::endl;
+  os <<" "<<std::endl;
   
-  std::cout << std::dec << std::setprecision(2) << "Trigger Module = " << iValue(0, "SLOTNR") * 2 + iValue(0, "CARDNR") << std::endl;
-  std::cout << std::dec << std::setprecision(4) << "Evt Nr = " << iValue(0, "EVTNR") <<std::endl; 
-  std::cout << std::dec << std::setprecision(4) << "Clock = " << iValue(0, "CLOCK") <<std::endl; 
-  std::cout << std::dec << std::setprecision(4) << "Monitor = " << iValue(0, "MONITOR") <<std::endl; 
+  os << std::dec << std::setprecision(2) << "Trigger Module = " << iValue(0, "SLOTNR") * 2 + iValue(0, "CARDNR") << std::endl;
+  os << std::dec << std::setprecision(4) << "Evt Nr = " << iValue(0, "EVTNR") <<std::endl;
+  os << std::dec << std::setprecision(4) << "Clock = " << iValue(0, "CLOCK") <<std::endl;
+  os << std::dec << std::setprecision(4) << "Monitor = " << iValue(0, "MONITOR") <<std::endl;
 
   if (_trigger_type == TRIGGERTYPE::EMCAL)
     {  
-      std::cout <<"-------------------------------------------------------------- "<<std::endl;
-      for (int ch = 0; ch < 24; ch++)
+      os <<"-------------------------------------------------------------- "<<std::endl;
+      for (int ch = 0; ch < iValue(0, "FIBERS"); ch++)
 	{      
-	  std::cout << std::dec<<"Fiber: "<<ch<<std::endl;
-	  for (int ic=0; ic<16; ic++) {
-	    std::cout<<std::dec<<" Sum " << ic<<" |";
-	    for (int is=0; is<_nsamples; is++) {
-	      std::cout << std::hex<< " "<<iValue(is, ch*16 + ic);
+	  os << std::dec<<"Fiber: "<<ch<<std::endl;
+	  for (int ic=0; ic<iValue(0, "SUMS"); ic++) {
+	    os<<std::dec<<" Sum " << ic<<" |";
+	    for (int is=0; is< iValue(0, "SAMPLES"); is++) {
+	      os << std::hex<< " "<<iValue(is, ch*iValue(0, "SUMS") + ic);
 	    }
 	
-	    std::cout <<" |"<<endl;
-	    std::cout <<"-------------------------------------------------------------- "<<std::endl;
+	    os <<" |"<<endl;
+	    os <<"-------------------------------------------------------------- "<<std::endl;
 	
 	  }
 	}
-      for (int is = 0; is < _nsamples; is++)
+      for (int ic = 0; ic < iValue(0, "TRIGGERWORDS"); ic++)
 	{      
-	  std::cout << std::dec<<"Sample: "<<is<<std::endl;
-	  for (int ic=0; ic<2; ic++) {
-	    for (int ie=0; ie<12; ie++) {
-	      std::cout << std::hex<< " "<<iValue(is, 24*16 + ic * 12 + ie);
-	    }
-	
-	    std::cout <<" |"<<endl;
-	    std::cout <<"-------------------------------------------------------------- "<<std::endl;
-	
+	  os << std::dec<<"SUM "<<ic<<std::endl;
+	  for (int is=0; is<iValue(0,"SAMPLES"); is++) {
+	    os << std::hex<< " "<<iValue(is, iValue(0,"FEMWORDS") + ic);
 	  }
+	  os <<" |"<<endl;
+	  os <<"-------------------------------------------------------------- "<<std::endl;
 	}
 
     }
   else if (_trigger_type == TRIGGERTYPE::JET)
     {
-      std::cout << " -------------- " << (iValue(0, "MONITOR")? "HCAL Data Map" : "EMCAL Data Map") <<  " -------------- " <<std::endl;
+      os << " -------------- " << (iValue(0, "MONITOR")? "HCAL Data Map" : "EMCAL Data Map") <<  " -------------- " <<std::endl;
       for (int sample = 0; sample < iValue(0, "SAMPLES") ; sample++)
 	{      
-	  std::cout << std::dec<<"BC : "<<sample<<std::endl;
-	  std::cout<<std::dec<<"\t phibin --> "<<std::endl;
-	  std::cout<<std::dec<<"etabin\t||  \t"<<std::endl;
-	  for (int ic=0; ic<32; ic++) std::cout << std::dec << "\t" << ic ;
-	  std::cout << " " << std::endl;
+	  os << std::dec<<"BC : "<<sample<<std::endl;
+	  os<<std::dec<<"phibin --> ";
+	  for (int ic=0; ic<32; ic++) os << std::dec << "\t" << ic ;
+	  os << " " << std::endl;
+	  os<<std::dec<<"etabin\t||  \t"<<std::endl;
+
 	  for (int ic=0; ic<12; ic++)
 	    {
-	      std::cout<<std::dec<< ic << "\t||";    
+	      os<<std::dec<< ic << "\t||";
 	      for (int is=0; is<32; is++) {
-		std::cout << std::hex<< "\t"<<iValue(sample, ic*32 + is);
+		os << std::hex<< "\t"<<iValue(sample, ic*32 + is);
 	    }
-	    std::cout <<" |"<<endl;
+	    os <<" |"<<endl;
 	  }
-	  std::cout << " "<<std::endl;
+	  os << " "<<std::endl;
 	}
 
       for (int is = 0; is < _nsamples; is++)
 	{      
-	  std::cout << std::dec<<"Sample: "<<is<<std::endl;
+	  os << std::dec<<"Sample: "<<is<<std::endl;
 	  for (int ic=0; ic<9; ic++) {
 	    for (int ie=0; ie<32; ie++) {
-	      std::cout << std::hex<< " "<<iValue(is, 12*32 + ic*32 + ie);
+	      os << std::hex<< " "<<iValue(is, iValue(0,"FEMWORDS") + ic*32 + ie);
 	    }
 	
-	    std::cout <<" |"<<endl;
-	    std::cout <<"-------------------------------------------------------------- "<<std::endl;
+	    os <<" |"<<endl;
+	    os <<"-------------------------------------------------------------- "<<std::endl;
 	
 	  }
 	}
@@ -574,46 +585,46 @@ void  Packet_idll1v2::dump ( OSTREAM& os )
     }
   else if (_trigger_type == TRIGGERTYPE::MBD)
     {
-      for (int ifem = 0; ifem < 4 ; ifem++)
+      for (int ifem = 0; ifem < iValue(0, "FIBERS"); ifem++)
 	{      
-	  std::cout << std::dec<<"FEM : "<<ifem<<std::endl;
+	  os << std::dec<<"FEM : "<<ifem<<std::endl;
 	  for (int iq = 0 ; iq < 8; iq++)
 	    {
-	      std::cout<<std::dec<<"Q" << iq << "\t||  \t";
+	      os<<std::dec<<"Q" << iq << "\t||  \t";
 	      for (int is=0; is<iValue(0, "SAMPLES"); is++)
 		{
-		  std::cout << std::hex << iValue(is, ifem*13 + iq)<<"\t";
+		  os << std::hex << iValue(is, ifem*iValue(0,"SUMS") + iq)<<"\t";
 		}
-	      std::cout <<" |"<<endl;
+	      os <<" |"<<endl;
 	    }
-	  std::cout<<std::dec<<"NH \t||  \t";
+	  os<<std::dec<<"NH \t||  \t";
 	  for (int is=0; is<iValue(0, "SAMPLES"); is++)
 	    {
-	      std::cout << std::hex << iValue(is, ifem*13 + 8)<<"\t";
+	      os << std::hex << iValue(is, ifem*iValue(0,"SUMS") + 8)<<"\t";
 	    }
-	  std::cout <<" |"<<endl;
+	  os <<" |"<<endl;
 
-	  for (int iq = 0 ; iq < 4; iq++)
+	  for (int iq = 0 ; iq < iValue(0,"FIBERS"); iq++)
 	    {
-	      std::cout<<std::dec<<"T" << iq << "\t||  \t";
+	      os<<std::dec<<"T" << iq << "\t||  \t";
 	      for (int is=0; is<iValue(0, "SAMPLES"); is++)
 		{
-		  std::cout << std::hex <<iValue(is, ifem*13 + 9 + iq)<<"\t";
+		  os << std::hex <<iValue(is, ifem*iValue(0,"SUMS") + 9 + iq)<<"\t";
 		}
-	      std::cout <<" |"<<endl;
+	      os <<" |"<<endl;
 	    }
-	  std::cout << " "<<std::endl;
+	  os << " "<<std::endl;
 	}
 
 	for (int iw = 0; iw < iValue(0,"TRIGGERWORDS"); iw++)
 	{      
-	  std::cout<<std::dec<< "W "<<iw << "\t||  \t";
+	  os<<std::dec<< "W "<<iw << "\t||  \t";
 	  for (int is=0; is<iValue(0,"SAMPLES"); is++) 
 	    {
-	      std::cout << std::hex<<iValue(is, 52 + iw) << "\t";
+	      os << std::hex<<iValue(is, iValue(0,"FEMWORDS") + iw) << "\t";
 	    }
 	
-	  std::cout <<" |"<<endl;
+	  os <<" |"<<endl;
 	}
   
     }

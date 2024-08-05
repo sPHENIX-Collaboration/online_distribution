@@ -131,6 +131,7 @@ Event * fileEventiterator::getNextEvent()
       if (bptr) evt =  bptr->getEvent();
       if (evt) 
 	{
+	  //evt->setOriginBuffer(bptr->getBufferSequence());
 	  events_so_far++;
 	  return evt;
 	}
@@ -191,14 +192,14 @@ int fileEventiterator::read_next_buffer()
 
       // get the buffer length into a dedicated variable
       if (initialbuffer[1] == BUFFERMARKER || initialbuffer[1]== GZBUFFERMARKER 
-	  ||  initialbuffer[1]== LZO1XBUFFERMARKER || initialbuffer[1]== ONCSBUFFERMARKER) 
+	  ||  initialbuffer[1]== LZO1XBUFFERMARKER || initialbuffer[1]== LZO1CBUFFERMARKER || initialbuffer[1]== ONCSBUFFERMARKER) 
 	{
 	  buffer_size = initialbuffer[0];
 	}
       else
 	{
 	  unsigned int  marker = buffer::u4swap(initialbuffer[1]);
-	  if (marker == BUFFERMARKER || marker == GZBUFFERMARKER || marker ==  LZO1XBUFFERMARKER || marker == ONCSBUFFERMARKER)
+	  if (marker == BUFFERMARKER || marker == GZBUFFERMARKER || marker ==  LZO1XBUFFERMARKER || marker ==  LZO1CBUFFERMARKER || marker == ONCSBUFFERMARKER)
 	    {
 	      buffer_size = buffer::u4swap(initialbuffer[0]);
 	    }
@@ -258,7 +259,9 @@ int fileEventiterator::read_next_buffer()
   if ( ( initialbuffer[1]== GZBUFFERMARKER || 
        buffer::u4swap(initialbuffer[1])== GZBUFFERMARKER ||
        initialbuffer[1]== LZO1XBUFFERMARKER || 
-       buffer::u4swap(initialbuffer[1])== LZO1XBUFFERMARKER )
+       buffer::u4swap(initialbuffer[1])== LZO1XBUFFERMARKER ||
+       initialbuffer[1]== LZO1CBUFFERMARKER || 
+       buffer::u4swap(initialbuffer[1])== LZO1CBUFFERMARKER )
        && errorinread  )
     {
       bptr = 0;

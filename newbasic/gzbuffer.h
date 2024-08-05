@@ -17,7 +17,7 @@ public:
   ~gzbuffer();
 
   Event * getEvent();
-
+  int getBufferSequence() const;
 
 protected:
 

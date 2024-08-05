@@ -3,6 +3,7 @@
 
 #include "prdfBuffer.h"
 #include <lzo/lzo1x.h>
+#include <lzo/lzo1c.h>
 
 
 #ifndef __CINT__
@@ -20,6 +21,7 @@ public:
 
   Event * getEvent();
 
+  int getBufferSequence() const;
 
 protected:
   static int lzo_initialized;

@@ -40,6 +40,13 @@ gzbuffer::gzbuffer (PHDWORD *array , const int length )
 
 }
 
+int gzbuffer::getBufferSequence() const
+{
+  if ( !theBuffer) return 0;
+  return theBuffer->getBufferSequence();
+}
+
+
 // ---------------------------------------------------------
 Event * gzbuffer::getEvent()
 {

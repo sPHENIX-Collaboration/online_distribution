@@ -1,4 +1,4 @@
-#include "oncsSub_idtpcfeev3.h"
+#include "oncsSub_idtpcfeev4.h"
 
 #include <string.h>
 #include <stdint.h>
@@ -8,7 +8,7 @@
 
 using namespace std;
 
-oncsSub_idtpcfeev3::oncsSub_idtpcfeev3(subevtdata_ptr data)
+oncsSub_idtpcfeev4::oncsSub_idtpcfeev4(subevtdata_ptr data)
   :oncsSubevent_w2 (data)
 {
 
@@ -18,7 +18,7 @@ oncsSub_idtpcfeev3::oncsSub_idtpcfeev3(subevtdata_ptr data)
 }
 
 
-oncsSub_idtpcfeev3::~oncsSub_idtpcfeev3()
+oncsSub_idtpcfeev4::~oncsSub_idtpcfeev4()
 {
 
   for (auto itr = waveforms.begin() ; itr  != waveforms.end() ; ++itr)
@@ -42,7 +42,7 @@ oncsSub_idtpcfeev3::~oncsSub_idtpcfeev3()
 
 }
 
-int oncsSub_idtpcfeev3::cacheIterator(const int n)
+int oncsSub_idtpcfeev4::cacheIterator(const int n)
 {
   if ( n < 0) return 0; // not ok
   if ( _last_requested_element == n) return 1; // say "ok"
@@ -61,13 +61,14 @@ int oncsSub_idtpcfeev3::cacheIterator(const int n)
   return 1;
 }
 
-int oncsSub_idtpcfeev3::decode_gtm_data(unsigned short dat[16])
+int oncsSub_idtpcfeev4::decode_gtm_data(unsigned short dat[16])
 {
     unsigned char *gtm = (unsigned char *)dat;
     gtm_payload *payload = new gtm_payload;
 
     payload->pkt_type = gtm[0] | ((unsigned short)gtm[1] << 8);
-    if (payload->pkt_type != GTM_LVL1_ACCEPT_MAGIC_KEY && payload->pkt_type != GTM_ENDAT_MAGIC_KEY)
+//    if (payload->pkt_type != GTM_LVL1_ACCEPT_MAGIC_KEY && payload->pkt_type != GTM_ENDAT_MAGIC_KEY)
+    if (payload->pkt_type != GTM_LVL1_ACCEPT_MAGIC_KEY && payload->pkt_type != GTM_ENDAT_MAGIC_KEY && payload->pkt_type != GTM_MODEBIT_MAGIC_KEY)
       {
 	delete payload;
 	return -1;
@@ -75,6 +76,7 @@ int oncsSub_idtpcfeev3::decode_gtm_data(unsigned short dat[16])
 
     payload->is_lvl1 = payload->pkt_type == GTM_LVL1_ACCEPT_MAGIC_KEY;
     payload->is_endat = payload->pkt_type == GTM_ENDAT_MAGIC_KEY;
+    payload->is_modebit = payload->pkt_type == GTM_MODEBIT_MAGIC_KEY;
 
     payload->bco = ((unsigned long long)gtm[2] << 0)
       | ((unsigned long long)gtm[3] << 8)
@@ -97,13 +99,14 @@ int oncsSub_idtpcfeev3::decode_gtm_data(unsigned short dat[16])
       | ((unsigned long long)gtm[20] << 32)
       | (((unsigned long long)gtm[21]) << 40);
     payload->modebits = gtm[22];
+    payload->userbits = gtm[23];
 
     this->gtm_data.push_back(payload);
 
     return 0;
 }
 
-int oncsSub_idtpcfeev3::tpc_decode ()
+int oncsSub_idtpcfeev4::tpc_decode ()
 {
 
   if (_is_decoded ) return 0;
@@ -183,7 +186,7 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 	  unsigned int startpos = pos;
 
 	  // first the check if our vector cuts off before the fixed-length header, then we are already done
-	  if ( startpos + HEADER_LENGTH >= fee_data[ifee].size() || startpos + fee_data[ifee][startpos] > fee_data[ifee].size())
+	  if ( startpos + HEADER_LENGTH >= fee_data[ifee].size() || startpos + fee_data[ifee][startpos] >= fee_data[ifee].size())
 	    {
 	      pos = fee_data[ifee].size() + 1; // make sure we really terminate the loop
 	    }
@@ -194,20 +197,21 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 	      for ( int i = 0; i < HEADER_LENGTH; i++ ) header[i] = (fee_data[ifee][pos++]) ;
 
 	      sampa_waveform *sw = new sampa_waveform;
-	  
+
 	      sw->fee           = ifee;
-	      sw->pkt_length    = header[0]; // this is indeed the number of 10-bit words + 5 in this packet
-	      sw->adc_length    = header[0]-5; // this is indeed the number of 10-bit words in this packet
-	      sw->sampa_address = (header[1] >> 5) & 0xf;
-	      sw->sampa_channel = header[1] & 0x1f;
-	      sw->channel       = header[1] & 0x1ff;
-	      sw->bx_timestamp  = ((header[3] & 0x1ff) << 11)
-		| ((header[2] & 0x3ff) << 1)
-		| (header[1] >> 9);	  
+	      sw->pkt_length    = header[0]+1; // this is indeed the number of 10-bit words + 5 in this packet
+	      sw->adc_length    = header[0]-HEADER_LENGTH; // this is indeed the number of 10-bit words in this packet
+	      sw->data_parity   = header[4] >> 9;
+	      sw->sampa_address = (header[4] >> 5) & 0xf;
+	      sw->sampa_channel = header[4] & 0x1f;
+	      sw->channel       = header[4] & 0x1ff;
+	      sw->type          = (header[3] >>7) & 0x7;
+	      sw->user_word     = header[3] & 0x7f;
+	      sw->bx_timestamp  = ((header[6] & 0x3ff) << 10) | (header[5] & 0x3ff);
 
 	      // now we add the actual waveform
 	     // unsigned short data_size = header[5] -1 ;
-	      short data_size_counter = header[0]-5;
+	      short data_size_counter = header[0]-HEADER_LENGTH;
 
 	      short actual_data_size = 0;
 	     //  coutfl << " Fee: " << ifee << " Sampa " << sw->sampa_address
@@ -216,11 +220,10 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 	     //  	 << "  waveform length: " << data_size  << endl;
 
 	     // for (int i = 0 ; i < data_size ; i++)
-	      // First fill -100 for all time samples
+	      // First fill 65000 for all time samples
 	      for (int i = 0 ; i < 1024 ; i++)
 		{
 		  sw->waveform.push_back(65000);
-//		cout <<"Initializing waveform "<<i<<endl;
 		}
 
 	      // Format is (N sample) (start time), (1st sample)... (Nth sample)
@@ -239,56 +242,42 @@ int oncsSub_idtpcfeev3::tpc_decode ()
 //		  if(nsamp>data_size_counter){ cout<<"nsamp: "<<nsamp<<", size: "<<data_size_counter<<", format error"<<endl; break;}
 
 		  for (int j=0; j<nsamp;j++){
+
+          if (pos>= fee_data[ifee].size())
+          {
+            // std::cout<<__PRETTY_FUNCTION__<<" : warning - sampa data wavelet loss at the end of fee_data for fee "<<ifee<<std::endl;
+            break;
+          }
                       if(start_t+j<1024){ sw->waveform[start_t+j]= fee_data[ifee][pos++]; }
                       else { pos++; }
 //                   cout<<"data: "<< sw->waveform[start_t+j]<<endl;
 		      data_size_counter--;
-
-	      //
-	      // This line is inserted to accommodate the "wrong format issue", which is the
-	      // last sample from the data is missing. This issue should be fixed and eventually
-	      // the following two lines will be removed. Apr 30. by TS
-	      //
-		      if(data_size_counter==1) break;
 		    }
-//                  cout<<"data_size_counter: "<<data_size_counter<<" "<<endl;
-	          if(data_size_counter==1) break;
+          if (pos>= fee_data[ifee].size())
+          {
+            continue;
+          }
 		}
 
-// We decided to suppress errors (May 13, 2024)
-//	      if (data_size_counter<0) cout <<" error in datasize"<<endl;
-
-//              if(header[0]-5 != actual_data_size){ cout <<header[0]-5<<", "<<actual_data_size-1<<endl; cout<<"Error size"<<endl;}
-	      
 	      //
 	      // If the size defined by SAMPA is consitent with what the header says, we keep that data.
 	      //
-              if(header[0]-5 == actual_data_size){
+              if(header[0]-HEADER_LENGTH == actual_data_size){
 // cout <<header[0]-5<<", "<<actual_data_size-1<<endl; cout<<"Error size"<<endl;
 
 	      // we calculate the checksum here because "pos" is at the right place
-  	         unsigned short crc = crc16(ifee, startpos, header[0]-1);
-	      // coutfl << "fee " << setw(3) << sw->fee
-	      // 	     << " sampla channel " << setw(3) <<  sw->channel
-	      // 	     << " crc and value " << hex << setw(5) << crc << " " << setw(5) << fee_data[ifee][pos] << dec;
-//	       if (  crc != fee_data[ifee][pos] ) cout << "  *********";
-
-//	       if (  crc != fee_data[ifee][pos-1] ) cout << "crc: "<<crc<<", fee: "<<fee_data[ifee][pos-1]<<endl;
-
-//	          if (  crc != fee_data[ifee][pos] ) cout << "crc: "<<crc<<", fee: "<<fee_data[ifee][pos]<<endl;
-
+  	          unsigned short crc = crc16(ifee, startpos, header[0]);
+  	          unsigned short parity = check_data_parity(ifee, startpos+HEADER_LENGTH, header[0]-HEADER_LENGTH);
 	      
 	          sw->checksum = crc;
 
 	          sw->valid = ( crc == fee_data[ifee][pos]);
+    	          sw->parity_valid = ((!parity) == sw->data_parity); 
 
 	          waveforms.insert(sw);
 	       }
                else{ delete sw; }
 	    }
-	  
-	  //coutfl << "inserting at " << ifee*MAX_CHANNELS + sw->channel << " size is " << waveforms.size() << endl;
-	  //waveform_vector[ifee*MAX_CHANNELS + sw->channel].push_back(sw);
 	}
     }
 
@@ -302,7 +291,7 @@ int oncsSub_idtpcfeev3::tpc_decode ()
   return 0;
 }
 
-long long oncsSub_idtpcfeev3::lValue(const int n, const char *what)
+long long oncsSub_idtpcfeev4::lValue(const int n, const char *what)
 {
   tpc_decode();
 
@@ -334,6 +323,14 @@ long long oncsSub_idtpcfeev3::lValue(const int n, const char *what)
     if (i < gtm_data.size())
     {
       return gtm_data[i]->is_lvl1;
+    }
+  }
+
+  else if (strcmp(what, "IS_MODEBIT") == 0 )
+  {
+    if (i < gtm_data.size())
+    {
+      return gtm_data[i]->is_modebit;
     }
   }
 
@@ -377,10 +374,18 @@ long long oncsSub_idtpcfeev3::lValue(const int n, const char *what)
     }
   }
 
+  else if (strcmp(what, "FEMUSERBITS") == 0 )
+  {
+    if (i < gtm_data.size())
+    {
+      return gtm_data[i]->userbits;
+    }
+  }
+
   return 0;
 }
 
-int oncsSub_idtpcfeev3::iValue(const int n, const int sample)
+int oncsSub_idtpcfeev4::iValue(const int n, const int sample)
 {
   if ( n < 0) return 0;
   
@@ -399,7 +404,7 @@ int oncsSub_idtpcfeev3::iValue(const int n, const int sample)
 
   
 
-int oncsSub_idtpcfeev3::iValue(const int n, const char *what)
+int oncsSub_idtpcfeev4::iValue(const int n, const char *what)
 {
 
   tpc_decode();
@@ -488,12 +493,49 @@ int oncsSub_idtpcfeev3::iValue(const int n, const char *what)
       return 0;
     }
 
+  else if ( strcmp(what,"DATAPARITY") == 0 )
+    {
+      if ( cacheIterator(n) )
+	{
+	  return (int) (_last_requested_waveform)->data_parity;
+	}
+      return 0;
+    }
+
+  else if ( strcmp(what,"DATAPARITYERROR") == 0 )
+    {
+      if ( cacheIterator(n) )
+	{
+	  if ( (_last_requested_waveform)->parity_valid ) return 0; 
+	  return 1;
+	}
+      return 0;
+    }
+
+  else if ( strcmp(what,"TYPE") == 0 )
+    {
+      if ( cacheIterator(n) )
+	{
+	  return (int) (_last_requested_waveform)->type;
+	}
+      return 0;
+    }
+
+  else if ( strcmp(what,"USERWORD") == 0 )
+    {
+      if ( cacheIterator(n) )
+	{
+	  return (int) (_last_requested_waveform)->user_word;
+	}
+      return 0;
+    }
+
   return 0;
   
 }
  
-//int oncsSub_idtpcfeev3::find_header ( std::vector<unsigned short>::const_iterator &itr,  const std::vector<unsigned short> &orig)
-int oncsSub_idtpcfeev3::find_header ( const unsigned int yy,  const std::vector<unsigned short> &orig)
+//int oncsSub_idtpcfeev4::find_header ( std::vector<unsigned short>::const_iterator &itr,  const std::vector<unsigned short> &orig)
+int oncsSub_idtpcfeev4::find_header ( const unsigned int yy,  const std::vector<unsigned short> &orig)
 {
   bool found = false;
   unsigned int pos = yy;
@@ -521,8 +563,8 @@ int oncsSub_idtpcfeev3::find_header ( const unsigned int yy,  const std::vector<
     {
       //      coutfl << " current pos is  " << pos  << "  vector length " << orig.size()  << endl;
 	    
-//      if (header_candidate[4] == MAGIC_KEY_0 && header_candidate[6] == MAGIC_KEY_1 && (header_candidate[0] - header_candidate[5] == HEADER_LENGTH))
-      if (header_candidate[4] == MAGIC_KEY_0)
+//      if (header_candidate[4] == MAGIC_KEY_0)
+      if (header_candidate[1] == MAGIC_KEY_0 && header_candidate[2] == MAGIC_KEY_1)
 	{
 	  // found it!
             found = true;
@@ -544,7 +586,7 @@ int oncsSub_idtpcfeev3::find_header ( const unsigned int yy,  const std::vector<
   return skip_amount;
 }
  
-void  oncsSub_idtpcfeev3::dump ( OSTREAM& os )
+void  oncsSub_idtpcfeev4::dump ( OSTREAM& os )
 {
   tpc_decode();
   identify(os);
@@ -553,18 +595,20 @@ void  oncsSub_idtpcfeev3::dump ( OSTREAM& os )
     os << "  No lvl1 and Endat taggers" << endl;
   else
   {
-    os << "  TAGGER_TYPE    BCO          LEVEL1 CNT  ENDAT CNT     LAST_BCO     MODEBITS" << endl;
+    os << "  TAGGER_TYPE       BCO       LEVEL1 CNT  ENDAT CNT     LAST_BCO  MODE/USERBIT" << endl;
 
     for (int i = 0; i < lValue(0, "N_TAGGER"); ++i)  // go through the datasets
     {
       os << "  0x" << setw(4) << hex << lValue(i, "TAGGER_TYPE") << dec
-         << " (" << (lValue(i, "IS_ENDAT") ? "ENDAT" : "") << (lValue(i, "IS_LEVEL1_TRIGGER") ? "LVL1 " : "")
+//         << " (" << (lValue(i, "IS_ENDAT") ? "ENDAT" : "") << (lValue(i, "IS_LEVEL1_TRIGGER") ? "LVL1 " : "")
+         << " (" << (lValue(i, "IS_ENDAT") ? "ENDAT" : "") << (lValue(i, "IS_LEVEL1_TRIGGER") ? "LVL1 " : "") << (lValue(i, "IS_MODEBIT") ? "MDBIT" : "")
          << ") "
          << setw(12) << hex << lValue(i, "BCO") << dec << " "
          << setw(10) << lValue(i, "LEVEL1_COUNT") << " "
          << setw(10) << lValue(i, "ENDAT_COUNT") << " "
          << setw(12) << hex << lValue(i, "LAST_BCO") << dec
-         << "     0x" << std::setfill('0') << setw(2) << hex << lValue(i, "MODEBITS") << std::setfill(' ')<< dec
+         << "   0x" << std::setfill('0') << setw(2) << hex << lValue(i, "MODEBITS") << std::setfill(' ')<< dec
+         << " / 0x" << std::setfill('0') << setw(2) << hex << lValue(i, "FEMUSERBITS") << std::setfill(' ')<< dec
          << endl;
     }
 
@@ -575,7 +619,7 @@ void  oncsSub_idtpcfeev3::dump ( OSTREAM& os )
     
   for ( int i = 0; i < iValue(0, "NR_WF") ; i++) // go through the datasets
     {
-      os << "  FEE   Channel   Sampachannel   Samples     BCO     CRC_ERR" << endl;
+      os << "  FEE   Channel   Sampachannel   Samples     BCO    CRC_ERR   PARITY_ERR  DATA_TYPE  USERWORD" << endl;
 
       os << setw(5) << iValue(i, "FEE")  << " "
 	 << setw(9) << iValue(i, "CHANNEL")  << " "
@@ -584,6 +628,9 @@ void  oncsSub_idtpcfeev3::dump ( OSTREAM& os )
 	 <<  "     0x" << setw(5) << hex << iValue(i, "BCO") << dec
 	//	 << " 0x" << setw(4) << hex << iValue(i, "CHECKSUM") << dec
 	 <<  setw(4) << iValue(i, "CHECKSUMERROR")
+	 <<  setw(10) << iValue(i, "DATAPARITYERROR")
+	 <<  setw(12) << iValue(i, "TYPE")
+	 <<  setw(12) << iValue(i, "USERWORD")
 	 << endl;
       
       for (int j = 0; j  < iValue(i, "SAMPLES") ; j += 10)
@@ -602,7 +649,7 @@ void  oncsSub_idtpcfeev3::dump ( OSTREAM& os )
 
 
 
-unsigned short oncsSub_idtpcfeev3::reverseBits(const unsigned short x) const
+unsigned short oncsSub_idtpcfeev4::reverseBits(const unsigned short x) const
 {
   unsigned short n = x;  
   n = ((n >> 1) & 0x55555555) | ((n << 1) & 0xaaaaaaaa);
@@ -615,7 +662,7 @@ unsigned short oncsSub_idtpcfeev3::reverseBits(const unsigned short x) const
 
 
 
-unsigned short oncsSub_idtpcfeev3::crc16(const unsigned int fee, const unsigned int index, const int  l) const 
+unsigned short oncsSub_idtpcfeev4::crc16(const unsigned int fee, const unsigned int index, const int  l) const 
 {
 
   unsigned short crc = 0xffff;
@@ -634,3 +681,14 @@ unsigned short oncsSub_idtpcfeev3::crc16(const unsigned int fee, const unsigned 
   return crc;
 }
 
+uint16_t oncsSub_idtpcfeev4::check_data_parity(const unsigned int fee, const unsigned int index, const int  l) const 
+{
+    uint16_t data_parity = 1;
+    for (uint16_t i = 0; i < l; i++) {
+        for (int j = 0; j < 10; j++) {
+            data_parity ^= ((fee_data[fee][index+i] & (1 << j)) >> j);
+        }
+    }
+
+    return data_parity;
+}

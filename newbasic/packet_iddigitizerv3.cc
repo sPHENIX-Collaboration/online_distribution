@@ -128,6 +128,11 @@ int Packet_iddigitizerv3::decode ()
 	  fem_index += i;
 	  //coutfl << " fem_index now  " << fem_index << "  " << hex <<  k[fem_index] << dec << endl;
 	}
+      else
+	{
+	  _broken = 4;
+	  return 1;
+	}
     }
 
   
@@ -193,7 +198,9 @@ unsigned int Packet_iddigitizerv3::decode_FEM ( unsigned int *k, const int fem_n
 	  //	  coutfl << "new NFEM and channel - " << NFEM << " " << CHNL << "   "  << hex << k[index] << dec << endl;
 	  if (NFEM != fem_nr || NFEM >= NR_FEMS)
 	    {
-	      coutfl << "NFEM and fem_nr differ - " << NFEM << " " << fem_nr << "  " << hex << k[index] << dec << endl;
+	      //cerrfl << "NFEM and fem_nr differ - " << NFEM << " " << fem_nr << "  " << hex << k[index] << dec << endl;
+	      _broken = 5;
+	      return 0;
 	    }
 	  // we have a new channel. reset the sample and parity index, and set the channel index
 	  index_sample = 0;
@@ -254,6 +261,12 @@ unsigned int Packet_iddigitizerv3::decode_FEM ( unsigned int *k, const int fem_n
 	    }
 	  if ( index >= len) break;
 	}
+      else
+	{
+	  coutfl << "unknown word classifier " << hex << "0x" << word_classifier << dec << endl;
+	  _broken = 2;
+	  return 0;
+	}
     }
   return index;
 }
@@ -263,6 +276,7 @@ int Packet_iddigitizerv3::iValue(const int sample, const int ch)
 {
   decode();
 
+  if (_broken) return 0; 
   
   if ( sample >= _nsamples || sample < 0 
        || ch >= _nchannels || ch < 0 ) return 0;
@@ -276,6 +290,8 @@ long long Packet_iddigitizerv3::lValue(const int n, const char *what)
 
   decode();
 
+  if (_broken) return 0; 
+  
   if ( strcmp(what,"CLOCK") == 0 )
   {
     return _xmit_clock;
@@ -294,6 +310,8 @@ int Packet_iddigitizerv3::iValue(const int n, const char *what)
 {
 
   decode();
+
+  if (_broken) return 0; 
 
   // if ( strcmp(what,"CLOCK") == 0 )
   // {
@@ -414,6 +432,8 @@ void  Packet_iddigitizerv3::dump ( OSTREAM& os )
 {
   identify(os);
 
+  decode();
+  
   if ( _broken)
     {
       os << " *** Corrupt packet "  << std::endl;

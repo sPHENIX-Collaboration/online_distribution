@@ -19,6 +19,9 @@
 #endif
 
 #include <map>
+#include <set>
+
+
 
 
 #include "testEventiterator.h"
@@ -31,7 +34,7 @@ using namespace std;
 #define PORT	 8080 
 #define MAXSIZE 5120
 
-map<int, Event*> EventMap;
+
 Eventiterator *it;
 
 
@@ -42,13 +45,15 @@ Eventiterator *it;
 
 void exitmsg()
 {
-  cout << "** usage: gl1_server -nifTrOvh datastream" << std::endl;
-  cout << "    type  gl1_server -h   for more help" << std::endl;
+  cout << "** usage: eventSserver -ivfTrOh datastream" << std::endl;
+  cout << "    type  eventServer -h   for more help" << std::endl;
   exit(0);
 }
 
 float requested = 0; 
 float sent = 0; 
+
+int last_eventnr = 0;
 
 void exithelp()
 {
@@ -57,7 +62,6 @@ void exithelp()
   cout << "   gl1_server serves events from a given datastream" << std::endl;
   cout << std::endl;
   cout << "  List of options: " << std::endl;
-  cout << " -d <number> depth of buffer" << std::endl;
   cout << " -f (stream is a file)" << std::endl;
   cout << " -T (stream is a test stream)" << std::endl;
   cout << " -r (stream is a rcdaq monitoring stream)" << std::endl;
@@ -72,7 +76,6 @@ void exithelp()
   exit(0);
 }
 
-unsigned int depth = 1000;
 int go_on = 1;
 int identify = 0;
 int verbose = 0;
@@ -83,7 +86,11 @@ int old_runnumber = -9999;
 int msgfrequency =1;
 
 pthread_mutex_t MapSem;
+pthread_mutex_t M_cout;
 
+#define RANGE (0x7ffff)
+
+Event* eventarray[RANGE+1] = {0};
 
 
 void * EventLoop( void *arg)
@@ -102,43 +109,46 @@ void * EventLoop( void *arg)
 	  
 	}
       e->convert();
+      last_eventnr = e->getEvtSequence() ;
 
-      pthread_mutex_lock( &MapSem);
-      map<int, Event*>::iterator it = EventMap.begin();
 
-      // if we find that our run number has changed, we clear out what we have
       if ( old_runnumber != e->getRunNumber())
 	{
 	  old_runnumber = e->getRunNumber();
 	  requested = 0;
 	  sent = 0;
-	  for ( ; it != EventMap.end(); ++it)
+	  for ( int i = 0; i< RANGE; i++)
 	    {
-	      delete it->second;
+	      delete eventarray[i];
+	      eventarray[i] = 0;
 	    }
-	  EventMap.clear();
 	}
 
-      // if the next event inserted would exceed the envisioned depth, we remove the oldest 
-      if (EventMap.size() >= depth)
+
+
+      
+      pthread_mutex_lock( &MapSem);
+      //      map<int, Event*>::iterator it = EventMap.begin();
+
+      // if we find that our run number has changed, we clear out what we have
+
+      if ( eventarray[(last_eventnr & RANGE)])
 	{
-	  map<int, Event*>::iterator it = EventMap.begin();
-	  if ( verbose ) coutfl << "erasing event " << it->first << " depth = " << EventMap.size() << endl;
-	  delete it->second;
-	  EventMap.erase(it);
+	  delete eventarray[(last_eventnr & RANGE)];
 	}
+      
+      eventarray[(last_eventnr & RANGE)] =e;
+	
 
-      // ok, so now we insert...
-      EventMap[e->getEvtSequence()] = e;
-
-      // and unlock the map
       pthread_mutex_unlock( &MapSem);
 
       current_count++;
 
       if ( current_count >= msgfrequency && identify )
 	{
+	  pthread_mutex_lock( &M_cout);
 	  e->identify();
+	  pthread_mutex_unlock( &M_cout);
 	  current_count = 0;
 	}
 
@@ -146,6 +156,18 @@ void * EventLoop( void *arg)
     }
   return 0;
 }
+
+int send_not_found (int sockfd, const struct sockaddr * cliaddr, socklen_t len)
+{
+  int  buffer[2] = {0};
+
+  sendto(sockfd, (const char *) buffer, sizeof(int), 
+	 MSG_CONFIRM, cliaddr, 
+	 len);
+
+  return 0;
+}
+
 
 
 int 
@@ -156,16 +178,18 @@ main(int argc, char *argv[])
 
   int c;
 
+  int ThePort = PORT;
 
   int status = -1;
 
   pthread_mutex_init( &MapSem, 0);
+  pthread_mutex_init( &M_cout, 0);
 
-  while ((c = getopt(argc, argv, "d:s:c:ifTrOvh")) != EOF)
+  while ((c = getopt(argc, argv, "d:s:c:p:ifTrOvh")) != EOF)
     switch (c) 
       {
       case 'd':
-	if ( !sscanf(optarg, "%d", &depth) ) exitmsg();
+	coutfl  << " -d flag is obsolete  "  << endl;
 	break;
 
       case 's':
@@ -174,6 +198,10 @@ main(int argc, char *argv[])
 
       case 'c':
 	if ( !sscanf(optarg, "%d", &msgfrequency) ) exitmsg();
+	break;
+
+      case 'p':
+	if ( !sscanf(optarg, "%d", &ThePort) ) exitmsg();
 	break;
 
       case 'i':
@@ -287,7 +315,7 @@ main(int argc, char *argv[])
   // Filling server information 
   servaddr.sin_family = AF_INET; // IPv4 
   servaddr.sin_addr.s_addr = INADDR_ANY; 
-  servaddr.sin_port = htons(PORT); 
+  servaddr.sin_port = htons(ThePort); 
   
   // Bind the socket with the server address 
   if ( bind(sockfd, (const struct sockaddr *)&servaddr, 
@@ -311,46 +339,65 @@ main(int argc, char *argv[])
 		   MSG_WAITALL, ( struct sockaddr *) &cliaddr, 
 		   &len);
       requested += 1;
-      if ( verbose && ++current_count >= msgfrequency)
-	{
-	  cout << "request from " << inet_ntoa(cliaddr.sin_addr) << " requesting " << recbuffer[0];
-	}
       
-     pthread_mutex_lock( &MapSem);
-     
-     map<int, Event*>::iterator it = EventMap.find(recbuffer[0]);
-     if ( it == EventMap.end() )
-       {
-	 pthread_mutex_unlock( &MapSem);
 
-	 buffer[0] = 0;
-	 sendto(sockfd, (const char *) buffer, sizeof(int), 
-		MSG_CONFIRM, (const struct sockaddr *) &cliaddr, 
-		len);
-	 if ( verbose && current_count >= msgfrequency)
-	   {
-	     cout << " Event not delievered";
-	     if ( requested > 0) cout << " " << 100 * sent/requested << "%" << endl;
-	     else cout << endl;
-	     current_count = 0;
-	   }
+      if ( recbuffer[0] > last_eventnr)
+	{
+	  send_not_found(sockfd, (const struct sockaddr *) &cliaddr, len);
+	  if ( verbose && ++current_count >= msgfrequency)
+	    {
+	      
+	      pthread_mutex_lock( &M_cout);
+	      cout << "request from " << inet_ntoa(cliaddr.sin_addr) << " not delivered, beyond scope " << recbuffer[0]
+		   << " last  " << last_eventnr << " diff: " << last_eventnr - recbuffer[0] << endl;
+	      pthread_mutex_unlock( &M_cout);
+	      current_count = 0;
+	    }
 	}
-     else
-       {
-	 int nw;
-	 (it->second)->Copy(buffer,MAXSIZE,&nw,"");
-	 pthread_mutex_unlock( &MapSem);
-	 sendto(sockfd, (const char *) buffer, nw*sizeof(int), 
-		MSG_CONFIRM, (const struct sockaddr *) &cliaddr, 
-		len); 
-	 sent += 1;
-	 if ( verbose && current_count >= msgfrequency )
-	   {
-	     cout << " Event sent";
-	     if ( requested > 0) cout << " " << 100 * sent/requested << "%" << endl;
-	     current_count = 0;
-	   }
-       }
+      else
+	{
+	  pthread_mutex_lock( &MapSem);
+
+	  Event *x = eventarray[recbuffer[0] & RANGE];
+	  
+	  if ( x == 0 || x->getEvtSequence() != recbuffer[0])
+	    {
+	      pthread_mutex_unlock( &MapSem);
+	      
+	      send_not_found(sockfd, (const struct sockaddr *) &cliaddr, len);
+	      
+	      
+	      if ( verbose && ++current_count >= msgfrequency)
+		{
+		  pthread_mutex_lock( &M_cout);
+		  cout << "request from " << inet_ntoa(cliaddr.sin_addr) << " not delivered " << recbuffer[0]
+		       << " last  " << last_eventnr << " diff: " << last_eventnr - recbuffer[0] ;
+		  if ( requested > 0) cout << " " << 100 * sent/requested << "%" << endl;
+		  else cout << endl;
+		  pthread_mutex_unlock( &M_cout);
+		  current_count = 0;
+		}
+	    }
+	  else
+	    {
+	      int nw;
+	      x->Copy(buffer,MAXSIZE,&nw,"");
+	      pthread_mutex_unlock( &MapSem);
+	      sendto(sockfd, (const char *) buffer, nw*sizeof(int), 
+		     MSG_CONFIRM, (const struct sockaddr *) &cliaddr, 
+		     len); 
+	      sent += 1;
+	      if ( verbose && ++current_count >= msgfrequency )
+		{
+		  pthread_mutex_lock( &M_cout);
+		  cout << "request from " << inet_ntoa(cliaddr.sin_addr) << " event sent " << recbuffer[0];
+		  if ( requested > 0) cout << " " << 100 * sent/requested << "%" << endl;
+		  else cout << endl;
+		  pthread_mutex_unlock( &M_cout);
+		  current_count = 0;
+		}
+	    }
+	}
     }
   return 0; 
 }

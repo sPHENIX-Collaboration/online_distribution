@@ -33,29 +33,36 @@ oncsSub_idinttv0::~oncsSub_idinttv0()
 int oncsSub_idinttv0::intt_decode_hitlist (std::vector<unsigned int> &hitlist , const int fee)
 {
   
-  //  coutfl << " next hitlist, size " << hitlist.size() << " :" << endl;
+  //  coutfl << "hit  for fee " << fee << "  size " << hitlist.size()  << endl;
   
   // for ( unsigned int i = 0; i < hitlist.size(); i++)
   //   {
-  //     coutfl << i << " " << hex << hitlist[i] << dec << endl;
+  //     coutfl << setw(3) << i << " " << hex << hitlist[i] << dec << endl;
   //   }
   // cout << endl;
 
+  FEE_List.insert(fee);
   if ( hitlist.size() < 3)
     {
-      //      coutfl << "hitlist too short " << endl;
+      //coutfl << "hitlist too short " << hitlist.size() << endl;
       return 1;
     }
 	
   unsigned long long BCO = 0;
   unsigned long long l = 0;
   
+  // we assemble the BCO from 1 byte from hitlist[0]
   l = hitlist[0];
   BCO |= ( ((l >> 16 ) & 0xff) << 32);
+  // and 8 bytes from hitlist[1]
   l = hitlist[1];
   BCO |= ( (l & 0xffff) << 16);
   BCO |= ( (l >> 16) & 0xffff);
+
   unsigned int event_counter =hitlist[2];
+  //  coutfl << "pushing back  0x" << hex << BCO << dec << " fee = " << fee << " hitlist size  = " << hitlist.size() << endl;
+
+  BCO_List.insert(BCO);
 
   for  (unsigned int i = 3; i < hitlist.size(); i++)
     {
@@ -116,7 +123,7 @@ int oncsSub_idinttv0::intt_decode ()
 
       for ( int i = 0; i < len ; i++)
 	{
-	  // coutfl << "adding to ladder " << fee << "  " << hex << buffer[index] << dec << endl;
+	  //coutfl << "adding to ladder " << fee << "  " << hex << buffer[index] << dec << endl;
 	  fee_data[fee].push_back(buffer[index++]);
 	}
     }
@@ -125,7 +132,7 @@ int oncsSub_idinttv0::intt_decode ()
   //   {
   //     for ( unsigned int i = 0; i < fee_data[fee].size(); i++)
   // 	{
-  // 	  cout << setw(3) << fee << "  " << hex << fee_data[fee][i] << dec << endl;
+  // 	  coutfl << setw(3) << fee << "  " << hex << fee_data[fee][i] << dec << endl;
   // 	}
   //     cout << endl;
   //   }
@@ -163,15 +170,15 @@ int oncsSub_idinttv0::intt_decode ()
 	  // here j points to a "cade" word
 
 	  // push back the cdae word, the BCO, and event counter
-	  if ( fee_data[fee].size() >=3 )
+	  if ( fee_data[fee].size() -j >=3 )
 	    {
 	      for ( int k = 0; k < 3; k++) hitlist.push_back(fee_data[fee][j++]);
 	    }
 	  else
 	    {
-	      coutfl << " Warning - size is " << fee_data[fee].size() << endl;
+	      //coutfl << " Warning - index is " << j << " and size is " << fee_data[fee].size() << endl;
+	      j+= fee_data[fee].size() -j;
 	    }
-	  
 
 	  // ok, now let's go until we hit the end, or hit the next header, or a footer
 	  while ( j < fee_data[fee].size() )
@@ -311,6 +318,16 @@ int oncsSub_idinttv0::iValue(const int hit, const char *what)
       return intt_hits.size();
     }
     
+  if ( strcmp(what,"NR_BCOS") == 0)
+    {
+      return BCO_List.size();
+    }
+    
+  if ( strcmp(what,"NR_FEES") == 0)
+    {
+      return FEE_List.size();
+    }
+    
   if ( strcmp(what,"FEE_LENGTH") == 0)
     {
       if ( hit < 0 || hit >= MAX_FEECOUNT) return 0;
@@ -370,6 +387,20 @@ int oncsSub_idinttv0::iValue(const int hit, const char *what)
       return iValue(hit,F_DATAWORD);
     }
 
+
+  unsigned int i= hit; //  size() is unsigned
+  if ( strcmp(what,"FEELIST") == 0)
+    {
+      if ( hit < 0 || i >= FEE_List.size()) return 0;
+      auto it = FEE_List.cbegin();
+      for (unsigned int j = 0; j< i; j++) ++it;
+      return *it;
+    }
+
+
+
+
+
   return 0;
 }
 
@@ -381,6 +412,16 @@ long long  oncsSub_idinttv0::lValue(const int hit, const char *what)
     {
       return lValue(hit,F_BCO);
     }
+
+  unsigned int i= hit; //  size() is unsigned
+  if ( strcmp(what,"BCOLIST") == 0)
+    {
+      if ( hit < 0 || i >= BCO_List.size()) return 0;
+      auto it = BCO_List.cbegin();
+      for (unsigned int j = 0; j< i; j++) ++it;
+      return *it;
+    }
+
   return 0;
 }
 
@@ -391,9 +432,21 @@ void  oncsSub_idinttv0::dump ( OSTREAM& os )
   intt_decode();
   identify(os);
 
+  os << "  Number of unique BCOs: " << iValue(0, "NR_BCOS") << endl;
+  for ( int i = 0; i < iValue(0, "NR_BCOS"); i++)
+    {
+      os << " " << setw(3) << i << " 0x" << hex << lValue(i, "BCOLIST") << dec <<  endl;
+    }
+
+  os << "  Number of unique FEEs: " << iValue(0, "NR_FEES") << endl;
+  for ( int i = 0; i < iValue(0, "NR_FEES"); i++)
+    {
+      os << " " << setw(3) << iValue(i, "FEELIST");
+    }
+  os << endl;
+
   os << "  Number of hits: " << iValue(0, "NR_HITS") << endl;
 
-//  std::vector<intt_hit*>::const_iterator hit_itr;
 
   os << "   #    FEE    BCO      chip_BCO  chip_id channel_id    ADC  full_phx full_ROC Ampl." << endl;
 
@@ -414,6 +467,7 @@ void  oncsSub_idinttv0::dump ( OSTREAM& os )
 	 <<  setfill(' ') << dec << endl;
       
     }
+  os << endl;
   
 }
 

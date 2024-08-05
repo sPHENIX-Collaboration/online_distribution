@@ -1,16 +1,16 @@
-#ifndef __ONCSSUB_IDGL1V0_H__
-#define __ONCSSUB_IDGL1V0_H__
+#ifndef __ONCSSUB_IDGL1V1_H__
+#define __ONCSSUB_IDGL1V1_H__
 
 #include "oncsSubevent.h"
 
 #ifndef __CINT__
-class WINDOWSEXPORT oncsSub_idgl1v0 : public  oncsSubevent_w4 {
+class WINDOWSEXPORT oncsSub_idgl1v1 : public  oncsSubevent_w4 {
 #else
-class  oncsSub_idgl1v0 : public  oncsSubevent_w2 {
+class  oncsSub_idgl1v1 : public  oncsSubevent_w2 {
 #endif
 
 public:
-  oncsSub_idgl1v0( subevtdata_ptr);
+  oncsSub_idgl1v1( subevtdata_ptr);
 
   int    iValue(const int dummy);
 
@@ -30,10 +30,12 @@ protected:
   unsigned long long BunchNumber;
   unsigned long long TriggerInput;
   unsigned long long TriggerVector;
+  unsigned long long ScaledVector;
 
   unsigned int GTM_BusyVector;
       
   unsigned int packet_nr;
+  unsigned int tag;
 
   unsigned long long scalers[3*64];
   unsigned int gl1p_scalers[3*16];
@@ -44,4 +46,4 @@ protected:
 };
 
 
-#endif /* __ONCSSUB_IDGL1V0_H__ */
+#endif /* __ONCSSUB_IDGL1V1_H__ */

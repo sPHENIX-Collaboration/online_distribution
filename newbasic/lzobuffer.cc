@@ -28,12 +28,12 @@ lzobuffer::lzobuffer (PHDWORD *array , const int length )
 
   lzo_uint bytes; 
   lzo_uint outputlength_in_bytes;
-  if (array[1] == LZO1XBUFFERMARKER )
+  if (array[1] == LZO1XBUFFERMARKER || array[1] == LZO1CBUFFERMARKER)
     {
       bytes = array[0]-4*BUFFERHEADERLENGTH;
       outputlength_in_bytes = array[3];
     }
-  else if ( u4swap(array[1]) == LZO1XBUFFERMARKER)
+  else if ( u4swap(array[1]) == LZO1XBUFFERMARKER || u4swap(array[1]) == LZO1CBUFFERMARKER)
     {
       bytes = i4swap(array[0])-16;
       outputlength_in_bytes = i4swap(array[3]);
@@ -41,7 +41,7 @@ lzobuffer::lzobuffer (PHDWORD *array , const int length )
 
   else
     {
- 	COUT << " wrong buffer" << std::endl;
+      COUT << __FILE__ << " " << __LINE__ << " wrong buffer marker = " << std::hex << array[1] << std::dec << std::endl;
 	is_good = 0;
 	return;
     }
@@ -53,9 +53,19 @@ lzobuffer::lzobuffer (PHDWORD *array , const int length )
 
   //  std::cout << __FILE__ << "  " << __LINE__ << " safe!!! array length before is " << array[-1] << std::endl;
   olen = outputlength_in_bytes;
-  lzo1x_decompress_safe ( (lzo_byte *)  &array[4], bytes,
-  		     (lzo_byte *)  bufferarray, &olen, NULL );
-  
+
+  if (array[1] == LZO1XBUFFERMARKER || u4swap(array[1]) == LZO1XBUFFERMARKER )
+    {
+      lzo1x_decompress_safe ( (lzo_byte *)  &array[4], bytes,
+			      (lzo_byte *)  bufferarray, &olen, NULL );
+    }
+  else
+    {
+
+      lzo1c_decompress_safe ( (lzo_byte *)  &array[4], bytes,
+			      (lzo_byte *)  bufferarray, &olen, NULL );
+
+    }
 
   //  std::cout << __FILE__ << "  " << __LINE__ << " array length after is " << array[-1] << std::endl;
 
@@ -86,6 +96,13 @@ Event * lzobuffer::getEvent()
 {
   if ( theBuffer) return theBuffer->getEvent();
   return 0;
+}
+
+// ---------------------------------------------------------
+int lzobuffer::getBufferSequence() const
+{
+  if ( !theBuffer) return 0;
+  return theBuffer->getBufferSequence();
 }
 
 // ---------------------------------------------------------

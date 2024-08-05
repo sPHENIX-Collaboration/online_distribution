@@ -1,15 +1,18 @@
-#include "oncsSub_idgl1v0.h"
+#include "oncsSub_idgl1v1.h"
 
 #include <string.h>
 
 using namespace std;
 
-oncsSub_idgl1v0::oncsSub_idgl1v0(subevtdata_ptr data)
+#define NR_GL1PSCALERS (12)
+
+oncsSub_idgl1v1::oncsSub_idgl1v1(subevtdata_ptr data)
   :oncsSubevent_w4 (data)
 {
 
   BCO = 0;
   packet_nr = 0;
+  tag = 0;
 
   memset (scalers, 0, sizeof(scalers) );
   memset (gl1p_scalers, 0, sizeof(gl1p_scalers) );
@@ -18,7 +21,7 @@ oncsSub_idgl1v0::oncsSub_idgl1v0(subevtdata_ptr data)
   _broken = 0;
 }
   
-int oncsSub_idgl1v0::decode ()
+int oncsSub_idgl1v1::decode ()
 {
   if (is_decoded) return 0;
   is_decoded = 1;
@@ -64,7 +67,6 @@ int oncsSub_idgl1v0::decode ()
   
   //cout << "bunch number " << BunchNumber << endl;
 
-  unsigned int tag = 0;
 
   // 11,12,13,14 are 0x12345678ab - let's check
   i = 11;
@@ -84,6 +86,7 @@ int oncsSub_idgl1v0::decode ()
 
   TriggerInput = 0;
   TriggerVector = 0;
+  ScaledVector = 0;
 
   // 15,16,17,18 are the trigger input 
   i = 15;
@@ -108,20 +111,13 @@ int oncsSub_idgl1v0::decode ()
 
   // 23,24,25,26 are 0xdeadbeefbas5eba11 - let's check
   i = 23;
-  unsigned long long tag64 = 0;
   for ( int j = 0; j < 3; j++)
     {
-      tag64 |= buffer[i+j];
-      tag64 <<=16;
+      ScaledVector |= buffer[i+j];
+      ScaledVector <<=16;
     }
-  tag64 |= buffer[i+3];
+  ScaledVector |= buffer[i+3];
 
-  // if ( tag64 != 0xdeadbeefba5eba11)
-  //   {
-  //     cout << endl << " wrong tag " << hex << "0x" << tag << dec << endl;
-  //   }
-  
-  
   int index = 0;
   unsigned long long s;
   // here start the scalers
@@ -141,9 +137,9 @@ int oncsSub_idgl1v0::decode ()
       
     }
   
-  // here start the gl1_p scalers
+  // here start the gl1_p scalers - NOW 12!
   index = 0;
-  for ( i = 27+3*4*64; i < 27+3*4*64 + 3*2*16; i+=2)
+  for ( i = 27+3*4*64; i < 27+3*4*64 + 3*2*NR_GL1PSCALERS; i+=2)
     {
       s = 0;
       s = buffer[i];
@@ -159,14 +155,16 @@ int oncsSub_idgl1v0::decode ()
   return 0;  
 }
 
-int oncsSub_idgl1v0::iValue(const int i)
+int oncsSub_idgl1v1::iValue(const int i)
 {
   decode();
   if ( _broken) return 0;
-  return packet_nr;
+  if ( i == 0)   return packet_nr;
+  if ( i == 1)   return tag;
+  return 0;
 }
 
-long long oncsSub_idgl1v0::lValue(const int i, const int k)
+long long oncsSub_idgl1v1::lValue(const int i, const int k)
 {
   decode();
   if ( _broken) return 0;
@@ -174,7 +172,7 @@ long long oncsSub_idgl1v0::lValue(const int i, const int k)
   return scalers[3*i + k];
 }
 
-long long oncsSub_idgl1v0::lValue(const int i, const char *what)
+long long oncsSub_idgl1v1::lValue(const int i, const char *what)
 {
   decode();
   if ( _broken) return 0;
@@ -187,6 +185,16 @@ long long oncsSub_idgl1v0::lValue(const int i, const char *what)
   if ( strcmp(what,"TriggerVector") == 0)
     {
       return TriggerVector;
+    }
+
+  if ( strcmp(what,"LiveVector") == 0)  // make "LiveVevtor" the same as "TriggerVector"
+    {
+      return TriggerVector;
+    }
+
+  if ( strcmp(what,"ScaledVector") == 0)
+    {
+      return ScaledVector;
     }
 
   if ( strcmp(what,"TriggerInput") == 0)
@@ -225,19 +233,19 @@ long long oncsSub_idgl1v0::lValue(const int i, const char *what)
 
   if ( strcmp(what,"GL1PRAW") == 0)
     {
-      if ( i < 0 || i > 15) return 0;
+      if ( i < 0 || i > NR_GL1PSCALERS-1) return 0;
       return gl1p_scalers[i * 3];
     }
 
   if ( strcmp(what,"GL1PLIVE") == 0)
     {
-      if ( i < 0 || i > 15) return 0;
+      if ( i < 0 || i > NR_GL1PSCALERS-1) return 0;
       return gl1p_scalers[i*3+1];
     }
 
   if ( strcmp(what,"GL1PSCALED") == 0)
     {
-      if ( i < 0 || i > 15) return 0;
+      if ( i < 0 || i > NR_GL1PSCALERS-1) return 0;
       return gl1p_scalers[i*3+2];
     }
 
@@ -247,7 +255,7 @@ long long oncsSub_idgl1v0::lValue(const int i, const char *what)
 }
 
 
-void oncsSub_idgl1v0::dump(std::ostream &os)
+void oncsSub_idgl1v1::dump(std::ostream &os)
 {
   identify(os);
   if ( _broken) 
@@ -259,7 +267,8 @@ void oncsSub_idgl1v0::dump(std::ostream &os)
   os << "packet nr:       " << iValue(0) << endl;
   os << "Beam Clock:      " << "0x" << hex << lValue(0, "BCO") << dec  << "   "  << lValue(0, "BCO") << endl;
   os << "Trigger Input:   " << "0x" << hex <<  lValue(0, "TriggerInput")  << dec << "   " << lValue(0, "TriggerInput") << endl;
-  os << "Trigger Vector:  " << "0x" << hex <<  lValue(0, "TriggerVector") << dec << "   " << lValue(0, "TriggerVector") << endl;
+  os << "Live Vector:     " << "0x" << hex <<  lValue(0, "LiveVector") << dec << "   " << lValue(0, "LiveVector") << endl;
+  os << "Scaled Vector:   " << "0x" << hex <<  lValue(0, "ScaledVector")  << dec << "   " << lValue(0, "ScaledVector") << endl;
   os << "GTM Busy Vector: " << "0x" << hex <<  lValue(0, "GTMBusyVector") << dec << "   " << lValue(0, "GTMBusyVector") << endl;
   os << "Bunch Number:    " << lValue(0, "BunchNumber") << endl << endl;
   os << "Trg #                  raw              live              scaled" << endl;
@@ -283,7 +292,7 @@ void oncsSub_idgl1v0::dump(std::ostream &os)
   os << "Gl1P #                raw              live              scaled" << endl;
   os << "----------------------------------------------------------------" << endl;
   
-  for (i = 0; i< 16; i++)
+  for (i = 0; i < NR_GL1PSCALERS; i++)
     {
       if ( lValue(i, "GL1PRAW") ||  lValue(i, "GL1PLIVE") ||  lValue(i, "GL1PSCALED") )
 	{

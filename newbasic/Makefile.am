@@ -166,12 +166,14 @@ allheaders = \
   oncsSub_idtpcfeev1.h \
   oncsSub_idtpcfeev2.h \
   oncsSub_idtpcfeev3.h \
+  oncsSub_idtpcfeev4.h \
   oncsSub_idinttv0.h \
   oncsSub_iddreamv0.h \
   oncsSub_idmvtxv1.h \
   oncsSub_idmvtxv2.h \
   oncsSub_idmvtxv3.h \
   oncsSub_idgl1v0.h \
+  oncsSub_idgl1v1.h \
   oncsSubevent.h \
   packet.h \
   packetConstants.h \
@@ -268,12 +270,14 @@ allsources = \
   oncsSub_idtpcfeev1.cc \
   oncsSub_idtpcfeev2.cc \
   oncsSub_idtpcfeev3.cc \
+  oncsSub_idtpcfeev4.cc \
   oncsSub_idinttv0.cc \
   oncsSub_iddreamv0.cc \
   oncsSub_idmvtxv1.cc \
   oncsSub_idmvtxv2.cc \
   oncsSub_idmvtxv3.cc \
   oncsSub_idgl1v0.cc \
+  oncsSub_idgl1v1.cc \
   oncsSubevent.cc \
   oncs_mnemonic.cc \
   packet_A.cc \
