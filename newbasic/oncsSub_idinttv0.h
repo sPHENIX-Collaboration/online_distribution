@@ -65,6 +65,7 @@ protected:
   std::vector<unsigned int> fee_data[MAX_FEECOUNT];
   std::vector<intt_hit *> intt_hits;
   std::set<unsigned long long> BCO_List;
+  std::set<unsigned int> FEE_List;
 
 };
 
