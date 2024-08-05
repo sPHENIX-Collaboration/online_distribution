@@ -33,7 +33,7 @@ oncsSub_idinttv0::~oncsSub_idinttv0()
 int oncsSub_idinttv0::intt_decode_hitlist (std::vector<unsigned int> &hitlist , const int fee)
 {
   
-  //coutfl << " next hitlist  for fee " << fee << "  size " << hitlist.size() << " :" << endl;
+  //  coutfl << "hit  for fee " << fee << "  size " << hitlist.size()  << endl;
   
   // for ( unsigned int i = 0; i < hitlist.size(); i++)
   //   {
@@ -41,6 +41,7 @@ int oncsSub_idinttv0::intt_decode_hitlist (std::vector<unsigned int> &hitlist , 
   //   }
   // cout << endl;
 
+  FEE_List.insert(fee);
   if ( hitlist.size() < 3)
     {
       //coutfl << "hitlist too short " << hitlist.size() << endl;
@@ -322,6 +323,11 @@ int oncsSub_idinttv0::iValue(const int hit, const char *what)
       return BCO_List.size();
     }
     
+  if ( strcmp(what,"NR_FEES") == 0)
+    {
+      return FEE_List.size();
+    }
+    
   if ( strcmp(what,"FEE_LENGTH") == 0)
     {
       if ( hit < 0 || hit >= MAX_FEECOUNT) return 0;
@@ -381,6 +387,20 @@ int oncsSub_idinttv0::iValue(const int hit, const char *what)
       return iValue(hit,F_DATAWORD);
     }
 
+
+  unsigned int i= hit; //  size() is unsigned
+  if ( strcmp(what,"FEELIST") == 0)
+    {
+      if ( hit < 0 || i >= FEE_List.size()) return 0;
+      auto it = FEE_List.cbegin();
+      for (unsigned int j = 0; j< i; j++) ++it;
+      return *it;
+    }
+
+
+
+
+
   return 0;
 }
 
@@ -401,6 +421,7 @@ long long  oncsSub_idinttv0::lValue(const int hit, const char *what)
       for (unsigned int j = 0; j< i; j++) ++it;
       return *it;
     }
+
   return 0;
 }
 
@@ -416,6 +437,13 @@ void  oncsSub_idinttv0::dump ( OSTREAM& os )
     {
       os << " " << setw(3) << i << " 0x" << hex << lValue(i, "BCOLIST") << dec <<  endl;
     }
+
+  os << "  Number of unique FEEs: " << iValue(0, "NR_FEES") << endl;
+  for ( int i = 0; i < iValue(0, "NR_FEES"); i++)
+    {
+      os << " " << setw(3) << iValue(i, "FEELIST");
+    }
+  os << endl;
 
   os << "  Number of hits: " << iValue(0, "NR_HITS") << endl;
 
