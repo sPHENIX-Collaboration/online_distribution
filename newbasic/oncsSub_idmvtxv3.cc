@@ -334,7 +334,7 @@ int oncsSub_idmvtxv3::iValue(const int i_feeid, const int i_trg, const int i_hit
 long long int oncsSub_idmvtxv3::lValue(const int i_feeid, const char *what)
 {
   decode();
-  if(m_decoding_failed == true) return -1;
+  //if(m_decoding_failed == true) return -1; should be commented - decoder errors are filled even when decoding failed
 
   uint32_t feeId = i_feeid;
 
