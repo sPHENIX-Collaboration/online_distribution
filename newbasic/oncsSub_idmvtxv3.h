@@ -40,6 +40,7 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
 
   int decode();
   bool m_is_decoded;
+  bool m_decoding_failed;
 
 
   struct dumpEntry
