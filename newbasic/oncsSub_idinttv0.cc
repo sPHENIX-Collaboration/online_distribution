@@ -41,7 +41,6 @@ int oncsSub_idinttv0::intt_decode_hitlist (std::vector<unsigned int> &hitlist , 
   //   }
   // cout << endl;
 
-  FEE_List.insert(fee);
   if ( hitlist.size() < 3)
     {
       //coutfl << "hitlist too short " << hitlist.size() << endl;
@@ -63,6 +62,9 @@ int oncsSub_idinttv0::intt_decode_hitlist (std::vector<unsigned int> &hitlist , 
   //  coutfl << "pushing back  0x" << hex << BCO << dec << " fee = " << fee << " hitlist size  = " << hitlist.size() << endl;
 
   BCO_List.insert(BCO);
+
+  FEE_BCO_Association[BCO].insert(fee);
+
 
   for  (unsigned int i = 3; i < hitlist.size(); i++)
     {
@@ -284,13 +286,36 @@ int oncsSub_idinttv0::iValue(const int hit, const int field)
   return 0;
 }
 
-int  oncsSub_idinttv0::iValue(const int fee, const int index, const char * what)
+int  oncsSub_idinttv0::iValue(const int i, const int j, const char * what)
 {
+  //coutfl << "do we get called? " << endl;
+  
+  // so here we have the index i of the BCO, and the position j of that FEE
+  if ( strcmp(what,"FEELIST") == 0)
+    {
+      
+      unsigned long long BCO = lValue(i,"BCOLIST");
+      if ( BCO == 0) return -1;
+      unsigned int uj = j;
+      if ( j < 0 || uj >=FEE_BCO_Association[BCO].size() )
+	{
+	  return -1;
+	}
+      auto it = FEE_BCO_Association[BCO].cbegin();
+      for (unsigned int k = 0; k< uj; k++) ++it;
+      return *it;
+    }
+
+  int fee = i;
+  int index=j;
+
   if ( fee < 0 || fee >= MAX_FEECOUNT) return 0;
 
   if ( index < 0 || (unsigned int) index >= fee_data[fee].size() ) return 0;
   intt_decode();
   return fee_data[fee][index];
+
+
 }
 						     
 long long  oncsSub_idinttv0::lValue(const int hit, const int field)
@@ -311,7 +336,8 @@ long long  oncsSub_idinttv0::lValue(const int hit, const int field)
 
 int oncsSub_idinttv0::iValue(const int hit, const char *what)
 {
-    intt_decode();
+  //  unsigned int i= hit; //  we compare with size() later that is unsigned
+  intt_decode();
 
   if ( strcmp(what,"NR_HITS") == 0)
     {
@@ -323,9 +349,14 @@ int oncsSub_idinttv0::iValue(const int hit, const char *what)
       return BCO_List.size();
     }
     
+  //the new API "get the number of fees associated with the BCO i
+  // we do not have an i or lValue that would take an long long argument
   if ( strcmp(what,"NR_FEES") == 0)
     {
-      return FEE_List.size();
+      unsigned long long BCO = lValue(hit,"BCOLIST");
+      if ( BCO == 0) return 0;
+      return FEE_BCO_Association[BCO].size();
+      //eturn FEE_List.size();
     }
     
   if ( strcmp(what,"FEE_LENGTH") == 0)
@@ -334,8 +365,6 @@ int oncsSub_idinttv0::iValue(const int hit, const char *what)
       return fee_data[hit].size();
     }
     
-
-
 
   else if ( strcmp(what,"ADC") == 0)
     {
@@ -388,15 +417,6 @@ int oncsSub_idinttv0::iValue(const int hit, const char *what)
     }
 
 
-  unsigned int i= hit; //  size() is unsigned
-  if ( strcmp(what,"FEELIST") == 0)
-    {
-      if ( hit < 0 || i >= FEE_List.size()) return 0;
-      auto it = FEE_List.cbegin();
-      for (unsigned int j = 0; j< i; j++) ++it;
-      return *it;
-    }
-
 
 
 
@@ -428,24 +448,24 @@ long long  oncsSub_idinttv0::lValue(const int hit, const char *what)
 
 void  oncsSub_idinttv0::dump ( OSTREAM& os )
 {
+
   //  os << "number_of_hits: " << iValue(0, "NR_HITS") << endl;
   intt_decode();
   identify(os);
 
-  os << "  Number of unique BCOs: " << iValue(0, "NR_BCOS") << endl;
-  for ( int i = 0; i < iValue(0, "NR_BCOS"); i++)
+  os << " Number of unique BCOs: " << iValue(0, "NR_BCOS") << endl;
+  for ( int b = 0; b < iValue(0, "NR_BCOS"); b++)
     {
-      os << " " << setw(3) << i << " 0x" << hex << lValue(i, "BCOLIST") << dec <<  endl;
+      os << " BCO " << setw(3) << b << ":  0x" << hex << lValue(b, "BCOLIST") << dec << "    number of FEEs for this BCO " << setw(3) << iValue(b,"NR_FEES") <<  endl;
+      os << "           Number of unique FEEs: ";
+      for ( int i = 0; i < iValue(b, "NR_FEES"); i++)
+	{
+	  os << " " << setw(3) << iValue(b, i, "FEELIST");
+	}
+      os << endl;
     }
 
-  os << "  Number of unique FEEs: " << iValue(0, "NR_FEES") << endl;
-  for ( int i = 0; i < iValue(0, "NR_FEES"); i++)
-    {
-      os << " " << setw(3) << iValue(i, "FEELIST");
-    }
-  os << endl;
-
-  os << "  Number of hits: " << iValue(0, "NR_HITS") << endl;
+  os << " Number of hits: " << iValue(0, "NR_HITS") << endl;
 
 
   os << "   #    FEE    BCO      chip_BCO  chip_id channel_id    ADC  full_phx full_ROC Ampl." << endl;
