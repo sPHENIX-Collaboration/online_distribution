@@ -4,6 +4,7 @@
 #include "oncsSubevent.h"
 #include <vector>
 #include <set>
+#include <map>
 #include <algorithm>
 #include <functional>
 #include <stdint.h>
@@ -65,7 +66,10 @@ protected:
   std::vector<unsigned int> fee_data[MAX_FEECOUNT];
   std::vector<intt_hit *> intt_hits;
   std::set<unsigned long long> BCO_List;
-  std::set<unsigned int> FEE_List;
+
+  // we make here a list of FEEs that we found associated with a given BCO
+  std::map<unsigned long long, std::set<unsigned int>> FEE_BCO_Association;
+  //  std::set<unsigned int> FEE_List;
 
 };
 
