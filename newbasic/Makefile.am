@@ -376,6 +376,7 @@ bin_PROGRAMS = \
   prdfcheck \
   prdfsplit \
   eventServer \
+  eventServer_classic \
   eventClient \
   lastEvent
 
@@ -396,6 +397,7 @@ prdf2prdf_SOURCES = prdf2prdf.cc
 prdfcheck_SOURCES = prdfcheck.cc
 prdfsplit_SOURCES = prdfsplit.cc
 eventServer_SOURCES = eventServer.cc
+eventServer_classic_SOURCES = eventServer_classic.cc
 eventClient_SOURCES = eventClient.cc
 lastEvent_SOURCES = lastEvent.cc
 
@@ -413,6 +415,7 @@ prdfcheck_LDADD = libNoRootEvent.la -ldl  @LZOLIB@
 prdfsplit_LDADD = libNoRootEvent.la -ldl  @LZOLIB@
 
 eventServer_LDADD = libNoRootEvent.la -ldl -lpthread  @LZOLIB@
+eventServer_classic_LDADD = libNoRootEvent.la -ldl -lpthread  @LZOLIB@
 eventClient_LDADD = libNoRootEvent.la -ldl  @LZOLIB@
 lastEvent_LDADD = libNoRootEvent.la -ldl  @LZOLIB@
 
