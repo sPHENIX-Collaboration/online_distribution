@@ -178,7 +178,7 @@ int rcdaqEventiterator::read_next_buffer()
 	}
   
   // say that this is our max size
-  int flag = htonl(64*1024*1024);
+  int flag = htonl(2*64*1024*1024 + 2048);
   
   int status = writen (_sockfd,(char *)  &flag, 4);
   if ( status < 0)
