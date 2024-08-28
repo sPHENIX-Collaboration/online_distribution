@@ -1,6 +1,7 @@
 #include "buffer.h"
 #include "gzbuffer.h"
 #include "lzobuffer.h"
+#include "bz2buffer.h"
 #include "prdfBuffer.h"
 #include "oncsBuffer.h"
 
@@ -23,10 +24,22 @@ int buffer::makeBuffer( PHDWORD *bp, const int allocatedsize, buffer **bptr)
       return 0;
     }
 
-  else if ( bp[1]== LZO1XBUFFERMARKER || buffer::u4swap(bp[1])== LZO1XBUFFERMARKER 
-	    || bp[1]== LZO1CBUFFERMARKER || buffer::u4swap(bp[1])== LZO1CBUFFERMARKER  )
+  else if ( bp[1] == BUFFERMARKER 
+	    || bp[1]== LZO1XBUFFERMARKER 
+	    || bp[1]== LZO1CBUFFERMARKER 
+	    || bp[1]== LZO2ABUFFERMARKER 
+	    || buffer::u4swap(bp[1]) == BUFFERMARKER 
+	    || buffer::u4swap(bp[1])== LZO1XBUFFERMARKER 
+	    || buffer::u4swap(bp[1])== LZO1CBUFFERMARKER 
+	    || buffer::u4swap(bp[1])== LZO2ABUFFERMARKER )
     {
       *bptr = new lzobuffer ( bp, allocatedsize );
+      return 0;
+    }
+
+  else if ( bp[1]== BZ2BUFFERMARKER || buffer::u4swap(bp[1])== BZ2BUFFERMARKER )
+    {
+      *bptr = new bz2buffer ( bp, allocatedsize );
       return 0;
     }
 

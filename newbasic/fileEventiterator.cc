@@ -192,14 +192,24 @@ int fileEventiterator::read_next_buffer()
 
       // get the buffer length into a dedicated variable
       if (initialbuffer[1] == BUFFERMARKER || initialbuffer[1]== GZBUFFERMARKER 
-	  ||  initialbuffer[1]== LZO1XBUFFERMARKER || initialbuffer[1]== LZO1CBUFFERMARKER || initialbuffer[1]== ONCSBUFFERMARKER) 
+	  ||  initialbuffer[1]== LZO1XBUFFERMARKER 
+	  || initialbuffer[1]== LZO1CBUFFERMARKER 
+	  || initialbuffer[1]== LZO2ABUFFERMARKER 
+	  || initialbuffer[1]== BZ2BUFFERMARKER 
+	  || initialbuffer[1]== ONCSBUFFERMARKER) 
 	{
 	  buffer_size = initialbuffer[0];
 	}
       else
 	{
 	  unsigned int  marker = buffer::u4swap(initialbuffer[1]);
-	  if (marker == BUFFERMARKER || marker == GZBUFFERMARKER || marker ==  LZO1XBUFFERMARKER || marker ==  LZO1CBUFFERMARKER || marker == ONCSBUFFERMARKER)
+	  if (marker == BUFFERMARKER 
+	      || marker == GZBUFFERMARKER 
+	      || marker ==  LZO1XBUFFERMARKER 
+	      || marker ==  LZO1CBUFFERMARKER 
+	      || marker ==  LZO2ABUFFERMARKER 
+	      || marker ==  BZ2BUFFERMARKER 
+	      || marker == ONCSBUFFERMARKER)
 	    {
 	      buffer_size = buffer::u4swap(initialbuffer[0]);
 	    }
@@ -256,12 +266,14 @@ int fileEventiterator::read_next_buffer()
 
   // and initialize the current_index to be the first event
 
-  if ( ( initialbuffer[1]== GZBUFFERMARKER || 
-       buffer::u4swap(initialbuffer[1])== GZBUFFERMARKER ||
-       initialbuffer[1]== LZO1XBUFFERMARKER || 
-       buffer::u4swap(initialbuffer[1])== LZO1XBUFFERMARKER ||
-       initialbuffer[1]== LZO1CBUFFERMARKER || 
-       buffer::u4swap(initialbuffer[1])== LZO1CBUFFERMARKER )
+  if ( ( initialbuffer[1]== GZBUFFERMARKER 
+	 || buffer::u4swap(initialbuffer[1])== GZBUFFERMARKER 
+	 || initialbuffer[1]== LZO1XBUFFERMARKER 
+	 || buffer::u4swap(initialbuffer[1])== LZO1XBUFFERMARKER 
+	 || initialbuffer[1]== LZO1CBUFFERMARKER 
+	 || buffer::u4swap(initialbuffer[1])== LZO1CBUFFERMARKER
+	 || initialbuffer[1]== LZO2ABUFFERMARKER 
+	 || buffer::u4swap(initialbuffer[1])== LZO2ABUFFERMARKER )
        && errorinread  )
     {
       bptr = 0;

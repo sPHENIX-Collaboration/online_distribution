@@ -11,7 +11,8 @@
 #define GZBUFFERMARKER        0xfffffafeU
 #define LZO1XBUFFERMARKER     0xffffbbfeU
 #define LZO1CBUFFERMARKER     0xffffbcfeU
-#define ONCSLZO1XBUFFERMARKER 0xffffbbc0U
+#define LZO2ABUFFERMARKER     0xffffbdfdU
+#define BZ2BUFFERMARKER       0xffffbefaU
 
 #define BUFFERBLOCKSIZE 8192U
 

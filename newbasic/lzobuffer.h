@@ -4,6 +4,7 @@
 #include "prdfBuffer.h"
 #include <lzo/lzo1x.h>
 #include <lzo/lzo1c.h>
+#include <lzo/lzo2a.h>
 
 
 #ifndef __CINT__
