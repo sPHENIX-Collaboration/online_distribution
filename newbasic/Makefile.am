@@ -404,22 +404,22 @@ eventClient_SOURCES = eventClient.cc
 lastEvent_SOURCES = lastEvent.cc
 
 
-dpipe_LDADD = libNoRootEvent.la libmessage.la  -ldl  @LZOLIB@ -lbz2
-dlist_LDADD = libNoRootEvent.la libmessage.la  -ldl  @LZOLIB@ -lbz2
-ddump_LDADD = libNoRootEvent.la libmessage.la  -ldl @LZOLIB@ -lbz2
-eventcombiner_LDADD = libNoRootEvent.la libmessage.la -ldl  @LZOLIB@ -lbz2
+dpipe_LDADD = libNoRootEvent.la libmessage.la  -ldl
+dlist_LDADD = libNoRootEvent.la libmessage.la  -ldl
+ddump_LDADD = libNoRootEvent.la libmessage.la  -ldl
+eventcombiner_LDADD = libNoRootEvent.la libmessage.la -ldl
 
 
-changeid_LDADD = libNoRootEvent.la libmessage.la -ldl @LZOLIB@  -lbz2
-changehitformat_LDADD = libNoRootEvent.la libmessage.la -ldl @LZOLIB@ -lbz2
-prdf2prdf_LDADD = libNoRootEvent.la libmessage.la -ldl  @LZOLIB@ -lbz2
-prdfcheck_LDADD = libNoRootEvent.la -ldl  @LZOLIB@ -lbz2
-prdfsplit_LDADD = libNoRootEvent.la -ldl  @LZOLIB@ -lbz2
+changeid_LDADD = libNoRootEvent.la libmessage.la -ldl
+changehitformat_LDADD = libNoRootEvent.la libmessage.la -ldl
+prdf2prdf_LDADD = libNoRootEvent.la libmessage.la -ldl
+prdfcheck_LDADD = libNoRootEvent.la -ldl
+prdfsplit_LDADD = libNoRootEvent.la -ldl
 
-eventServer_LDADD = libNoRootEvent.la -ldl -lpthread  @LZOLIB@  -lbz2
-eventServer_classic_LDADD = libNoRootEvent.la -ldl -lpthread  @LZOLIB@  -lbz2
-eventClient_LDADD = libNoRootEvent.la -ldl  @LZOLIB@  -lbz2
-lastEvent_LDADD = libNoRootEvent.la -ldl  @LZOLIB@  -lbz2
+eventServer_LDADD = libNoRootEvent.la -ldl -lpthread
+eventServer_classic_LDADD = libNoRootEvent.la -ldl -lpthread
+eventClient_LDADD = libNoRootEvent.la -ldl
+lastEvent_LDADD = libNoRootEvent.la -ldl
 
 
 libmessage_la_SOURCES = \
@@ -434,10 +434,10 @@ libmessage_la_SOURCES = \
 libEvent_la_SOURCES =  \
   $(ROOT5_EVENTDICTS)
 
-libEvent_la_LIBADD = libNoRootEvent.la libRootmessage.la  @ROOTGLIBS@  -lz @LZOLIB@
+libEvent_la_LIBADD = libNoRootEvent.la libRootmessage.la  @ROOTGLIBS@  -lz @LZOLIB@ -lbz2
 
 libNoRootEvent_la_SOURCES = $(allsources)
-libNoRootEvent_la_LIBADD = libmessage.la  -lz @LZOLIB@
+libNoRootEvent_la_LIBADD = libmessage.la  -lz @LZOLIB@ -lbz2
 
 
 # because this if statement contains dependencies, no more definitions after
