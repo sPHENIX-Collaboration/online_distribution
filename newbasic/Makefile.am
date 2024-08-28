@@ -40,6 +40,7 @@ installedheaders = \
   eventReceiverClient.h \
   gzbuffer.h \
   lzobuffer.h \
+  bz2buffer.h \
   prdfBuffer.h \
   oBuffer.h \
   ophBuffer.h \
@@ -237,6 +238,7 @@ allsources = \
   PHmd5Value.cc \
   gzbuffer.cc \
   lzobuffer.cc \
+  bz2buffer.cc \
   oEvent.cc \
   ospEvent.cc \
   oBuffer.cc \
@@ -402,22 +404,22 @@ eventClient_SOURCES = eventClient.cc
 lastEvent_SOURCES = lastEvent.cc
 
 
-dpipe_LDADD = libNoRootEvent.la libmessage.la  -ldl  @LZOLIB@
-dlist_LDADD = libNoRootEvent.la libmessage.la  -ldl  @LZOLIB@
-ddump_LDADD = libNoRootEvent.la libmessage.la  -ldl @LZOLIB@
-eventcombiner_LDADD = libNoRootEvent.la libmessage.la -ldl  @LZOLIB@
+dpipe_LDADD = libNoRootEvent.la libmessage.la  -ldl  @LZOLIB@ -lbz2
+dlist_LDADD = libNoRootEvent.la libmessage.la  -ldl  @LZOLIB@ -lbz2
+ddump_LDADD = libNoRootEvent.la libmessage.la  -ldl @LZOLIB@ -lbz2
+eventcombiner_LDADD = libNoRootEvent.la libmessage.la -ldl  @LZOLIB@ -lbz2
 
 
-changeid_LDADD = libNoRootEvent.la libmessage.la -ldl @LZOLIB@
-changehitformat_LDADD = libNoRootEvent.la libmessage.la -ldl @LZOLIB@
-prdf2prdf_LDADD = libNoRootEvent.la libmessage.la -ldl  @LZOLIB@
-prdfcheck_LDADD = libNoRootEvent.la -ldl  @LZOLIB@
-prdfsplit_LDADD = libNoRootEvent.la -ldl  @LZOLIB@
+changeid_LDADD = libNoRootEvent.la libmessage.la -ldl @LZOLIB@  -lbz2
+changehitformat_LDADD = libNoRootEvent.la libmessage.la -ldl @LZOLIB@ -lbz2
+prdf2prdf_LDADD = libNoRootEvent.la libmessage.la -ldl  @LZOLIB@ -lbz2
+prdfcheck_LDADD = libNoRootEvent.la -ldl  @LZOLIB@ -lbz2
+prdfsplit_LDADD = libNoRootEvent.la -ldl  @LZOLIB@ -lbz2
 
-eventServer_LDADD = libNoRootEvent.la -ldl -lpthread  @LZOLIB@
-eventServer_classic_LDADD = libNoRootEvent.la -ldl -lpthread  @LZOLIB@
-eventClient_LDADD = libNoRootEvent.la -ldl  @LZOLIB@
-lastEvent_LDADD = libNoRootEvent.la -ldl  @LZOLIB@
+eventServer_LDADD = libNoRootEvent.la -ldl -lpthread  @LZOLIB@  -lbz2
+eventServer_classic_LDADD = libNoRootEvent.la -ldl -lpthread  @LZOLIB@  -lbz2
+eventClient_LDADD = libNoRootEvent.la -ldl  @LZOLIB@  -lbz2
+lastEvent_LDADD = libNoRootEvent.la -ldl  @LZOLIB@  -lbz2
 
 
 libmessage_la_SOURCES = \

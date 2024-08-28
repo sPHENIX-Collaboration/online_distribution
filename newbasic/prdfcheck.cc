@@ -56,7 +56,11 @@ main(int argc, char *argv[])
 	   buffer[1] == LZO1XBUFFERMARKER || 
 	   buffer::u4swap(buffer[1]) == LZO1XBUFFERMARKER ||
 	   buffer[1] == LZO1CBUFFERMARKER || 
-	   buffer::u4swap(buffer[1]) == LZO1CBUFFERMARKER )
+	   buffer::u4swap(buffer[1]) == LZO1CBUFFERMARKER ||
+	   buffer[1] == LZO2ABUFFERMARKER || 
+	   buffer::u4swap(buffer[1]) == LZO2ABUFFERMARKER ||
+	   buffer[1] == BZ2BUFFERMARKER || 
+	   buffer::u4swap(buffer[1]) == BZ2BUFFERMARKER )
 	{
 
 
@@ -64,7 +68,9 @@ main(int argc, char *argv[])
 	       buffer::u4swap(buffer[1]) == ONCSBUFFERMARKER ||
 	       buffer::u4swap(buffer[1]) == GZBUFFERMARKER ||
 	       buffer::u4swap(buffer[1]) == LZO1XBUFFERMARKER ||
-	       buffer::u4swap(buffer[1]) == LZO1CBUFFERMARKER )
+	       buffer::u4swap(buffer[1]) == LZO1CBUFFERMARKER ||
+	       buffer::u4swap(buffer[1]) == LZO2ABUFFERMARKER ||
+	       buffer::u4swap(buffer[1]) == BZ2BUFFERMARKER )
 	    {
 	      needs_swap = 1;
 	    }
@@ -102,9 +108,31 @@ main(int argc, char *argv[])
 	  else if ( buffer[1] == LZO1XBUFFERMARKER || 
 		    buffer::u4swap(buffer[1]) == LZO1XBUFFERMARKER ||
 		    buffer[1] == LZO1CBUFFERMARKER || 
+		    buffer::u4swap(buffer[1]) == LZO1CBUFFERMARKER || 
+		    buffer[1] == LZO2ABUFFERMARKER || 
 		    buffer::u4swap(buffer[1]) == LZO1CBUFFERMARKER ) 
 	    {
 	      std::cout << "LZO Marker ";
+	      std::cout << " Or.length: " << buffer[3];
+	      float ratio = 100.*buffer[0]/buffer[3];
+	      std::cout << "  " << ratio << "%";
+
+	      int e = buffer[2] & 0xffff;
+	      int atp = (buffer[2] >> 16) & 0xffff;
+	      if ( atp) 
+		{
+		  std::cout << " events: " << e << " from ATP " << atp << std::endl;
+		}
+	      else
+		{
+		  std::cout << std::endl;
+		}
+	    }
+
+	  else if ( buffer[1] == BZ2BUFFERMARKER || 
+		    buffer::u4swap(buffer[1]) == BZ2BUFFERMARKER )
+	    {
+	      std::cout << "BZ2 Marker ";
 	      std::cout << " Or.length: " << buffer[3];
 	      float ratio = 100.*buffer[0]/buffer[3];
 	      std::cout << "  " << ratio << "%";

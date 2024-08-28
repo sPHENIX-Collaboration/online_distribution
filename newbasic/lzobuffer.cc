@@ -28,12 +28,16 @@ lzobuffer::lzobuffer (PHDWORD *array , const int length )
 
   lzo_uint bytes; 
   lzo_uint outputlength_in_bytes;
-  if (array[1] == LZO1XBUFFERMARKER || array[1] == LZO1CBUFFERMARKER)
+  if (array[1] == LZO1XBUFFERMARKER || 
+      array[1] == LZO1CBUFFERMARKER ||
+      array[1] == LZO2ABUFFERMARKER )
     {
       bytes = array[0]-4*BUFFERHEADERLENGTH;
       outputlength_in_bytes = array[3];
     }
-  else if ( u4swap(array[1]) == LZO1XBUFFERMARKER || u4swap(array[1]) == LZO1CBUFFERMARKER)
+  else if ( u4swap(array[1]) == LZO1XBUFFERMARKER 
+	    || u4swap(array[1]) == LZO1CBUFFERMARKER
+	    || u4swap(array[1]) == LZO2ABUFFERMARKER)
     {
       bytes = i4swap(array[0])-16;
       outputlength_in_bytes = i4swap(array[3]);
@@ -59,10 +63,17 @@ lzobuffer::lzobuffer (PHDWORD *array , const int length )
       lzo1x_decompress_safe ( (lzo_byte *)  &array[4], bytes,
 			      (lzo_byte *)  bufferarray, &olen, NULL );
     }
-  else
+  else if (array[1] == LZO1CBUFFERMARKER || u4swap(array[1]) == LZO1CBUFFERMARKER )
     {
 
       lzo1c_decompress_safe ( (lzo_byte *)  &array[4], bytes,
+			      (lzo_byte *)  bufferarray, &olen, NULL );
+
+    }
+  else 
+    {
+
+      lzo2a_decompress_safe ( (lzo_byte *)  &array[4], bytes,
 			      (lzo_byte *)  bufferarray, &olen, NULL );
 
     }
