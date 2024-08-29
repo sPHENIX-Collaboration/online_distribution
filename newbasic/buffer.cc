@@ -24,11 +24,9 @@ int buffer::makeBuffer( PHDWORD *bp, const int allocatedsize, buffer **bptr)
       return 0;
     }
 
-  else if ( bp[1] == BUFFERMARKER 
-	    || bp[1]== LZO1XBUFFERMARKER 
+  else if ( bp[1]== LZO1XBUFFERMARKER 
 	    || bp[1]== LZO1CBUFFERMARKER 
 	    || bp[1]== LZO2ABUFFERMARKER 
-	    || buffer::u4swap(bp[1]) == BUFFERMARKER 
 	    || buffer::u4swap(bp[1])== LZO1XBUFFERMARKER 
 	    || buffer::u4swap(bp[1])== LZO1CBUFFERMARKER 
 	    || buffer::u4swap(bp[1])== LZO2ABUFFERMARKER )
