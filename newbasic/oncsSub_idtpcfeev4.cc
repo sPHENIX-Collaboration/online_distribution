@@ -10,12 +10,7 @@ using namespace std;
 
 oncsSub_idtpcfeev4::oncsSub_idtpcfeev4(subevtdata_ptr data)
   :oncsSubevent_w2 (data)
-{
-
- _is_decoded = 0;
- _last_requested_element = -1;  // impossible value to mark "unnused" 
- _last_requested_waveform = 0;
-}
+{}
 
 
 oncsSub_idtpcfeev4::~oncsSub_idtpcfeev4()
@@ -106,6 +101,59 @@ int oncsSub_idtpcfeev4::decode_gtm_data(unsigned short dat[16])
     return 0;
 }
 
+int oncsSub_idtpcfeev4::tpc_gtm_decode()
+{
+
+  if (_is_gtm_decoded ) return 0;
+  _is_gtm_decoded = 1;
+
+  unsigned int payload_length = 2 * (getLength() - SEVTHEADERLENGTH - getPadding() );
+
+  unsigned int index = 0;
+
+  unsigned short *buffer = ( unsigned short *)  &SubeventHdr->data;
+
+  // demultiplexer
+  while (index < payload_length)
+  {
+    // this part is decoded in tpc_decode()
+    // Length for the 256-bit wide Round Robin Multiplexer for the data stream
+    const unsigned int datalength = 0xf;
+
+    if ((buffer[index] & 0xFF00) == FEE_MAGIC_KEY)
+    {
+
+      unsigned int fee_id = buffer[index] & 0xff;
+      // coutfl << " index = " << index << " fee_id = " << fee_id << " len = " << datalength << endl;
+      ++index;
+      if (fee_id < MAX_FEECOUNT)
+      {
+	index += datalength;
+      }
+      if (index >= payload_length) break;
+    }
+    else if ((buffer[index] & 0xFF00) == GTM_MAGIC_KEY)
+    {
+      unsigned short buf[16];
+
+      // memcpy?
+      for (unsigned int i = 0; i < 16; i++)
+      {
+	buf[i] = buffer[index++];
+      }
+
+      decode_gtm_data(buf);
+    }
+    else
+    {
+      // not FEE data, e.g. GTM data or other stream, to be decoded
+      index += datalength + 1;
+    }
+
+  }
+  return 0;
+}
+
 int oncsSub_idtpcfeev4::tpc_decode ()
 {
 
@@ -141,15 +189,10 @@ int oncsSub_idtpcfeev4::tpc_decode ()
           fee_data[fee_id].push_back(buffer[index++]);
         }
       }
-    } else if ((buffer[index] & 0xFF00) == GTM_MAGIC_KEY) {
-        unsigned short buf[16];
-
-        // memcpy?
-        for (unsigned int i = 0; i < 16; i++) {
-            buf[i] = buffer[index++];
-        }
-
-        decode_gtm_data(buf);
+    }
+    else if ((buffer[index] & 0xFF00) == GTM_MAGIC_KEY)
+    {
+      index += 16; // decoded in tpc_gtm_decode()
     }
     else
     {
@@ -278,11 +321,8 @@ int oncsSub_idtpcfeev4::tpc_decode ()
 	}
     }
 
-  auto it = waveforms.begin();
-  for ( ; it != waveforms.end(); ++it)
-    {
-      waveform_vector.push_back( *it);
-    }
+  waveform_vector.resize(waveforms.size());
+  std::copy(waveforms.begin(),waveforms.end(),waveform_vector.begin());
   waveforms.clear();
   
   return 0;
@@ -290,7 +330,7 @@ int oncsSub_idtpcfeev4::tpc_decode ()
 
 long long oncsSub_idtpcfeev4::lValue(const int n, const char *what)
 {
-  tpc_decode();
+  tpc_gtm_decode(); // this only decodes the gtm
 
   const size_t i = n;
 
@@ -536,7 +576,7 @@ int oncsSub_idtpcfeev4::find_header ( const unsigned int yy,  const std::vector<
 {
   bool found = false;
   unsigned int pos = yy;
-  std::vector<unsigned short> header_candidate;
+  std::vector<unsigned short> header_candidate(HEADER_LENGTH);
 
   // we slide over the data and find the header, if any.
   // we calculate and return the amount of words we need to skip to find the vector.
@@ -551,7 +591,7 @@ int oncsSub_idtpcfeev4::find_header ( const unsigned int yy,  const std::vector<
 	  return -1;
 	}
 
-      header_candidate.push_back(orig[pos]);
+      header_candidate[i] = orig[pos];
       pos++;
     }
   
@@ -570,9 +610,9 @@ int oncsSub_idtpcfeev4::find_header ( const unsigned int yy,  const std::vector<
         }
       skip_amount++;
       if ( pos >= orig.size())    // if we reached the end, no more header here
-	{
-	  return -1;
-	}
+      {
+	return -1;
+      }
 
       //   coutfl << " next value " << pos << "  " << hex << orig[pos]  << dec << endl;
       header_candidate.erase(header_candidate.begin());  // delete the vector 1st element
