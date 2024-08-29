@@ -221,11 +221,8 @@ int oncsSub_idtpcfeev4::tpc_decode ()
 
 	     // for (int i = 0 ; i < data_size ; i++)
 	      // First fill 65000 for all time samples
-	      for (int i = 0 ; i < 1024 ; i++)
-		{
-		  sw->waveform.push_back(65000);
-		}
-
+	      sw->waveform.resize(1024);
+	      fill(sw->waveform.begin(), sw->waveform.end(), 65000);
 	      // Format is (N sample) (start time), (1st sample)... (Nth sample)
 	      //for (int i = 0 ; i < header[0]-5 ; i++)
 	      while(data_size_counter>0)
