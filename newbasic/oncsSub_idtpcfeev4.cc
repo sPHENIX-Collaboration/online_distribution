@@ -323,11 +323,8 @@ int oncsSub_idtpcfeev4::tpc_decode ()
 	}
     }
 
-  auto it = waveforms.begin();
-  for ( ; it != waveforms.end(); ++it)
-    {
-      waveform_vector.push_back( *it);
-    }
+  waveform_vector.resize(waveforms.size());
+  std::copy(waveforms.begin(),waveforms.end(),waveform_vector.begin());
   waveforms.clear();
   
   return 0;
