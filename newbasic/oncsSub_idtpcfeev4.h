@@ -32,20 +32,20 @@ protected:
   int tpc_decode();
   int tpc_gtm_decode();
 
-  static const unsigned short  MAGIC_KEY_0 = 0xfe;
+  static const unsigned short  MAGIC_KEY_0 {0xfe};
 //  static const unsigned short  MAGIC_KEY_1 = 0x00;
-  static const unsigned short  MAGIC_KEY_1 = 0xed;
+  static const unsigned short  MAGIC_KEY_1 {0xed};
 
-  static const unsigned short FEE_MAGIC_KEY = 0xba00;
-  static const unsigned short GTM_MAGIC_KEY = 0xbb00;
-  static const unsigned short GTM_LVL1_ACCEPT_MAGIC_KEY = 0xbbf0;
-  static const unsigned short GTM_ENDAT_MAGIC_KEY = 0xbbf1;
-  static const unsigned short GTM_MODEBIT_MAGIC_KEY = 0xbbf2;
+  static const unsigned short FEE_MAGIC_KEY {0xba00};
+  static const unsigned short GTM_MAGIC_KEY {0xbb00};
+  static const unsigned short GTM_LVL1_ACCEPT_MAGIC_KEY {0xbbf0};
+  static const unsigned short GTM_ENDAT_MAGIC_KEY {0xbbf1};
+  static const unsigned short GTM_MODEBIT_MAGIC_KEY {0xbbf2};
 
-  static const unsigned short  MAX_FEECOUNT = 26;   // that many FEEs
-  static const unsigned short  MAX_CHANNELS   = 8*32; // that many channels per FEE
+  static const unsigned short  MAX_FEECOUNT {26};   // that many FEEs
+  static const unsigned short  MAX_CHANNELS   {8*32}; // that many channels per FEE
 //  static const unsigned short  HEADER_LENGTH  = 5;
-  static const unsigned short  HEADER_LENGTH  = 7;
+  static const unsigned short  HEADER_LENGTH  {7};
   
   unsigned short reverseBits(const unsigned short x) const;
   unsigned short crc16(const unsigned int fee, const unsigned int index, const int  l) const;
@@ -61,20 +61,20 @@ protected:
   int _is_gtm_decoded{0};
 
   struct sampa_waveform {
-    unsigned short fee = std::numeric_limits<unsigned short>::max();
-    unsigned short pkt_length = std::numeric_limits<unsigned short>::max();
-    unsigned short channel = std::numeric_limits<unsigned short>::max();
-    unsigned short sampa_channel = std::numeric_limits<unsigned short>::max();
-    unsigned short sampa_address = std::numeric_limits<unsigned short>::max();
-    unsigned int bx_timestamp = 0;
+    unsigned short fee {std::numeric_limits<unsigned short>::max()};
+    unsigned short pkt_length {std::numeric_limits<unsigned short>::max()};
+    unsigned short channel {std::numeric_limits<unsigned short>::max()};
+    unsigned short sampa_channel {std::numeric_limits<unsigned short>::max()};
+    unsigned short sampa_address {std::numeric_limits<unsigned short>::max()};
+    unsigned int bx_timestamp {0};
     std::vector<unsigned short> waveform;
-    unsigned short adc_length = std::numeric_limits<unsigned short>::max();
-    unsigned short checksum = std::numeric_limits<unsigned short>::max();
-    unsigned short user_word = std::numeric_limits<unsigned short>::max();
-    unsigned short type = std::numeric_limits<unsigned short>::max();
-    unsigned short data_parity = std::numeric_limits<unsigned short>::max();
-    bool     valid = false;
-    bool     parity_valid = false;
+    unsigned short adc_length {std::numeric_limits<unsigned short>::max()};
+    unsigned short checksum {std::numeric_limits<unsigned short>::max()};
+    unsigned short user_word {std::numeric_limits<unsigned short>::max()};
+    unsigned short type {std::numeric_limits<unsigned short>::max()};
+    unsigned short data_parity {std::numeric_limits<unsigned short>::max()};
+    bool     valid {false};
+    bool     parity_valid {false};
   };
 
   struct gtm_payload {
@@ -114,8 +114,8 @@ struct bco_compare {
   
   int cacheIterator(const int n);
   
-  int _last_requested_element;
-  sampa_waveform* _last_requested_waveform;
+  int _last_requested_element {-1}; // impossible value to mark "unused"
+  sampa_waveform* _last_requested_waveform {nullptr};
   
   std::vector<unsigned short> fee_data[MAX_FEECOUNT];
 
