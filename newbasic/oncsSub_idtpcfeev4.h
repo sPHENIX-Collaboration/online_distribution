@@ -29,7 +29,8 @@ public:
 
 
 protected:
-  int tpc_decode ();
+  int tpc_decode();
+  int tpc_gtm_decode();
 
   static const unsigned short  MAGIC_KEY_0 = 0xfe;
 //  static const unsigned short  MAGIC_KEY_1 = 0x00;
@@ -56,7 +57,8 @@ protected:
   
   int _broken;
   
-  int _is_decoded;
+  int _is_decoded{0};
+  int _is_gtm_decoded{0};
 
   struct sampa_waveform {
     unsigned short fee = std::numeric_limits<unsigned short>::max();

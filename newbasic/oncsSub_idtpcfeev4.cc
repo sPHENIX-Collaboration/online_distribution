@@ -11,8 +11,6 @@ using namespace std;
 oncsSub_idtpcfeev4::oncsSub_idtpcfeev4(subevtdata_ptr data)
   :oncsSubevent_w2 (data)
 {
-
- _is_decoded = 0;
  _last_requested_element = -1;  // impossible value to mark "unnused" 
  _last_requested_waveform = 0;
 }
@@ -104,6 +102,58 @@ int oncsSub_idtpcfeev4::decode_gtm_data(unsigned short dat[16])
     this->gtm_data.push_back(payload);
 
     return 0;
+}
+
+int oncsSub_idtpcfeev4::tpc_gtm_decode ()
+{
+
+  if (_is_gtm_decoded ) return 0;
+  _is_gtm_decoded = 1;
+
+  unsigned int payload_length = 2 * (getLength() - SEVTHEADERLENGTH - getPadding() );
+
+  unsigned int index = 0;
+
+  unsigned short *buffer = ( unsigned short *)  &SubeventHdr->data;
+
+  // demultiplexer
+  while (index < payload_length)
+  {
+    // Length for the 256-bit wide Round Robin Multiplexer for the data stream
+    const unsigned int datalength = 0xf;
+
+    if ((buffer[index] & 0xFF00) == FEE_MAGIC_KEY)
+    {
+
+      unsigned int fee_id = buffer[index] & 0xff;
+      // coutfl << " index = " << index << " fee_id = " << fee_id << " len = " << datalength << endl;
+      ++index;
+      if (fee_id < MAX_FEECOUNT)
+      {
+	index += datalength;
+      }
+      if (index >= payload_length) break;
+    }
+    else if ((buffer[index] & 0xFF00) == GTM_MAGIC_KEY)
+    {
+      unsigned short buf[16];
+
+      // memcpy?
+      for (unsigned int i = 0; i < 16; i++)
+      {
+	buf[i] = buffer[index++];
+      }
+
+      decode_gtm_data(buf);
+    }
+    else
+    {
+      // not FEE data, e.g. GTM data or other stream, to be decoded
+      index += datalength + 1;
+    }
+
+  }
+  return 0;
 }
 
 int oncsSub_idtpcfeev4::tpc_decode ()
@@ -290,7 +340,7 @@ int oncsSub_idtpcfeev4::tpc_decode ()
 
 long long oncsSub_idtpcfeev4::lValue(const int n, const char *what)
 {
-  tpc_decode();
+  tpc_gtm_decode(); // this only decodes the gtm
 
   const size_t i = n;
 
