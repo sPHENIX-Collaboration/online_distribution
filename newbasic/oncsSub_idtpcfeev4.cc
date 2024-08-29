@@ -104,7 +104,7 @@ int oncsSub_idtpcfeev4::decode_gtm_data(unsigned short dat[16])
     return 0;
 }
 
-int oncsSub_idtpcfeev4::tpc_gtm_decode ()
+int oncsSub_idtpcfeev4::tpc_gtm_decode()
 {
 
   if (_is_gtm_decoded ) return 0;
@@ -119,6 +119,7 @@ int oncsSub_idtpcfeev4::tpc_gtm_decode ()
   // demultiplexer
   while (index < payload_length)
   {
+    // this part is decoded in tpc_decode()
     // Length for the 256-bit wide Round Robin Multiplexer for the data stream
     const unsigned int datalength = 0xf;
 
@@ -191,15 +192,9 @@ int oncsSub_idtpcfeev4::tpc_decode ()
           fee_data[fee_id].push_back(buffer[index++]);
         }
       }
-    } else if ((buffer[index] & 0xFF00) == GTM_MAGIC_KEY) {
-        unsigned short buf[16];
-
-        // memcpy?
-        for (unsigned int i = 0; i < 16; i++) {
-            buf[i] = buffer[index++];
-        }
-
-        decode_gtm_data(buf);
+    } else if ((buffer[index] & 0xFF00) == GTM_MAGIC_KEY)
+{
+      index += 16; // decoded in tpc_gtm_decode()
     }
     else
     {
