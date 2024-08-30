@@ -113,7 +113,6 @@ int oncsSub_idtpcfeev4::tpc_gtm_decode()
   unsigned int index = 0;
 
   unsigned short *buffer = ( unsigned short *)  &SubeventHdr->data;
-  //std::vector<bool> fee_seen(26, false);
   std::bitset<26> fee_seen;
 
 
