@@ -106,12 +106,15 @@ int oncsSub_idtpcfeev4::tpc_gtm_decode()
 
   if (_is_gtm_decoded ) return 0;
   _is_gtm_decoded = 1;
+  NR_VALIDFEE=0;
 
   unsigned int payload_length = 2 * (getLength() - SEVTHEADERLENGTH - getPadding() );
 
   unsigned int index = 0;
 
   unsigned short *buffer = ( unsigned short *)  &SubeventHdr->data;
+  std::bitset<26> fee_seen;
+
 
   // demultiplexer
   while (index < payload_length)
@@ -124,11 +127,15 @@ int oncsSub_idtpcfeev4::tpc_gtm_decode()
     {
 
       unsigned int fee_id = buffer[index] & 0xff;
+      if (!fee_seen[fee_id]) {
+        fee_seen[fee_id] = true;
+        NR_VALIDFEE++;
+      }
       // coutfl << " index = " << index << " fee_id = " << fee_id << " len = " << datalength << endl;
       ++index;
       if (fee_id < MAX_FEECOUNT)
       {
-	index += datalength;
+        index += datalength;
       }
       if (index >= payload_length) break;
     }
@@ -139,7 +146,7 @@ int oncsSub_idtpcfeev4::tpc_gtm_decode()
       // memcpy?
       for (unsigned int i = 0; i < 16; i++)
       {
-	buf[i] = buffer[index++];
+        buf[i] = buffer[index++];
       }
 
       decode_gtm_data(buf);
@@ -338,6 +345,12 @@ long long oncsSub_idtpcfeev4::lValue(const int n, const char *what)
   {
     return gtm_data.size();
   }
+  
+  else if ( strcmp(what,"NR_VALIDFEE") == 0 )
+  {
+    return NR_VALIDFEE;
+  }
+  
 
   else if (strcmp(what, "TAGGER_TYPE") == 0 )
   {

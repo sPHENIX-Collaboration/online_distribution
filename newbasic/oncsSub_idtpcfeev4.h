@@ -4,6 +4,7 @@
 #include "oncsSubevent.h"
 #include <vector>
 #include <set>
+#include <bitset>
 #include <algorithm>
 #include <functional>
 #include <limits>
@@ -56,6 +57,7 @@ protected:
   int decode_gtm_data(unsigned short gtm[16]);
   
   int _broken;
+  unsigned long NR_VALIDFEE = 0;
   
   int _is_decoded{0};
   int _is_gtm_decoded{0};
