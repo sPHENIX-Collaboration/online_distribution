@@ -62,7 +62,11 @@ int oncsSub_idmvtxv3::decode()
   for (auto& link : mGBTLinks)
   {
     mvtx::GBTLink::CollectedDataStatus decoding_status = link.collectROFCableData();
-    if(decoding_status == mvtx::GBTLink::CollectedDataStatus::AbortedOnError) m_decoding_failed = true;
+    if(decoding_status == mvtx::GBTLink::CollectedDataStatus::AbortedOnError)
+    {
+      m_decoding_failed = true;
+      link.clearCableData();
+    }
   }
 
   ++mEventId;
