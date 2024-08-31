@@ -35,6 +35,7 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
   void * pValue(const int) final;
 
   void dump(OSTREAM &os = COUT) final;
+  int getStatus() const final {return (m_decoding_failed ? -1 : 0);};
 
  protected:
 
