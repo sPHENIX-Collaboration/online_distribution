@@ -263,7 +263,7 @@ int oncsSub_idmvtxv3::iValue(const int i_feeid, const int idx, const char *what)
   if (mFeeId2LinkID.find(feeId) == mFeeId2LinkID.cend())
   {
     log_error << "FeeId " << feeId << " was not found in the feeId mapping for this packet" << std::endl;
-    //assert(false);
+    assert(false);
     return -1;
   }
   uint32_t lnkId =  mFeeId2LinkID[feeId].entry;
@@ -300,7 +300,7 @@ int oncsSub_idmvtxv3::iValue(const int i_feeid, const int i_trg, const int i_hit
   if (mFeeId2LinkID.find(feeId) == mFeeId2LinkID.cend())
   {
     log_error << "FeeId " << feeId << "was not found in the feeId mapping for this packet" << std::endl;
-    //assert(false);
+    assert(false);
     return -1;
   }
   uint32_t lnkId =  mFeeId2LinkID[feeId].entry;
@@ -345,7 +345,7 @@ long long int oncsSub_idmvtxv3::lValue(const int i_feeid, const char *what)
   if (mFeeId2LinkID.find(feeId) == mFeeId2LinkID.cend())
   {
     log_error << "FeeId " << feeId << "was not found in the feeId mapping for this packet" << std::endl;
-    //assert(false);
+    assert(false);
     return -1;
   }
   uint32_t lnkId =  mFeeId2LinkID[feeId].entry;
@@ -381,7 +381,7 @@ long long int oncsSub_idmvtxv3::lValue(const int i_feeid, const int idx, const c
   if (mFeeId2LinkID.find(feeId) == mFeeId2LinkID.cend())
   {
     log_error << "FeeId " << feeId << "was not found in the feeId mapping for this packet" << std::endl;
-    //assert(false);
+    assert(false);
     return -1;
   }
   uint32_t lnkId =  mFeeId2LinkID[feeId].entry;
