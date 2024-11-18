@@ -113,7 +113,7 @@ int *oncsSub_idfnalmwpcv2::decode ( int *nwout)
   //cout << __FILE__ << " " << __LINE__ << " spillinfo.Spill_Link_Status_Bits " << spillinfo.Spill_Link_Status_Bits << endl;
 
 
-  TDCEvent *te;
+  TDCEvent *te {nullptr};
 
 
   // we now push, up front, one event structure on the vector

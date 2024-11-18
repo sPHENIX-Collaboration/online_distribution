@@ -89,7 +89,7 @@ int *oncsSub_idfnalmwpc::decode ( int *nwout)
 
   //  cout << " triggers = " << spillinfo.triggercount << endl;
 
-  TDCEvent *te;
+  TDCEvent *te {nullptr};
 
 
   // we now push, up front, one event structure on the vector
