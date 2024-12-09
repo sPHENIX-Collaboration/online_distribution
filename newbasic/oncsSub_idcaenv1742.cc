@@ -1,6 +1,7 @@
 #include "oncsSub_idcaenv1742.h"
 #include <cstring>
 
+
 oncsSub_idcaenv1742::oncsSub_idcaenv1742(subevtdata_ptr data)
   :oncsSubevent_w4 (data)
 {
@@ -126,8 +127,8 @@ int *oncsSub_idcaenv1742::decode ( int *nwout)
 		  pos +=3;
 		}
 	    }
+	  group_offset += pos + 1;
 	}
-      group_offset += pos + 1;
     }
   *nwout = samples*8 *4;
 
@@ -306,7 +307,7 @@ void  oncsSub_idcaenv1742::dump ( OSTREAM& os )
 	  
 	  os << std::setw(4) << iValue(i,j) << " ";
 	}
-      os << " tr: " << iValue(i, "TR0") << std::endl;
+      os << " tr: " << std::setw(5) << iValue(i, "TR0") << " " << std::setw(5) << iValue(i, "TR1")<< std::endl;
     }
   
   os << std::endl;
