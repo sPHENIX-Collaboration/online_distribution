@@ -12,7 +12,7 @@ std::unordered_map<uint16_t, oncsSub_idmvtxv3::dumpEntry> oncsSub_idmvtxv3::mFee
 std::vector<mvtx::GBTLink> oncsSub_idmvtxv3::mGBTLinks = {};
 
 oncsSub_idmvtxv3::oncsSub_idmvtxv3(subevtdata_ptr data)
-  : oncsSubevent_w4(data)
+  : oncsSubevent_w1(data)
 {
   m_is_decoded = false;
   m_decoding_failed = false;
@@ -431,7 +431,11 @@ void oncsSub_idmvtxv3::dump(OSTREAM &os)
     {
       auto feeId = iValue(i, "FEEID");
       auto hbfSize = iValue(feeId, "NR_HBF");
-      os << "Link " << setw(4) << feeId << " has " << hbfSize << " HBs, ";
+      int layer = feeId>>12;
+      int gbtx = (feeId>> 8) & 0x3;
+      int stave = feeId & 0x3f;
+      os << "FeeId " << hex << setw(4) << setfill('0') << feeId << dec << " (L" << layer <<
+      "_" << setw(2) << stave << " GBTx" << setw(1) << gbtx << ") has " << hbfSize << " HBs, ";
       os << iValue(feeId, "NR_STROBES") << " strobes and ";
       os << iValue(feeId, "NR_PHYS_TRG") << " L1 triggers" << std::endl;
 
@@ -468,6 +472,120 @@ void oncsSub_idmvtxv3::dump(OSTREAM &os)
 
   return;
 }
+
+//_________________________________________________
+void oncsSub_idmvtxv3::gdump(const int i, OSTREAM& out) const
+{
+  unsigned char *SubeventData = (unsigned char *) &SubeventHdr->data;
+
+
+  if ( i == EVT_RAW)
+  {
+    fwrite(SubeventData, sizeof(int), getDataLength(), stdout);
+    return;
+  }
+
+  if ( i == EVT_RAW_WH)
+  {
+    fwrite(SubeventHdr, sizeof(int), getLength(), stdout);
+    return;
+  }
+
+  unsigned int j;
+  int l;
+
+
+  std::string msg;
+  char cstring[20];
+  char *c;
+  identify(out);
+
+  j = 0;
+  switch (i)
+  {
+    case (EVT_HEXADECIMAL):
+      while (1)
+	    {
+        msg = "";
+        if ( *(unsigned short *)&SubeventData[j+30]  == 0xab01)
+        {
+          msg = "| FELIX Header";
+        }
+	      out << std::hex <<  SETW(5) << j << " |  ";
+	      for (l=0;l<10;l++)
+	      {
+	        if (j < 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) 
+		      {
+		        out << std::hex << SETW(2) << (u_int) SubeventData[j] << " ";
+		      }
+	        j++;
+	      }
+        out << " ";
+	      for (l=10;l<20;l++)
+	      {
+	        if (j < 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) 
+		      {
+		        out << std::hex << SETW(2) << (u_int) SubeventData[j] << " ";
+		      }
+	        j++;
+	      }
+        out << " ";
+	      for (l=20;l<30;l++)
+	      {
+	        if (j < 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) 
+		      {
+		        out << std::hex << SETW(2) << (u_int) SubeventData[j] << " ";
+		      }
+	        j++;
+	      }
+        out << " ";
+	      for (l=30;l<32;l++)
+	      {
+	        if (j < 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) 
+		      {
+		        out << std::hex << SETW(2) << (u_int) SubeventData[j] << " ";
+		      }
+	        j++;
+	      }
+	      out << msg << std::endl;
+	      if (j >= 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) break;
+	    }
+      break;
+
+    case (EVT_DECIMAL):
+      while (1)
+	    {
+	      c = cstring;
+	      out << std::dec <<  SETW(5) << j << " |  ";
+	      for (l=0;l<16;l++)
+	      {
+	        if (j < 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) 
+		      {
+		        out  << SETW(3) << (u_int) SubeventData[j] << " ";
+		        if (SubeventData[j] >=32 && SubeventData[j] <127) 
+		        {
+		          *c++ = SubeventData[j];
+		        }
+		        else
+		        {
+		          *c++ = 0x20;
+		        }
+		        out << " ";
+		      }
+	        j++;
+	      }
+	      *c = 0;
+	      out << "  | " << cstring;
+	      out << std::endl;
+	      if (j >= 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) break;
+	    }
+      break;
+
+    default: break;
+  }
+  out << std::endl;
+}
+
 
 //_________________________________________________
 oncsSub_idmvtxv3::~oncsSub_idmvtxv3()

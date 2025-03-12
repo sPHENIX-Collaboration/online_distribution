@@ -16,9 +16,9 @@
 #include <unordered_map>
 
 #ifndef __CINT__
-class WINDOWSEXPORT oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
+class WINDOWSEXPORT oncsSub_idmvtxv3 : public  oncsSubevent_w1 {
 #else
-class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
+class  oncsSub_idmvtxv3 : public  oncsSubevent_w1 {
 #endif
 
  public:
@@ -34,6 +34,7 @@ class  oncsSub_idmvtxv3 : public  oncsSubevent_w4 {
 
   void * pValue(const int) final;
 
+  void gdump ( const int how=EVT_HEXADECIMAL, OSTREAM& os = COUT) const; // add this to override the generic gdump
   void dump(OSTREAM &os = COUT) final;
   int getStatus() const final {return (m_decoding_failed ? -1 : 0);};
 
