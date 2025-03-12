@@ -1,0 +1,12 @@
+*.lo
+*.o
+*.la
+*.so
+configure
+config
+guess
+.deps
+*.log
+*.status
+config.guess
+config.sub
