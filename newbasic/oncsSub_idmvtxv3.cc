@@ -473,6 +473,32 @@ void oncsSub_idmvtxv3::dump(OSTREAM &os)
   return;
 }
 
+std::string interpretGbtPacket(unsigned char packetCode)
+{
+  std::string msg;
+  switch (packetCode)
+  {
+    case 0x0:
+      msg = " RDH     "; break;
+    case 0xe0:
+      msg = " IHW     "; break;
+    case 0xe8:
+      msg = " TDH     "; break;
+    case 0xf0:
+      msg = " TDT     "; break;
+    case 0xe4:
+      msg = " DDW     "; break;
+    case 0xf8:
+      msg = " CDW     "; break;
+    case 0x20 ... 0x28:
+      msg = " DTA     "; break;
+    case 0xa0 ... 0xa8:
+      msg = " Diag DTA"; break;
+    default:
+      msg = " ...     ";
+  }
+return msg;
+}
 //_________________________________________________
 void oncsSub_idmvtxv3::gdump(const int i, OSTREAM& out) const
 {
@@ -496,6 +522,7 @@ void oncsSub_idmvtxv3::gdump(const int i, OSTREAM& out) const
 
 
   std::string msg;
+  bool isFelixHeader;
   char cstring[20];
   char *c;
   identify(out);
@@ -507,11 +534,20 @@ void oncsSub_idmvtxv3::gdump(const int i, OSTREAM& out) const
       while (1)
 	    {
         msg = "";
+        isFelixHeader = false;
+	      out << std::hex <<  SETW(5) << j << " |  ";
         if ( *(unsigned short *)&SubeventData[j+30]  == 0xab01)
         {
-          msg = "| FELIX Header";
+          msg = " | FELIX Header";
+          isFelixHeader = true;
+          msg += " GBT " + std::to_string((int)SubeventData[j+28]);
+          msg += " DMA Cnt " + std::to_string(((int)SubeventData[j+26])*256 + (int)SubeventData[j+25]);
         }
-	      out << std::hex <<  SETW(5) << j << " |  ";
+        else
+        {
+          msg += " |";
+          msg += interpretGbtPacket(SubeventData[j+9]);
+        }
 	      for (l=0;l<10;l++)
 	      {
 	        if (j < 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) 
@@ -521,6 +557,14 @@ void oncsSub_idmvtxv3::gdump(const int i, OSTREAM& out) const
 	        j++;
 	      }
         out << " ";
+        if (!isFelixHeader)
+        {
+          if ((SubeventData[j+20]%3 == 2) || (SubeventData[j+20]%3 == 0))
+          {
+            msg += " |";
+            msg += interpretGbtPacket(SubeventData[j+9]);
+          }
+        }
 	      for (l=10;l<20;l++)
 	      {
 	        if (j < 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) 
@@ -530,6 +574,14 @@ void oncsSub_idmvtxv3::gdump(const int i, OSTREAM& out) const
 	        j++;
 	      }
         out << " ";
+        if (!isFelixHeader)
+        {
+          if (SubeventData[j+10]%3 == 0) 
+          {
+            msg += " |";
+            msg += interpretGbtPacket(SubeventData[j+9]);
+          }
+        }
 	      for (l=20;l<30;l++)
 	      {
 	        if (j < 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) 
