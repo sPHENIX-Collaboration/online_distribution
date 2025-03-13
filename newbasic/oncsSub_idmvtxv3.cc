@@ -1,7 +1,7 @@
 #include "oncsSub_idmvtxv3.h"
 
 // for memset
-#include <string.h>
+#include <string>
 #include <cassert>
 
 using namespace std;
@@ -473,7 +473,7 @@ void oncsSub_idmvtxv3::dump(OSTREAM &os)
   return;
 }
 
-std::string interpretGbtPacket(unsigned char packetCode)
+std::string interpretGbtPacket(const unsigned char packetCode)
 {
   std::string msg;
   switch (packetCode)
@@ -499,10 +499,11 @@ std::string interpretGbtPacket(unsigned char packetCode)
   }
 return msg;
 }
+
 //_________________________________________________
 void oncsSub_idmvtxv3::gdump(const int i, OSTREAM& out) const
 {
-  unsigned char *SubeventData = (unsigned char *) &SubeventHdr->data;
+  uint8_t *SubeventData = reinterpret_cast<uint8_t *> (&SubeventHdr->data);
 
 
   if ( i == EVT_RAW)
@@ -519,12 +520,11 @@ void oncsSub_idmvtxv3::gdump(const int i, OSTREAM& out) const
 
   unsigned int j;
   int l;
-
-
   std::string msg;
   bool isFelixHeader;
   char cstring[20];
   char *c;
+
   identify(out);
 
   j = 0;
@@ -536,12 +536,12 @@ void oncsSub_idmvtxv3::gdump(const int i, OSTREAM& out) const
         msg = "";
         isFelixHeader = false;
 	      out << std::hex <<  SETW(5) << j << " |  ";
-        if ( *(unsigned short *)&SubeventData[j+30]  == 0xab01)
+        if ( *reinterpret_cast<uint16_t *>(&SubeventData[j+30])  == 0xab01)
         {
           msg = " | FELIX Header";
           isFelixHeader = true;
-          msg += " GBT " + std::to_string((int)SubeventData[j+28]);
-          msg += " DMA Cnt " + std::to_string(((int)SubeventData[j+26])*256 + (int)SubeventData[j+25]);
+          msg += " GBT " + std::to_string( static_cast<int>(SubeventData[j+28]) );
+          msg += " DMA Cnt " + std::to_string( (static_cast<int>(SubeventData[j+26])) * 256 + static_cast<int>(SubeventData[j+25]) );
         }
         else
         {
@@ -552,7 +552,7 @@ void oncsSub_idmvtxv3::gdump(const int i, OSTREAM& out) const
 	      {
 	        if (j < 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) 
 		      {
-		        out << std::hex << SETW(2) << (u_int) SubeventData[j] << " ";
+		        out << std::hex << SETW(2) << static_cast<u_int>(SubeventData[j]) << " ";
 		      }
 	        j++;
 	      }
@@ -569,7 +569,7 @@ void oncsSub_idmvtxv3::gdump(const int i, OSTREAM& out) const
 	      {
 	        if (j < 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) 
 		      {
-		        out << std::hex << SETW(2) << (u_int) SubeventData[j] << " ";
+		        out << std::hex << SETW(2) << static_cast<u_int>(SubeventData[j]) << " ";
 		      }
 	        j++;
 	      }
@@ -586,7 +586,7 @@ void oncsSub_idmvtxv3::gdump(const int i, OSTREAM& out) const
 	      {
 	        if (j < 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) 
 		      {
-		        out << std::hex << SETW(2) << (u_int) SubeventData[j] << " ";
+		        out << std::hex << SETW(2) << static_cast<u_int>(SubeventData[j]) << " ";
 		      }
 	        j++;
 	      }
@@ -595,7 +595,7 @@ void oncsSub_idmvtxv3::gdump(const int i, OSTREAM& out) const
 	      {
 	        if (j < 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) 
 		      {
-		        out << std::hex << SETW(2) << (u_int) SubeventData[j] << " ";
+		        out << std::hex << SETW(2) << static_cast<u_int>(SubeventData[j]) << " ";
 		      }
 	        j++;
 	      }
@@ -613,7 +613,7 @@ void oncsSub_idmvtxv3::gdump(const int i, OSTREAM& out) const
 	      {
 	        if (j < 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) 
 		      {
-		        out  << SETW(3) << (u_int) SubeventData[j] << " ";
+		        out  << SETW(3) << static_cast<u_int>(SubeventData[j]) << " ";
 		        if (SubeventData[j] >=32 && SubeventData[j] <127) 
 		        {
 		          *c++ = SubeventData[j];
@@ -637,7 +637,6 @@ void oncsSub_idmvtxv3::gdump(const int i, OSTREAM& out) const
   }
   out << std::endl;
 }
-
 
 //_________________________________________________
 oncsSub_idmvtxv3::~oncsSub_idmvtxv3()
