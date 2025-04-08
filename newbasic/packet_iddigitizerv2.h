@@ -16,6 +16,7 @@ public:
 
   int    iValue(const int sample, const int ch);
   int    iValue(const int ,const char * what);
+  long long   lValue(const int ,const char * what);
   void  dump ( OSTREAM& os = COUT) ;
 
 
