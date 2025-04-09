@@ -193,6 +193,21 @@ int Packet_iddigitizerv2::decode ()
   return 0;
 }
 
+long long Packet_iddigitizerv2::lValue(const int n, const char *what)
+{
+
+  decode();
+
+  if ( strcmp(what,"CLOCK") == 0 )
+  {
+    return (unsigned int) _clock;
+  }
+  if ( strcmp(what,"EVTNR") == 0 )
+  {
+    return _evtnr;
+  }
+  return 0;
+}
 
 int Packet_iddigitizerv2::iValue(const int sample, const int ch)
 {
