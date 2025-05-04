@@ -3,9 +3,6 @@
 #include <string.h>
 #include <stdint.h>
 
-#define coutfl cout << __FILE__<< "  " << __LINE__ << " "
-#define cerrfl cerr << __FILE__<< "  " << __LINE__ << " "
-
 using namespace std;
 
 oncsSub_idtpcfeev2::oncsSub_idtpcfeev2(subevtdata_ptr data)

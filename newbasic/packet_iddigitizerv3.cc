@@ -5,10 +5,6 @@
 using namespace std;
 
 
-#define coutfl std::cout << __FILE__<< "  " << __LINE__ << " "
-#define cerrfl std::cerr << __FILE__<< "  " << __LINE__ << " "
-
-
 Packet_iddigitizerv3::Packet_iddigitizerv3(PACKET_ptr data)
   :Packet_w4 (data)
 {

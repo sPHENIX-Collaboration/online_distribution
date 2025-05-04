@@ -175,6 +175,7 @@ allheaders = \
   oncsSub_idmvtxv3.h \
   oncsSub_idgl1v0.h \
   oncsSub_idgl1v1.h \
+  oncsSub_idh2gcroc3.h \
   oncsSubevent.h \
   packet.h \
   packetConstants.h \
@@ -280,6 +281,7 @@ allsources = \
   oncsSub_idmvtxv3.cc \
   oncsSub_idgl1v0.cc \
   oncsSub_idgl1v1.cc \
+  oncsSub_idh2gcroc3.cc \
   oncsSubevent.cc \
   oncs_mnemonic.cc \
   packet_A.cc \
@@ -333,7 +335,7 @@ msgheaders = \
   remote_msg_buffer.h \
   strnstr.h
 
-AM_CPPFLAGS = -I$(includedir)  -I@ROOTINC@ -I$(OPT_SPHENIX)/include
+AM_CPPFLAGS = -g -O0 -I$(includedir)  -I@ROOTINC@ -I$(OPT_SPHENIX)/include
 
 noinst_HEADERS = \
   eventLinkDef.h \

@@ -317,6 +317,11 @@ Packet *oncsEvent::makePacket(PHDWORD *pp, const int hitFormat)
 	oncsSub_idgl1v1( sevt_ptr );
       break;
 
+    case (IDH2GCROC3):
+      return new
+	oncsSub_idh2gcroc3( sevt_ptr );
+      break;
+
     default:
       switch (sevt_ptr->sub_type)
 	{

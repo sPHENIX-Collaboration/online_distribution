@@ -8,6 +8,12 @@
 
 #define WINDOWSEXPORT
 
+#define coutfl std::cout << __FILE__ << " " << __LINE__ << " "
+#define cerrfl std::cout << __FILE__ << " " << __LINE__ << " "
+
+
+
+
 // --------------------------------------------------
 // the virtual base base class for all Packets.
 // --------------------------------------------------

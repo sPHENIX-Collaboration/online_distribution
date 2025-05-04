@@ -27,9 +27,6 @@ using namespace std;
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 
-#define coutfl cout << __LINE__ << "  " << __FILE__ << " "
-
-
 #define RCDAQEVENTITERATOR 1
 #define FILEEVENTITERATOR 2
 #define TESTEVENTITERATOR 3

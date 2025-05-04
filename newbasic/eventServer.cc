@@ -1,9 +1,5 @@
 
 
-#define coutfl cout << __FILE__<< "  " << __LINE__ << " "
-#define cerrfl cerr << __FILE__<< "  " << __LINE__ << " "
-
-
 #include <iostream>
 #include <stdlib.h> 
 #include <unistd.h> 
