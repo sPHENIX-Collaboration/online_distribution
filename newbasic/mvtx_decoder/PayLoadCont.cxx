@@ -10,26 +10,31 @@ using namespace mvtx;
 constexpr size_t PayLoadCont::MinCapacity;
 
 //________________________________________________________________________________
-PayLoadCont::PayLoadCont(const PayLoadCont& src)
+PayLoadCont::PayLoadCont(const PayLoadCont &src)
 {
   mBuffer = src.mBuffer;
-  if (src.mPtr) {
+  if (src.mPtr)
+  {
     mPtr = mBuffer.data() + (src.mPtr - src.mBuffer.data());
   }
-  if (src.mEnd) {
+  if (src.mEnd)
+  {
     mEnd = mBuffer.data() + (src.mEnd - src.mBuffer.data());
   }
 }
 
 //________________________________________________________________________________
-PayLoadCont& PayLoadCont::operator=(const PayLoadCont& src)
+PayLoadCont &PayLoadCont::operator=(const PayLoadCont &src)
 {
-  if (&src != this) {
+  if (&src != this)
+  {
     mBuffer = src.mBuffer;
-    if (src.mPtr) {
+    if (src.mPtr)
+    {
       mPtr = mBuffer.data() + (src.mPtr - src.mBuffer.data());
     }
-    if (src.mEnd) {
+    if (src.mEnd)
+    {
       mEnd = mBuffer.data() + (src.mEnd - src.mBuffer.data());
     }
   }
@@ -40,19 +45,24 @@ PayLoadCont& PayLoadCont::operator=(const PayLoadCont& src)
 void PayLoadCont::expand(size_t sz)
 {
   ///< increase the buffer size
-  auto* oldHead = mBuffer.data();
-  if (sz < MinCapacity) {
+  auto *oldHead = mBuffer.data();
+  if (sz < MinCapacity)
+  {
     sz = MinCapacity;
   }
-  if (sz < mBuffer.size()) { // never decrease the size
+  if (sz < mBuffer.size())
+  {  // never decrease the size
     return;
   }
   mBuffer.resize(sz);
-  if (oldHead) { // fix the pointers to account for the reallocation
+  if (oldHead)
+  {  // fix the pointers to account for the reallocation
     int64_t diff = mBuffer.data() - oldHead;
     mPtr += diff;
     mEnd += diff;
-  } else { // new buffer
+  }
+  else
+  {  // new buffer
     clear();
   }
 }
