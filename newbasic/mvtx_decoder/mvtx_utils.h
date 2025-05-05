@@ -21,24 +21,24 @@ namespace mvtx_utils
   struct RdhExt_t
   {
     // FLX header
-    uint8_t flxId;      // [23]
-    uint16_t pageSize;  // [25]
-    uint16_t gbtLink;
-    uint8_t flxHdrSize;
-    uint16_t flxHdrVersion;
+    uint8_t flxId{};      // [23]
+    uint16_t pageSize{};  // [25]
+    uint16_t gbtLink{};
+    uint8_t flxHdrSize{};
+    uint16_t flxHdrVersion{};
     // RU header
-    uint8_t rdhVersion;
-    uint8_t rdhSize;
-    uint16_t feeId;
-    uint8_t sourceId;
-    uint32_t detectorField;
-    uint16_t bc;
-    uint64_t orbit;
-    uint32_t trgType;
-    uint16_t packetCounter;
-    uint8_t stopBit;
-    uint8_t priority;
-    uint16_t rdhGBTcounter;  // 10 bits
+    uint8_t rdhVersion{};
+    uint8_t rdhSize{};
+    uint16_t feeId{};
+    uint8_t sourceId{};
+    uint32_t detectorField{};
+    uint16_t bc{};
+    uint64_t orbit{};
+    uint32_t trgType{};
+    uint16_t packetCounter{};
+    uint8_t stopBit{};
+    uint8_t priority{};
+    uint16_t rdhGBTcounter{};  // 10 bits
 
     RdhExt_t() = default;
     ~RdhExt_t() = default;
