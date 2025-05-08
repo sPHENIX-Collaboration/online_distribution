@@ -7,6 +7,8 @@
 
 #include "rcdaqEventiterator.h"
 #include <stdio.h>
+#include <stdlib.h>
+
 #include <iostream>
 #include <stdlib.h>
 
@@ -73,9 +75,36 @@ int rcdaqEventiterator::setup(const char *ip, int &status)
 {
   _defunct = 0;
 
+
+  // go through some hoops to extract the server id from a host string like "ebdc00:1"
+  _serverid = 0;
+  string host;
+  string serveridstring;
+  
+  string s = ip;
+  if ( s.find(":") == s.npos)
+    {
+      host = s;
+    }
+  else
+    {
+      host = s.substr(0, s.find(":"));
+      serveridstring = s.substr(s.find(":")+1, s.npos);
+      try
+	{
+	  _serverid = std::stoi(serveridstring);
+	} catch (const std::invalid_argument& e)
+	{
+	  cerr << "Invalid server is: " << serveridstring << endl;
+	  _defunct = 1;
+	  status = -2;
+	  return -3;
+	}
+	  
+    }
   
   struct hostent *p_host;
-  p_host = gethostbyname(ip);
+  p_host = gethostbyname(host.c_str());
   
   //  std::cout << __FILE__ << " " << __LINE__ << "  " << ip << "  " << p_host->h_name << "  " << p_host->h_addr << std::endl;
 
@@ -100,7 +129,7 @@ int rcdaqEventiterator::setup(const char *ip, int &status)
   memset((char *) &server, 0, sizeof(server));
   server.sin_family = AF_INET;
   bcopy(p_host->h_addr, &(server.sin_addr.s_addr), p_host->h_length);
-  server.sin_port = htons(MONITORINGPORT);
+  server.sin_port = htons(MONITORINGPORT + _serverid);
 
   return 0;
 }  
@@ -115,9 +144,16 @@ void rcdaqEventiterator::identify (OSTREAM &os) const
 
 const char * rcdaqEventiterator::getIdTag () const
 { 
-  static char line[180];
+  static char line[512];
+  char x[512];
+  
   strcpy (line, " -- rcdaqEventiterator reading from ");
   strcat (line, _theIP.c_str());
+  if (_serverid)
+    {
+      sprintf (x, " Serverid: %d", _serverid);
+      strcat (line, x );
+    }
   return line;
 };
 

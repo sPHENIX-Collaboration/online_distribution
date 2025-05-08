@@ -42,7 +42,8 @@ protected:
 
   
   std::string _theIP;
-
+  int _serverid;
+  
   int _sockfd;
   PHDWORD initialbuffer[BUFFERSIZE];
   PHDWORD *bp;
