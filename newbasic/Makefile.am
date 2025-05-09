@@ -335,7 +335,7 @@ msgheaders = \
   remote_msg_buffer.h \
   strnstr.h
 
-AM_CPPFLAGS = -g -O0 -I$(includedir)  -I@ROOTINC@ -I$(OPT_SPHENIX)/include
+AM_CPPFLAGS =  -I$(includedir)  -I@ROOTINC@ -I$(OPT_SPHENIX)/include
 
 noinst_HEADERS = \
   eventLinkDef.h \

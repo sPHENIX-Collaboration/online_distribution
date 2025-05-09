@@ -195,37 +195,70 @@ int oncsSub_idh2gcroc3::decode()
   
   int current_index  = 0;
   int lines = 0;
-  int n;
-      
+  int pos;
+  
+  std::vector<unsigned int>  incomplete_line;
+  
   
   while ( current_index < getDataLength() )
     {
 
       int packetlength = buffer[current_index+1]/4 + 2;
-      //coutfl << "marker " << hex << buffer[current_index] << dec << " Length " << buffer[current_index+1] << endl;
+
+      //unsigned int hdr0 = u4swap(buffer[current_index+2]);
+      //coutfl << "marker " << hex << buffer[current_index] << dec << " Length " << buffer[current_index+1] << " counter " << (hdr0 & 0xffff) << endl;
       int packet_end = current_index + packetlength -1;
 
-      current_index += 2;
 
-      for ( n = current_index; n < packet_end ; n++)
+      
+
+      current_index += 5;
+
+      // coutfl << " incomplete_line_size " << incomplete_line.size() << endl;
+      
+      if ( incomplete_line.size() )
 	{
-	  if ( (buffer[n] & 0xffff) == 0x00a0 || (buffer[n] & 0xffff) == 0x00a1)
+	  long unsigned int n = 0;
+	  for ( ; n < 10 - incomplete_line.size() ; n++)
 	    {
-	      //coutfl << " found line start at " << current_index << " value " << hex << buffer[n] << dec << endl;
-	      break;
+	      incomplete_line.push_back(buffer[current_index + n]);
 	    }
-
+	  coutfl << " incomplete_line_size " << incomplete_line.size() << endl;
+	  decode_line(&incomplete_line[0]);
+	  incomplete_line.clear();
+	  current_index =n;
 	}
-      current_index = n;
+
+
+
+      
+      // for ( n = current_index; n < packet_end ; n++)
+      // 	{
+      // 	  if ( (buffer[n] & 0xffff) == 0x00a0 || (buffer[n] & 0xffff) == 0x00a1)
+      // 	    {
+      // 	      coutfl << " found line start at " << n - current_index << " value " << hex << buffer[n] << dec << endl;
+      // 	      break;
+      // 	    }
+
+      // 	}
+
       lines = 0;
       // here we are at the beginning of an "a0 or "a1" line 
 
-      for ( n = current_index; n < packet_end -10; n += 10)
+      for ( pos = current_index; pos < packet_end; pos += 10)
 	{
-	  //cout << "line start " << hex << buffer[n] << dec << " at index " << n << endl;
-	  decode_line(&buffer[n]);
+	  //cout << "line start " << hex << buffer[pos] << dec << " at index " << pos << endl;
+	  decode_line(&buffer[pos]);
 	  lines++;
 	}
+
+      current_index = pos;
+      for ( pos = current_index; pos < packet_end; pos++)
+	{
+	  incomplete_line.push_back(buffer[pos]);
+	}
+      
+      
       current_index = packet_end+1;
       //      coutfl << " number of lines: " << lines << endl;
     }

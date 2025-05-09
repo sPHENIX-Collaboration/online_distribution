@@ -93,7 +93,7 @@ void  oncsSubevent::identify( OSTREAM& out ) const
   out << std::dec
       << "Packet " << SETW(5) <<  getIdentifier() 
       << " " << SETW(5) << getLength() 
-      << " -1"  << " (sPHENIX Packet) ";
+      << " -1"  << " (ePIC Packet) ";
 
   out << SETW(3) << getHitFormat() 
       << " (" << oncs_get_mnemonic( getStructure(), getHitFormat()) << ")" << std::endl;
