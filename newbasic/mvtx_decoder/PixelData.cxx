@@ -1,9 +1,11 @@
 // @file PixelData.cxx
-// @brief Implementation for transient data of single pixel and set of pixels from current chip
+// @brief Implementation for transient data of single pixel and set of pixels
+// from current chip
 // @sa <O2/Detectors/ITSMFT/common/reconstruction/src/PixelData.cxx>
 //     <d44292025>
 
-#include "mvtx_decoder/PixelData.h"
+#include "PixelData.h"
+
 #include <sstream>
 
 using namespace mvtx;
@@ -23,10 +25,10 @@ void ChipPixelData::print() const
 std::string ChipPixelData::getErrorDetails(int pos) const
 {
   // if possible, extract more detailed info about the error
-  if ( pos == int(ChipStat::RepeatingPixel) )
+  if (pos == int(ChipStat::RepeatingPixel))
   {
     std::stringstream ss;
-     ss << ": " << (mErrorInfo & 0xffff) << "/" << ((mErrorInfo >> 16) & 0xffff);
+    ss << ": " << (mErrorInfo & 0xffff) << "/" << ((mErrorInfo >> 16) & 0xffff);
     return ss.str();
   }
   if (pos == int(ChipStat::UnknownWord))
@@ -36,7 +38,7 @@ std::string ChipPixelData::getErrorDetails(int pos) const
     for (int i = 0; i < nc; i++)
     {
       std::stringstream ss;
-      ss << (i ? " " : "") << std::hex << (int)getRawErrBuff()[i];
+      ss << (i ? " " : "") << std::hex << (int) getRawErrBuff()[i];
     }
     rbuf += '>';
     return rbuf;
