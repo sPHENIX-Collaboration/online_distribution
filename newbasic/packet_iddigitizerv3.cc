@@ -240,6 +240,12 @@ unsigned int Packet_iddigitizerv3::decode_FEM ( unsigned int *k, const int fem_n
 		  index++;
 		}
 	    }
+	  else
+	    {
+	      coutfl << "unknown case: word classifier " << hex << "0x" << word_classifier << " next word 0x" << (k[index+1] >> 28) << dec << endl;
+	      _broken = 2;
+	      return 0;
+	    }
 
 	  // just in case we get a zero-suppressed word, step the index_channel
 	  index_channel++;
