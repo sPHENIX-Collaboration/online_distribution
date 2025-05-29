@@ -1,3 +1,4 @@
+
 #ifndef __ONCSSUB_IDCAENV1742_H__
 #define __ONCSSUB_IDCAENV1742_H__
 
@@ -25,8 +26,11 @@ protected:
   int evnr;
   int freq;
   int group_mask;
+  int LVDSPattern;
   int index_cell[4];
   int tr_present[4];
+  int GroupTriggerTime[4];
+  unsigned int EvtTimeTag;
 
 };
 
