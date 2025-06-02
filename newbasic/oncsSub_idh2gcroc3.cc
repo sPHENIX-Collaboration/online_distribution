@@ -173,7 +173,7 @@ int oncsSub_idh2gcroc3::decode_line( unsigned int d[10])
 	  break; 
 	  
 	default:
-	  cout << " invalid line number " << endl;
+	  //cout << " invalid line number " << endl;
 	  break;
 	  
 	  
