@@ -17,8 +17,11 @@ oncsSub_idgl1v1::oncsSub_idgl1v1(subevtdata_ptr data)
   memset (scalers, 0, sizeof(scalers) );
   memset (gl1p_scalers, 0, sizeof(gl1p_scalers) );
   is_decoded = 0;
+  GTM_AllBusyVector  = 0;
   GTM_BusyVector = 0;
   _broken = 0;
+  _newformat = 0;
+	
 }
   
 int oncsSub_idgl1v1::decode ()
@@ -27,12 +30,16 @@ int oncsSub_idgl1v1::decode ()
   is_decoded = 1;
   
   //we get 2000bytes= 500 words + 4 works header
-  if ( SubeventHdr->sub_length < 504  ||  SubeventHdr->sub_id != 14001)
+  if ( SubeventHdr->sub_length < 504 )
     {
       _broken = 1;
       return 1;
     }
 
+  if ( getHitFormat() == IDGL1V2)
+    {
+      _newformat = 1;
+    }
 
   unsigned short *buffer = ( unsigned short *)  &SubeventHdr->data;
 
@@ -54,6 +61,7 @@ int oncsSub_idgl1v1::decode ()
     }
   BCO |= buffer[i+3];
 
+
   // 7,8,9,10 are the bunch number
   BunchNumber = 0;
   i = 7;
@@ -68,20 +76,22 @@ int oncsSub_idgl1v1::decode ()
   //cout << "bunch number " << BunchNumber << endl;
 
 
-  // 11,12,13,14 are 0x12345678ab - let's check
-  i = 11;
-  tag = buffer[11];
-  tag<<=16;
-  tag |= buffer[12];
+  if ( _newformat)
+    {
 
-  // if ( tag != 0x1234567)
-  //   {
-  //     cout << endl << " wrong tag" << hex << "0x" << tag << dec << endl;
-  //   }
-
-  GTM_BusyVector = buffer[13];
-  GTM_BusyVector <<= 16;
-  GTM_BusyVector |= buffer[14];
+      GTM_AllBusyVector  = buffer[12];
+      GTM_BusyVector     = buffer[14];
+      
+    }
+  else
+    {
+  
+      GTM_AllBusyVector  = 0;
+      
+      GTM_BusyVector = buffer[13];
+      GTM_BusyVector <<= 16;
+      GTM_BusyVector |= buffer[14];
+    }
   
 
   TriggerInput = 0;
@@ -202,6 +212,11 @@ long long oncsSub_idgl1v1::lValue(const int i, const char *what)
       return TriggerInput;
     }
   
+  if ( strcmp(what,"GTMAllBusyVector") == 0)
+    {
+      return GTM_AllBusyVector;
+    }
+  
   if ( strcmp(what,"GTMBusyVector") == 0)
     {
       return GTM_BusyVector;
@@ -270,6 +285,10 @@ void oncsSub_idgl1v1::dump(std::ostream &os)
   os << "Live Vector:     " << "0x" << hex <<  lValue(0, "LiveVector") << dec << "   " << lValue(0, "LiveVector") << endl;
   os << "Scaled Vector:   " << "0x" << hex <<  lValue(0, "ScaledVector")  << dec << "   " << lValue(0, "ScaledVector") << endl;
   os << "GTM Busy Vector: " << "0x" << hex <<  lValue(0, "GTMBusyVector") << dec << "   " << lValue(0, "GTMBusyVector") << endl;
+  if ( _newformat)
+    {
+      os << "GTM All Busies:  " << "0x" << hex <<  lValue(0, "GTMAllBusyVector") << dec << "   " << lValue(0, "GTMAllBusyVector") << endl;
+    }
   os << "Bunch Number:    " << lValue(0, "BunchNumber") << endl << endl;
   os << "Trg #                  raw              live              scaled" << endl;
   os << "----------------------------------------------------------------" << endl;

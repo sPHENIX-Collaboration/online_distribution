@@ -318,6 +318,7 @@ Packet *oncsEvent::makePacket(PHDWORD *pp, const int hitFormat)
       break;
 
     case (IDGL1V1):
+    case (IDGL1V2):    // not a typo - v1 takes care of both
       return new
 	oncsSub_idgl1v1( sevt_ptr );
       break;
