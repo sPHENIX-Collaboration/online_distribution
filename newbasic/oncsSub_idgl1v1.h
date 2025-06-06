@@ -32,6 +32,7 @@ protected:
   unsigned long long TriggerVector;
   unsigned long long ScaledVector;
 
+  unsigned int GTM_AllBusyVector;
   unsigned int GTM_BusyVector;
       
   unsigned int packet_nr;
@@ -41,6 +42,7 @@ protected:
   unsigned int gl1p_scalers[3*16];
 
   int _broken;
+  int _newformat;
 
 
 };
