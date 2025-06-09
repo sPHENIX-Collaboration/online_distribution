@@ -796,7 +796,8 @@ int oncsSub_idtpcfeev5::find_header ( const unsigned int yy,  const std::vector<
       if (header_candidate[1] == MAGIC_KEY_0 && header_candidate[2] == MAGIC_KEY_1)
 	{
 	  // found it!
-            found = true;
+	// It doesn't help
+        //    found = true;
 	    //    coutfl << " found header skip value =  " << skip_amount << endl;
             break;
         }
