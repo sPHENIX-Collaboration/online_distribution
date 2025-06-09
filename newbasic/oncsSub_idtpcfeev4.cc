@@ -243,7 +243,7 @@ int oncsSub_idtpcfeev4::tpc_decode ()
 	  else
 	    {
 	      // capture the header so we can easier get the bit shift stuff
-	      unsigned short header[HEADER_LENGTH];
+	      unsigned short header[HEADER_LENGTH]={0,0,0,0,0,0,0};
 	      for ( int i = 0; i < HEADER_LENGTH; i++ ) header[i] = (fee_data[ifee][pos++]) ;
 
 	      sampa_waveform *sw = new sampa_waveform;

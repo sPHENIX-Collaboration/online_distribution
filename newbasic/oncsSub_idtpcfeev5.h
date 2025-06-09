@@ -57,7 +57,7 @@ protected:
   int find_header ( const unsigned int xx,  const std::vector<unsigned short> &orig);
   int decode_gtm_data(unsigned short gtm[16]);
   
-  int _broken;
+//  int _broken;
   unsigned long NR_VALIDFEE = 0;
   
   int _is_decoded{0};
