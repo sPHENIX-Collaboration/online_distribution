@@ -386,7 +386,6 @@ int oncsSub_idtpcfeev5::current_packet(unsigned short header[],int ifee,unsigned
 
   // now we add the actual waveform
   // unsigned short data_size = header[5] -1 ;
-  short data_size_counter = header[0]-HEADER_LENGTH;
   short actual_data_size = 0;
   int ich=0;
 
@@ -396,8 +395,6 @@ int oncsSub_idtpcfeev5::current_packet(unsigned short header[],int ifee,unsigned
       dc->nsamples[ich] = ((unsigned int)fee_data[ifee][pos])<<16 | ((unsigned int)fee_data[ifee][pos+1]);
       pos++; pos++;
 
-
-      data_size_counter -= 4;
       actual_data_size += 4;
     }
 
