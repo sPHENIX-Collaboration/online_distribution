@@ -403,11 +403,14 @@ int oncsSub_idtpcfeev5::current_packet(unsigned short header[],int ifee,unsigned
 
 
 //  cout<< "DC size "<< header[0]-HEADER_LENGTH-1 <<" "<<actual_data_size<<endl;
-  if(header[0]-HEADER_LENGTH-1 == actual_data_size){
+//  if(header[0]-HEADER_LENGTH-1 == actual_data_size){
+
+  if(header[0]-HEADER_LENGTH == actual_data_size){
 // cout <<header[0]-5<<", "<<actual_data_size-1<<endl; cout<<"Error size"<<endl;
 
 	      // we calculate the checksum here because "pos" is at the right place
-    unsigned short crc = crc16(ifee, startpos, header[0]-1);
+//    unsigned short crc = crc16(ifee, startpos, header[0]-1);
+    unsigned short crc = crc16(ifee, startpos, header[0]);
 	      
     dc->checksum = crc;
 

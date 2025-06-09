@@ -279,14 +279,14 @@ Packet *oncsEvent::makePacket(PHDWORD *pp, const int hitFormat)
 
     case (IDTPCFEEV4):
       return new
-//	oncsSub_idtpcfeev4( sevt_ptr );
-	oncsSub_idtpcfeev5( sevt_ptr );
+	oncsSub_idtpcfeev4( sevt_ptr );
+//	oncsSub_idtpcfeev5( sevt_ptr );
       break;
 
     case (IDTPCFEEV5):
       return new
-//	oncsSub_idtpcfeev4( sevt_ptr );
-	oncsSub_idtpcfeev5( sevt_ptr );
+	oncsSub_idtpcfeev4( sevt_ptr );
+//	oncsSub_idtpcfeev5( sevt_ptr );
       break;
 	    
     case (IDTPCFEEV6):
