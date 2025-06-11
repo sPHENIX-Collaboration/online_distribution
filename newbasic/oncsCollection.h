@@ -20,6 +20,7 @@
 #include "oncsSub_idtpcfeev2.h"
 #include "oncsSub_idtpcfeev3.h"
 #include "oncsSub_idtpcfeev4.h"
+#include "oncsSub_idtpcfeev5.h"
 #include "oncsSub_idinttv0.h"
 #include "oncsSub_iddreamv0.h"
 #include "oncsSub_idmvtxv1.h"

@@ -1,5 +1,5 @@
-#ifndef __ONCSSUB_IDTPCFEEV4_H__
-#define __ONCSSUB_IDTPCFEEV4_H__
+#ifndef __ONCSSUB_IDTPCFEEV5_H__
+#define __ONCSSUB_IDTPCFEEV5_H__
 
 #include "oncsSubevent.h"
 #include <vector>
@@ -10,14 +10,14 @@
 #include <limits>
 
 #ifndef __CINT__
-class WINDOWSEXPORT oncsSub_idtpcfeev4 : public  oncsSubevent_w2 {
+class WINDOWSEXPORT oncsSub_idtpcfeev5 : public  oncsSubevent_w2 {
 #else
-class  oncsSub_idtpcfeev4 : public  oncsSubevent_w2 {
+class  oncsSub_idtpcfeev5 : public  oncsSubevent_w2 {
 #endif
 
 public:
-  oncsSub_idtpcfeev4( subevtdata_ptr);
-  ~oncsSub_idtpcfeev4();
+  oncsSub_idtpcfeev5( subevtdata_ptr);
+  ~oncsSub_idtpcfeev5();
 
   //! SAMPA waveform interfaces
   int    iValue(const int ch, const int sample);
@@ -36,6 +36,7 @@ protected:
   static const unsigned short  MAGIC_KEY_0 {0xfe};
 //  static const unsigned short  MAGIC_KEY_1 = 0x00;
   static const unsigned short  MAGIC_KEY_1 {0xed};
+  static const unsigned short  MAGIC_KEY_2 {0xdcdc};
 
   static const unsigned short FEE_MAGIC_KEY {0xba00};
   static const unsigned short GTM_MAGIC_KEY {0xbb00};
@@ -79,6 +80,20 @@ protected:
     bool     parity_valid {false};
   };
 
+  struct digital_current {
+    unsigned short fee {std::numeric_limits<unsigned short>::max()};
+    unsigned short pkt_length {std::numeric_limits<unsigned short>::max()};
+    unsigned short channel {std::numeric_limits<unsigned short>::max()};
+    unsigned short sampa_max_channel {std::numeric_limits<unsigned short>::max()};
+    unsigned short sampa_address {std::numeric_limits<unsigned short>::max()};
+    unsigned int bx_timestamp {0};
+    unsigned int current[8];
+    unsigned int nsamples[8];
+    unsigned short checksum {std::numeric_limits<unsigned short>::max()};
+    unsigned short type {std::numeric_limits<unsigned short>::max()};
+    bool     valid {false};
+  };
+
   struct gtm_payload {
       unsigned short pkt_type;
       bool is_endat;
@@ -104,20 +119,36 @@ struct bco_compare {
     }
 };
 
+struct bco_dc_compare {
+    bool operator() (const digital_current *lhs, const digital_current *rhs) const
+    {
+      return  ( lhs->bx_timestamp <= rhs->bx_timestamp );
+    }
+};
 
   
   typedef std::multiset< sampa_waveform* , bco_compare> waveform_set;
+  typedef std::multiset< digital_current* , bco_dc_compare> current_set;
+
   //typedef waveform_set::iterator wf_iter;
   
   waveform_set waveforms;
+  current_set currentforms;
   //  waveform_set waveforms[MAX_FEECOUNT * MAX_CHANNELS];
 
   std::vector<sampa_waveform*> waveform_vector;
+  std::vector<digital_current*> current_vector;
   
   int cacheIterator(const int n);
+  int DCcacheIterator(const int n);
+
+  int normal_packet(unsigned short[],int,unsigned int,unsigned int);
+  int current_packet(unsigned short[],int,unsigned int,unsigned int);
   
   int _last_requested_element {-1}; // impossible value to mark "unused"
+  int _last_requested_dcelement {-1}; // impossible value to mark "unused"
   sampa_waveform* _last_requested_waveform {nullptr};
+  digital_current* _last_requested_currentform {nullptr};
   
   std::vector<unsigned short> fee_data[MAX_FEECOUNT];
 
@@ -126,4 +157,4 @@ struct bco_compare {
 };
 
  
-#endif /* __ONCSSUB_IDTPCFEEV4_H__ */
+#endif /* __ONCSSUB_IDTPCFEEV5_H__ */

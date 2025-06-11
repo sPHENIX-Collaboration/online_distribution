@@ -93,6 +93,7 @@
 #define IDTPCFEEV3     120
 #define IDTPCFEEV4     121
 #define IDTPCFEEV5     122
+#define IDTPCFEEV6     123
 
 #define IDGL1V0      140
 #define IDGL1V1      143

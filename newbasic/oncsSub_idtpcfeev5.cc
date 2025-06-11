@@ -1,4 +1,4 @@
-#include "oncsSub_idtpcfeev4.h"
+#include "oncsSub_idtpcfeev5.h"
 
 #include <string.h>
 #include <stdint.h>
@@ -8,12 +8,12 @@
 
 using namespace std;
 
-oncsSub_idtpcfeev4::oncsSub_idtpcfeev4(subevtdata_ptr data)
+oncsSub_idtpcfeev5::oncsSub_idtpcfeev5(subevtdata_ptr data)
   :oncsSubevent_w2 (data)
 {}
 
 
-oncsSub_idtpcfeev4::~oncsSub_idtpcfeev4()
+oncsSub_idtpcfeev5::~oncsSub_idtpcfeev5()
 {
 
   for (auto itr = waveforms.begin() ; itr  != waveforms.end() ; ++itr)
@@ -37,7 +37,7 @@ oncsSub_idtpcfeev4::~oncsSub_idtpcfeev4()
 
 }
 
-int oncsSub_idtpcfeev4::cacheIterator(const int n)
+int oncsSub_idtpcfeev5::cacheIterator(const int n)
 {
   if ( n < 0) return 0; // not ok
   if ( _last_requested_element == n) return 1; // say "ok"
@@ -56,7 +56,26 @@ int oncsSub_idtpcfeev4::cacheIterator(const int n)
   return 1;
 }
 
-int oncsSub_idtpcfeev4::decode_gtm_data(unsigned short dat[16])
+int oncsSub_idtpcfeev5::DCcacheIterator(const int n)
+{
+  if ( n < 0) return 0; // not ok
+  if ( _last_requested_dcelement == n) return 1; // say "ok"
+
+  unsigned i = n;
+  if  ( i >= current_vector.size() )
+    {
+      _last_requested_dcelement = -1;
+      _last_requested_currentform = 0;
+      return 0;
+    }
+
+  _last_requested_dcelement = n;
+  _last_requested_currentform = current_vector[n];  
+
+  return 1;
+}
+
+int oncsSub_idtpcfeev5::decode_gtm_data(unsigned short dat[16])
 {
     unsigned char *gtm = (unsigned char *)dat;
     gtm_payload *payload = new gtm_payload;
@@ -101,7 +120,7 @@ int oncsSub_idtpcfeev4::decode_gtm_data(unsigned short dat[16])
     return 0;
 }
 
-int oncsSub_idtpcfeev4::tpc_gtm_decode()
+int oncsSub_idtpcfeev5::tpc_gtm_decode()
 {
 
   if (_is_gtm_decoded ) return 0;
@@ -161,7 +180,7 @@ int oncsSub_idtpcfeev4::tpc_gtm_decode()
   return 0;
 }
 
-int oncsSub_idtpcfeev4::tpc_decode ()
+int oncsSub_idtpcfeev5::tpc_decode ()
 {
 
   if (_is_decoded ) return 0;
@@ -246,84 +265,12 @@ int oncsSub_idtpcfeev4::tpc_decode ()
 	      unsigned short header[HEADER_LENGTH]={0,0,0,0,0,0,0};
 	      for ( int i = 0; i < HEADER_LENGTH; i++ ) header[i] = (fee_data[ifee][pos++]) ;
 
-	      sampa_waveform *sw = new sampa_waveform;
-
-	      sw->fee           = ifee;
-	      sw->pkt_length    = header[0]+1; // this is indeed the number of 10-bit words + 5 in this packet
-	      sw->adc_length    = header[0]-HEADER_LENGTH; // this is indeed the number of 10-bit words in this packet
-	      sw->data_parity   = header[4] >> 9;
-	      sw->sampa_address = (header[4] >> 5) & 0xf;
-	      sw->sampa_channel = header[4] & 0x1f;
-	      sw->channel       = header[4] & 0x1ff;
-	      sw->type          = (header[3] >>7) & 0x7;
-	      sw->user_word     = header[3] & 0x7f;
-	      sw->bx_timestamp  = ((header[6] & 0x3ff) << 10) | (header[5] & 0x3ff);
-
-	      // now we add the actual waveform
-	     // unsigned short data_size = header[5] -1 ;
-	      short data_size_counter = header[0]-HEADER_LENGTH;
-
-	      short actual_data_size = 0;
-	     //  coutfl << " Fee: " << ifee << " Sampa " << sw->sampa_address
-	     //  	 << " sampa channel: " << sw->sampa_channel
-	     //  	 << " channel: " << sw->channel
-	     //  	 << "  waveform length: " << data_size  << endl;
-
-	     // for (int i = 0 ; i < data_size ; i++)
-	      // First fill 65000 for all time samples
-	      sw->waveform.resize(1024);
-	      fill(sw->waveform.begin(), sw->waveform.end(), 65000);
-	      // Format is (N sample) (start time), (1st sample)... (Nth sample)
-	      //for (int i = 0 ; i < header[0]-5 ; i++)
-	      while(data_size_counter>0)
-		{
-		  int nsamp = fee_data[ifee][pos++];
-		  int start_t = fee_data[ifee][pos++];
-
-		  data_size_counter-=2;
-
-                  actual_data_size += nsamp;
-                  actual_data_size += 2;
-
-// We decided to suppress errors (May 13, 2024)
-//		  if(nsamp>data_size_counter){ cout<<"nsamp: "<<nsamp<<", size: "<<data_size_counter<<", format error"<<endl; break;}
-
-		  for (int j=0; j<nsamp;j++){
-
-          if (pos>= fee_data[ifee].size())
-          {
-            // std::cout<<__PRETTY_FUNCTION__<<" : warning - sampa data wavelet loss at the end of fee_data for fee "<<ifee<<std::endl;
-            break;
-          }
-                      if(start_t+j<1024){ sw->waveform[start_t+j]= fee_data[ifee][pos++]; }
-                      else { pos++; }
-//                   cout<<"data: "<< sw->waveform[start_t+j]<<endl;
-		      data_size_counter--;
-		    }
-          if (pos>= fee_data[ifee].size())
-          {
-            continue;
-          }
-		}
-
-	      //
-	      // If the size defined by SAMPA is consitent with what the header says, we keep that data.
-	      //
-              if(header[0]-HEADER_LENGTH == actual_data_size){
-// cout <<header[0]-5<<", "<<actual_data_size-1<<endl; cout<<"Error size"<<endl;
-
-	      // we calculate the checksum here because "pos" is at the right place
-  	          unsigned short crc = crc16(ifee, startpos, header[0]);
-  	          unsigned short parity = check_data_parity(ifee, startpos+HEADER_LENGTH, header[0]-HEADER_LENGTH);
-	      
-	          sw->checksum = crc;
-
-	          sw->valid = ( crc == fee_data[ifee][pos]);
-    	          sw->parity_valid = ((!parity) == sw->data_parity); 
-
-	          waveforms.insert(sw);
-	       }
-               else{ delete sw; }
+	      if(header[3]==MAGIC_KEY_2){
+                  current_packet(header,ifee,startpos,pos);
+              }
+              else{
+                  normal_packet(header,ifee,startpos,pos);
+              }
 	    }
 	}
     }
@@ -331,11 +278,151 @@ int oncsSub_idtpcfeev4::tpc_decode ()
   waveform_vector.resize(waveforms.size());
   std::copy(waveforms.begin(),waveforms.end(),waveform_vector.begin());
   waveforms.clear();
+
+  current_vector.resize(currentforms.size());
+  std::copy(currentforms.begin(),currentforms.end(),current_vector.begin());
+  currentforms.clear();
   
   return 0;
 }
 
-long long oncsSub_idtpcfeev4::lValue(const int n, const char *what)
+
+int oncsSub_idtpcfeev5::normal_packet(unsigned short header[],int ifee,unsigned int startpos,unsigned int pos)
+{
+  sampa_waveform *sw = new sampa_waveform;
+
+  sw->fee           = ifee;
+  sw->pkt_length    = header[0]+1; // this is indeed the number of 10-bit words + 5 in this packet
+  sw->adc_length    = header[0]-HEADER_LENGTH; // this is indeed the number of 10-bit words in this packet
+  sw->data_parity   = header[4] >> 9;
+  sw->sampa_address = (header[4] >> 5) & 0xf;
+  sw->sampa_channel = header[4] & 0x1f;
+  sw->channel       = header[4] & 0x1ff;
+  sw->type          = (header[3] >>7) & 0x7;
+  sw->user_word     = header[3] & 0x7f;
+  sw->bx_timestamp  = ((header[6] & 0x3ff) << 10) | (header[5] & 0x3ff);
+
+  // now we add the actual waveform
+  // unsigned short data_size = header[5] -1 ;
+  short data_size_counter = header[0]-HEADER_LENGTH;
+
+  short actual_data_size = 0;
+	     //  coutfl << " Fee: " << ifee << " Sampa " << sw->sampa_address
+	     //  	 << " sampa channel: " << sw->sampa_channel
+	     //  	 << " channel: " << sw->channel
+	     //  	 << "  waveform length: " << data_size  << endl;
+
+  // for (int i = 0 ; i < data_size ; i++)
+  // First fill 65000 for all time samples
+ 
+  sw->waveform.resize(1024);
+  fill(sw->waveform.begin(), sw->waveform.end(), 65000);
+ 
+  // Format is (N sample) (start time), (1st sample)... (Nth sample)
+  //for (int i = 0 ; i < header[0]-5 ; i++)
+
+  while(data_size_counter>0)
+    {
+      int nsamp = fee_data[ifee][pos++];
+      int start_t = fee_data[ifee][pos++];
+
+      data_size_counter-=2;
+
+      actual_data_size += nsamp;
+      actual_data_size += 2;
+
+      for (int j=0; j<nsamp;j++){
+          if (pos>= fee_data[ifee].size())
+          {
+            // std::cout<<__PRETTY_FUNCTION__<<" : warning - sampa data wavelet loss at the end of fee_data for fee "<<ifee<<std::endl;
+            break;
+          }
+          if(start_t+j<1024){ sw->waveform[start_t+j]= fee_data[ifee][pos++]; }
+          else { pos++; }
+//     cout<<"data: "<< sw->waveform[start_t+j]<<endl;
+          data_size_counter--;
+      }
+      if (pos>= fee_data[ifee].size())
+        {
+          continue;
+        }
+    }
+
+// If the size defined by SAMPA is consitent with what the header says, we keep that data.
+//
+  if(header[0]-HEADER_LENGTH == actual_data_size){
+// cout <<header[0]-5<<", "<<actual_data_size-1<<endl; cout<<"Error size"<<endl;
+
+	      // we calculate the checksum here because "pos" is at the right place
+    unsigned short crc = crc16(ifee, startpos, header[0]);
+    unsigned short parity = check_data_parity(ifee, startpos+HEADER_LENGTH, header[0]-HEADER_LENGTH);
+	      
+    sw->checksum = crc;
+
+    sw->valid = ( crc == fee_data[ifee][pos]);
+    sw->parity_valid = ((!parity) == sw->data_parity); 
+
+    waveforms.insert(sw);
+  }
+  else{ delete sw; }
+
+  return 0;
+}
+
+
+int oncsSub_idtpcfeev5::current_packet(unsigned short header[],int ifee,unsigned int startpos, unsigned int pos)
+{
+  digital_current *dc = new digital_current;
+
+  dc->fee           = ifee;
+  dc->pkt_length    = header[0]+1;
+  dc->sampa_address = (header[4] >> 5) & 0xf;
+  dc->sampa_max_channel = header[4] & 0x1f;
+  dc->channel       = header[4] & 0x1ff;
+  dc->type          = header[3];
+//  dc->bx_timestamp  = ((header[5] & 0xffff) << 4) | (header[6] & 0xf);
+  dc->bx_timestamp  = ((header[6] & 0x3ff) << 10) | (header[5] & 0x3ff);
+//cout <<dc->fee<<" "<<hex<<dc->bx_timestamp<<dec<<endl;
+
+  // now we add the actual waveform
+  // unsigned short data_size = header[5] -1 ;
+  short actual_data_size = 0;
+  int ich=0;
+
+  for(ich = 0; ich<8; ich++){
+      dc->current[ich] = ((unsigned int)fee_data[ifee][pos])<<16 | ((unsigned int)fee_data[ifee][pos+1]);
+      pos++; pos++;
+      dc->nsamples[ich] = ((unsigned int)fee_data[ifee][pos])<<16 | ((unsigned int)fee_data[ifee][pos+1]);
+      pos++; pos++;
+
+      actual_data_size += 4;
+    }
+
+
+//  cout<< "DC size "<< header[0]-HEADER_LENGTH-1 <<" "<<actual_data_size<<endl;
+//  if(header[0]-HEADER_LENGTH-1 == actual_data_size){
+
+  if(header[0]-HEADER_LENGTH == actual_data_size){
+// cout <<header[0]-5<<", "<<actual_data_size-1<<endl; cout<<"Error size"<<endl;
+
+	      // we calculate the checksum here because "pos" is at the right place
+//    unsigned short crc = crc16(ifee, startpos, header[0]-1);
+    unsigned short crc = crc16(ifee, startpos, header[0]);
+	      
+    dc->checksum = crc;
+
+//    cout<< crc<<" "<< fee_data[ifee][pos]<<endl;
+    dc->valid = ( crc == fee_data[ifee][pos]);
+
+    currentforms.insert(dc);
+  }
+  else{ delete dc; }
+
+  return 0;
+}
+
+
+long long oncsSub_idtpcfeev5::lValue(const int n, const char *what)
 {
   tpc_gtm_decode(); // this only decodes the gtm
 
@@ -435,15 +522,30 @@ long long oncsSub_idtpcfeev4::lValue(const int n, const char *what)
   return 0;
 }
 
-int oncsSub_idtpcfeev4::iValue(const int n, const int sample)
+int oncsSub_idtpcfeev5::iValue(const int n, const int sample)
 {
   if ( n < 0) return 0;
   
   tpc_decode();
 
+  unsigned int m = sample; 
+
+  if(m>=1030 && m<=1037){
+    if ( DCcacheIterator(n) )
+      {
+        return (_last_requested_currentform)->current[m-1030];
+      }
+    }
+  else if(m>=1040 && m<=1047){
+    if ( DCcacheIterator(n) )
+      {
+        return (_last_requested_currentform)->nsamples[m-1040];
+      }
+    }
+
+  
   if ( cacheIterator(n) )
     {
-      unsigned int m = sample; 
       if ( m >= (_last_requested_waveform)->waveform.size() ) return 0;
       return (_last_requested_waveform)->waveform[m];
     }
@@ -451,10 +553,7 @@ int oncsSub_idtpcfeev4::iValue(const int n, const int sample)
 }
 
 
-
-  
-
-int oncsSub_idtpcfeev4::iValue(const int n, const char *what)
+int oncsSub_idtpcfeev5::iValue(const int n, const char *what)
 {
 
   tpc_decode();
@@ -580,12 +679,92 @@ int oncsSub_idtpcfeev4::iValue(const int n, const char *what)
       return 0;
     }
 
+  // From Here, digital current
+
+  else if ( strcmp(what,"NR_DC") == 0 )  // the number of datasets
+  {
+    return current_vector.size();
+  }
+
+  else if ( strcmp(what,"FEE_DC") == 0 )
+    {
+      if ( DCcacheIterator(n) )
+	{
+	  return (int) (_last_requested_currentform)->fee;
+	}
+      return 0;
+    }
+  
+  else if ( strcmp(what,"SAMPAADDRESS_DC") == 0 )
+    {
+      if ( DCcacheIterator(n) )
+	{
+	  return (int) (_last_requested_currentform)->sampa_address;
+	}
+      return 0;
+    }
+  
+  else if ( strcmp(what,"SAMPAMAXCHANNEL_DC") == 0 )
+    {
+      if ( DCcacheIterator(n) )
+	{
+	  return (int) (_last_requested_currentform)->sampa_max_channel;
+	}
+      return 0;
+    }
+  
+  else if ( strcmp(what,"CHANNEL_DC") == 0 )
+    {
+      if ( DCcacheIterator(n) )
+	{
+	  return (int) (_last_requested_currentform)->channel;
+	}
+      return 0;
+    }
+  
+  else if ( strcmp(what,"BCO_DC") == 0 )
+    {
+      if ( DCcacheIterator(n) )
+	{
+	  return (int) (_last_requested_currentform)->bx_timestamp;
+	}
+      return 0;
+    }
+
+  else if ( strcmp(what,"CHECKSUM_DC") == 0 )
+    {
+      if ( DCcacheIterator(n) )
+	{
+	  return (int) (_last_requested_currentform)->checksum;
+	}
+      return 0;
+    }
+
+  else if ( strcmp(what,"CHECKSUMERROR_DC") == 0 )
+    {
+      if ( DCcacheIterator(n) )
+	{
+	  if ( (_last_requested_currentform)->valid ) return 0; 
+	  return 1;
+	}
+      return 0;
+    }
+
+  else if ( strcmp(what,"TYPE_DC") == 0 )
+    {
+      if ( DCcacheIterator(n) )
+	{
+	  return (int) (_last_requested_currentform)->type;
+	}
+      return 0;
+    }
+
   return 0;
   
 }
  
-//int oncsSub_idtpcfeev4::find_header ( std::vector<unsigned short>::const_iterator &itr,  const std::vector<unsigned short> &orig)
-int oncsSub_idtpcfeev4::find_header ( const unsigned int yy,  const std::vector<unsigned short> &orig)
+//int oncsSub_idtpcfeev5::find_header ( std::vector<unsigned short>::const_iterator &itr,  const std::vector<unsigned short> &orig)
+int oncsSub_idtpcfeev5::find_header ( const unsigned int yy,  const std::vector<unsigned short> &orig)
 {
   bool found = false;
   unsigned int pos = yy;
@@ -617,8 +796,8 @@ int oncsSub_idtpcfeev4::find_header ( const unsigned int yy,  const std::vector<
       if (header_candidate[1] == MAGIC_KEY_0 && header_candidate[2] == MAGIC_KEY_1)
 	{
 	  // found it!
-//            It doesn't help
-//            found = true;
+	// It doesn't help
+        //    found = true;
 	    //    coutfl << " found header skip value =  " << skip_amount << endl;
             break;
         }
@@ -637,7 +816,7 @@ int oncsSub_idtpcfeev4::find_header ( const unsigned int yy,  const std::vector<
   return skip_amount;
 }
  
-void  oncsSub_idtpcfeev4::dump ( OSTREAM& os )
+void  oncsSub_idtpcfeev5::dump ( OSTREAM& os )
 {
   tpc_decode();
   identify(os);
@@ -696,11 +875,40 @@ void  oncsSub_idtpcfeev4::dump ( OSTREAM& os )
       os << endl;
   
     }
+
+  os << " number of digital current " << iValue(0, "NR_DC") << endl;
+    
+  for ( int i = 0; i < iValue(0, "NR_DC") ; i++) // go through the datasets
+    {
+      os << "  BCO   CRC_ERR   DATA_TYPE" << endl;
+
+      os <<  " 0x" << setw(5) << hex << iValue(i, "BCO_DC") << dec
+	//	 << " 0x" << setw(4) << hex << iValue(i, "CHECKSUM") << dec
+	 <<  setw(4) << iValue(i, "CHECKSUMERROR_DC")
+	 <<  setw(12) << hex<<iValue(i, "TYPE_DC")<<dec
+	 << endl;
+      
+//      os << " (DC0) (Nsamples0) (DC1) (Nsamples1).... "<<endl;
+
+      os << "  FEE   Channel   SampaChan     DC       Nsample" << endl;
+      for (int j = 0; j  < 8 ; j ++)
+	{
+          os << setw(5) << iValue(i, "FEE_DC")  << " "
+	     << setw(7) << iValue(i, "CHANNEL_DC")-7+j  << " "
+	     << setw(9) << iValue(i, "SAMPAMAXCHANNEL_DC")-7+j  << " "
+	     << setw(12) << iValue(i,j+1030)  << " "
+	     << setw(9) << iValue(i,j+1040)  << " ";
+	os << endl;
+        }
+
+      os << endl;
+  
+    }
 }
 
 
 
-unsigned short oncsSub_idtpcfeev4::reverseBits(const unsigned short x) const
+unsigned short oncsSub_idtpcfeev5::reverseBits(const unsigned short x) const
 {
   unsigned short n = x;  
   n = ((n >> 1) & 0x55555555) | ((n << 1) & 0xaaaaaaaa);
@@ -713,7 +921,7 @@ unsigned short oncsSub_idtpcfeev4::reverseBits(const unsigned short x) const
 
 
 
-unsigned short oncsSub_idtpcfeev4::crc16(const unsigned int fee, const unsigned int index, const int  l) const 
+unsigned short oncsSub_idtpcfeev5::crc16(const unsigned int fee, const unsigned int index, const int  l) const 
 {
 
   unsigned short crc = 0xffff;
@@ -732,7 +940,7 @@ unsigned short oncsSub_idtpcfeev4::crc16(const unsigned int fee, const unsigned 
   return crc;
 }
 
-uint16_t oncsSub_idtpcfeev4::check_data_parity(const unsigned int fee, const unsigned int index, const int  l) const 
+uint16_t oncsSub_idtpcfeev5::check_data_parity(const unsigned int fee, const unsigned int index, const int  l) const 
 {
     uint16_t data_parity = 1;
     for (uint16_t i = 0; i < l; i++) {
