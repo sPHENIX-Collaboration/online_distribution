@@ -23,6 +23,9 @@ public:
   int    iValue(const int ch, const int sample);
   int    iValue(const int ,const char * what);
 
+  //! FEE digital current interfaces
+  int    iValue(const int, const int, const char *what);
+
   //! Expose the Level 1 trigger and endat taggers
   long long  lValue(const int channel, const char *what) ;
 
