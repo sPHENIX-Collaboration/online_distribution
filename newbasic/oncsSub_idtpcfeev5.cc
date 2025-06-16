@@ -28,6 +28,12 @@ oncsSub_idtpcfeev5::~oncsSub_idtpcfeev5()
     }
   waveform_vector.clear();
   
+  for (auto itr = current_vector.begin() ; itr  != current_vector.end() ; ++itr)
+    {
+      delete (*itr);
+    }
+  current_vector.clear();
+  
   
   for (auto itr = gtm_data.begin() ; itr  != gtm_data.end() ; ++itr)
     {
@@ -552,6 +558,33 @@ int oncsSub_idtpcfeev5::iValue(const int n, const int sample)
   return 0;
 }
 
+int oncsSub_idtpcfeev5::iValue(const int n, const int sample, const char *what)
+{
+  if ( n < 0) return 0;
+  
+  tpc_decode();
+
+  unsigned int m = sample; 
+
+  if ( strcmp(what,"DC_VAL") == 0 )
+    {
+    if ( DCcacheIterator(n) )
+      {
+        return (_last_requested_currentform)->current[m];
+      }
+    }
+  else if ( strcmp(what,"DC_NSAMPLES") == 0 )
+    {
+    if ( DCcacheIterator(n) )
+      {
+        return (_last_requested_currentform)->nsamples[m];
+      }
+    }
+  else return -1;
+  
+  return 0;
+}
+
 
 int oncsSub_idtpcfeev5::iValue(const int n, const char *what)
 {
@@ -896,8 +929,10 @@ void  oncsSub_idtpcfeev5::dump ( OSTREAM& os )
           os << setw(5) << iValue(i, "FEE_DC")  << " "
 	     << setw(7) << iValue(i, "CHANNEL_DC")-7+j  << " "
 	     << setw(9) << iValue(i, "SAMPAMAXCHANNEL_DC")-7+j  << " "
-	     << setw(12) << iValue(i,j+1030)  << " "
-	     << setw(9) << iValue(i,j+1040)  << " ";
+//	     << setw(12) << iValue(i,j+1030)  << " "
+//	     << setw(9) << iValue(i,j+1040)  << " ";
+	     << setw(12) << iValue(i,j,"DC_VAL")  << " "
+	     << setw(9) << iValue(i,j,"DC_NSAMPLES")  << " ";
 	os << endl;
         }
 
