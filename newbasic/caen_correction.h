@@ -28,7 +28,8 @@ public:
  protected:
   Packet *_p;
   int _broken;
-
+  int _samples;
+  
   int base[1024][4*9];
   float timevec[1024][4];
 

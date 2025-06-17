@@ -13,7 +13,8 @@ caen_correction::caen_correction ( const char *calibdata)
   int nsample[9];
 
   _broken = 0;
-
+  _samples = 1024;
+  
   int index;
   ifstream IN;
 
@@ -78,11 +79,12 @@ int caen_correction::init (Packet *p)
   for ( chip = 0; chip < 4; chip++)
     {
 
+      _samples = p->iValue(chip,"SAMPLES");
       int cell = p->iValue(chip,"INDEXCELL");
 
       //correct time for each chip
       idx = cell;
-      for ( i = 0; i < 1024; i++)
+      for ( i = 0; i < _samples; i++)
 	{
 	  current_time[i][chip] = timevec[idx][chip];
 	  idx++;
@@ -93,7 +95,7 @@ int caen_correction::init (Packet *p)
       for ( c = 0; c < 8; c++)  
 	{
 	  idx = cell;
-	  for ( i = 0; i < 1024; i++)
+	  for ( i = 0; i < _samples; i++)
 	    {
 	      current_wave[i][chip*8+c] = p->iValue(i,chip*8+c) - base[idx][chip*9+c];
 	      idx++;
@@ -104,7 +106,7 @@ int caen_correction::init (Packet *p)
       // Trigger cells;
       {
 	idx = cell;
-	for ( i = 0; i < 1024; i++)
+	for ( i = 0; i < _samples; i++)
 	  {
 	    current_wave[i][32+chip] = p->iValue(i,32+chip) - base[idx][chip*9+8];
 	    idx++;
@@ -117,8 +119,7 @@ int caen_correction::init (Packet *p)
 	  
 float caen_correction::caen_corrected(const int sample, const int channel) const
 {
-  //if ( sample < 0 || sample >1023 || channel < 0 || channel > 31) return 0;
-  if ( sample < 0 || sample >1023 || channel < 0 || channel > 35) return 0;
+  if ( sample < 0 || sample >=_samples || channel < 0 || channel > 35) return 0;
   return current_wave[sample][channel];
 }
 
