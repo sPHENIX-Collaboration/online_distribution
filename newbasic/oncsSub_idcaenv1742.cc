@@ -27,7 +27,7 @@ int *oncsSub_idcaenv1742::decode ( int *nwout)
   int *p;
 
 
-  int *SubeventData = &SubeventHdr->data;
+  unsigned int *SubeventData = (unsigned int *) &SubeventHdr->data;
 
 
   // the first word must have  0xa in the MSB, and
@@ -84,7 +84,7 @@ int *oncsSub_idcaenv1742::decode ( int *nwout)
 
       if  ( (group_mask >> group_nr) &1) // we have that group present
 	{
-	  int *groupdata = &(SubeventData[group_offset]); // first group
+	  unsigned int *groupdata = &(SubeventData[group_offset]); // first group
 	  tr_present[group_nr] = (groupdata[0] >> 12) & 1;
 	  index_cell[group_nr] = (groupdata[0] >> 20) & 0x3ff;
 
@@ -135,6 +135,18 @@ int *oncsSub_idcaenv1742::decode ( int *nwout)
 	  group_offset += pos + 1;
 	  
 	}
+    }
+
+  // now see if we have an extended trigger time setting
+  if ( GroupTriggerTime[0] != GroupTriggerTime[1])
+    {
+      GroupTriggerTime[0] |= ( GroupTriggerTime[1] << 30);
+      GroupTriggerTime[1] = 0;
+    }
+  if ( GroupTriggerTime[2] != GroupTriggerTime[3])
+    {
+      GroupTriggerTime[2] |= ( GroupTriggerTime[3] << 30);
+      GroupTriggerTime[3] = 0;
     }
   
   *nwout = samples*8 *4;
@@ -257,16 +269,30 @@ int oncsSub_idcaenv1742::iValue(const int n,const char *what)
     return EvtTimeTag;
   }
 
+  // if ( strcmp(what,"GROUPTRIGGERTIME") == 0 )
+  // {
+  //   if ( n <0 || n >=4) return 0;
+  //   return GroupTriggerTime[n];
+  // }
+
+
+  return 0;
+
+}
+
+long long oncsSub_idcaenv1742::lValue(const int n, const char *what)
+{
+  if ( decoded_data1 == 0 ) decoded_data1 = decode(&data1_length);
+  
   if ( strcmp(what,"GROUPTRIGGERTIME") == 0 )
   {
     if ( n <0 || n >=4) return 0;
     return GroupTriggerTime[n];
   }
 
-
   return 0;
-
 }
+
 
 
 void  oncsSub_idcaenv1742::dump ( OSTREAM& os )
@@ -325,7 +351,7 @@ void  oncsSub_idcaenv1742::dump ( OSTREAM& os )
   os << "Group Trigger time       ";
   for ( i = 0; i < 4; i++)
     {
-      os<<  std::setw(10) << iValue(i, "GROUPTRIGGERTIME") << "  ";
+      os<<  std::setw(10) << lValue(i, "GROUPTRIGGERTIME") << "  ";
     }
   os << std::endl;
 
