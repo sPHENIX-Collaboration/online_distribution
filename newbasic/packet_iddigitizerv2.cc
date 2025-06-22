@@ -329,7 +329,7 @@ void  Packet_iddigitizerv2::dump ( OSTREAM& os )
   identify(os);
 
   os << "Evt Nr:      " << iValue(0,"EVTNR") << std::endl;
-  os << "Clock:       " << iValue(0,"CLOCK") << std::endl;
+  os << "Clock:       0x" << std::hex << iValue(0,"CLOCK") << std::dec << std::endl;
   os << "Nr Modules:  " << iValue(0,"NRMODULES") << std::endl;
   os << "Channels:    " << iValue(0,"CHANNELS") << std::endl;
   os << "Samples:     " << iValue(0,"SAMPLES") << std::endl;
@@ -344,8 +344,8 @@ void  Packet_iddigitizerv2::dump ( OSTREAM& os )
   for ( int i = 0; i < iValue(0,"NRMODULES"); i++)  os << setw(8) << iValue(i,"FEMEVTNR");
   os << std::endl;
 
-  os << "FEM Clock:   ";
-  for ( int i = 0; i < iValue(0,"NRMODULES"); i++)  os << setw(8) << iValue(i,"FEMCLOCK");
+  os << "FEM Clock:        ";
+  for ( int i = 0; i < iValue(0,"NRMODULES"); i++)  os << std::hex << setw(4) << "0x" << iValue(i,"FEMCLOCK") << std::dec;
   os << std::endl;
 
   os << "Even chksum: 0x" << hex << iValue(0,"EVENCHECKSUM")  << "   calculated:  0x" <<  iValue(0,"CALCEVENCHECKSUM");
