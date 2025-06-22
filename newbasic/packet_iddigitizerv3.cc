@@ -447,7 +447,7 @@ void  Packet_iddigitizerv3::dump ( OSTREAM& os )
     }
   
   os << "Evt Nr:      " << lValue(0,"EVTNR") << std::endl;
-  os << "Clock:       " << lValue(0,"CLOCK") << std::endl;
+  os << "Clock:       0x" << std::hex << lValue(0,"CLOCK") << std::dec << std::endl;
   os << "Nr Modules:  " << iValue(0,"NRMODULES") << std::endl;
   os << "Channels:    " << iValue(0,"CHANNELS") << std::endl;
   os << "Samples:     " << iValue(0,"SAMPLES") << std::endl;
@@ -462,8 +462,8 @@ void  Packet_iddigitizerv3::dump ( OSTREAM& os )
   for ( int i = 0; i < iValue(0,"NRMODULES"); i++)  os << setw(8) << iValue(i,"FEMEVTNR");
   os << std::endl;
 
-  os << "FEM Clock:   ";
-  for ( int i = 0; i < iValue(0,"NRMODULES"); i++)  os << setw(8) << iValue(i,"FEMCLOCK");
+  os << "FEM Clock:          ";
+  for ( int i = 0; i < iValue(0,"NRMODULES"); i++)  os << "0x" << std::hex << setw(4) << iValue(i,"FEMCLOCK") << "  " << std::dec;
   os << std::endl;
 
   char oldFill=os.fill('0');
