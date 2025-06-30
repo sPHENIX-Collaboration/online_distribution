@@ -60,6 +60,7 @@ void exithelp()
   cout << std::endl;
   cout << "  List of options: " << std::endl;
   cout << " -d <number> depth of buffer" << std::endl;
+  cout << " -e <event1,event2> buffer from event1-event2 (eg for testing on 1st N events of a run)" << std::endl;
   cout << " -f (stream is a file)" << std::endl;
   cout << " -T (stream is a test stream)" << std::endl;
   cout << " -r (stream is a rcdaq monitoring stream)" << std::endl;
@@ -78,6 +79,8 @@ void exithelp()
 }
 
 unsigned int depth = 1000;
+int evt1 = -1;
+int evt2 = -1;
 int go_on = 1;
 int identify = 0;
 int verbose = 0;
@@ -107,6 +110,10 @@ void * EventLoop( void *arg)
 	  return 0;
 	  
 	}
+      if ( evt1>0 && (e->getEvtSequence()<evt1 || e->getEvtSequence()>evt2) )
+        {
+          continue;
+        }
       e->convert();
 
       pthread_mutex_lock( &MapSem);
@@ -178,11 +185,17 @@ main(int argc, char *argv[])
 
   pthread_mutex_init( &MapSem, 0);
 
-  while ((c = getopt(argc, argv, "d:s:c:ifTrOLxvh")) != EOF)
+  while ((c = getopt(argc, argv, "d:e:s:c:ifTrOLxvh")) != EOF)
     switch (c) 
       {
       case 'd':
 	if ( !sscanf(optarg, "%d", &depth) ) exitmsg();
+	break;
+
+      case 'e':
+	if ( !sscanf(optarg, "%d,%d", &evt1, &evt2) ) exitmsg();
+        depth = evt2 - evt1 + 1;
+        cout << "Buffering only events from " << evt1 << " to " << evt2 << endl;
 	break;
 
       case 's':
