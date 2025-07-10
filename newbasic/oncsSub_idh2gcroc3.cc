@@ -85,6 +85,8 @@ int oncsSub_idh2gcroc3::decode_line( unsigned int d[10])
       if ( group) group_offset = 36;
 
       int calib;
+
+      unsigned int val;
       
       switch ( line_number)
 	{
@@ -94,35 +96,39 @@ int oncsSub_idh2gcroc3::decode_line( unsigned int d[10])
 	  
 	  c = 0;
 	  o = 4;
-	  
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  //	  cout << chip_offset + group_offset + c -1 << "  " << _sample->ADC[chip_offset + group_offset + c -1] << endl;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  //cout << chip_offset + group_offset + c -1 << "  " << _sample->ADC[chip_offset + group_offset + c -1] << endl;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  //cout << chip_offset + group_offset + c -1 << "  " << _sample->ADC[chip_offset + group_offset + c -1] << endl;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  //cout << chip_offset + group_offset + c -1 << "  " << _sample->ADC[chip_offset + group_offset + c -1] << endl;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  //cout << chip_offset + group_offset + c -1 << "  " << _sample->ADC[chip_offset + group_offset + c -1] << endl;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  //cout << chip_offset + group_offset + c -1 << "  " << _sample->ADC[chip_offset + group_offset + c -1] << endl;
-	  
-	  
+
+	  // 6 values in line "0"
+	  for ( int j = 0; j < 6; j++)
+	    {
+	      val = u4swap(d[o]);
+	      _sample->ADC[chip_offset + group_offset + c] = (val >> 20) & 0x3ff;
+	      _sample->tot[chip_offset + group_offset + c] = (val >> 10) & 0x3ff;
+	      _sample->toa[chip_offset + group_offset + c] = val & 0x3ff;
+	      // coutfl << hex << "Value: 0x" << val << dec << "  ADC " << _sample->ADC[chip_offset + group_offset + c]
+	      // 	     << " TOT " << _sample->tot[chip_offset + group_offset + c]
+	      // 	     << " TOA " << _sample->toa[chip_offset + group_offset + c]
+	      // 	     << endl;
+	      o++;
+	      c++;
+	    }
+
 	  break; 
 	  
 	case 1:
 	  c = 6;
 	  o = 2;
 	  
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
+
+	  // 8 values in line "1"
+	  for ( int j = 0; j < 8; j++)
+	    {
+	      val = u4swap(d[o]);
+	      _sample->ADC[chip_offset + group_offset + c] = (val >> 20) & 0x3ff;
+	      _sample->tot[chip_offset + group_offset + c] = (val >> 10) & 0x3ff;
+	      _sample->toa[chip_offset + group_offset + c] = val & 0x3ff;
+	      o++;
+	      c++;
+	    }
 	  
 	  break; 
 	  
@@ -130,46 +136,67 @@ int oncsSub_idh2gcroc3::decode_line( unsigned int d[10])
 	  c = 14;
 	  o = 2;
 	  
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  
+	  // 3 values in line "2"
+	  for ( int j = 0; j < 3; j++)
+	    {
+	      val = u4swap(d[o]);
+	      _sample->ADC[chip_offset + group_offset + c] = (val >> 20) & 0x3ff;
+	      _sample->tot[chip_offset + group_offset + c] = (val >> 10) & 0x3ff;
+	      _sample->toa[chip_offset + group_offset + c] = val & 0x3ff;
+	      o++;
+	      c++;
+	    }
+
 	  calib        = (u4swap(d[o++]) >> 20) & 0x3ff;
 	  
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
+	  // and 4 more values
+	  for ( int j = 0; j < 4; j++)
+	    {
+	      val = u4swap(d[o]);
+	      _sample->ADC[chip_offset + group_offset + c] = (val >> 20) & 0x3ff;
+	      _sample->tot[chip_offset + group_offset + c] = (val >> 10) & 0x3ff;
+	      _sample->toa[chip_offset + group_offset + c] = val & 0x3ff;
+	      o++;
+	      c++;
+	    }
+
+
 	  
 	  break; 
 	  
 	case 3:
 	  c = 21;
 	  o = 2;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
 	  
+	  // 8 values in line "3"
+	  for ( int j = 0; j < 8; j++)
+	    {
+	      val = u4swap(d[o]);
+	      _sample->ADC[chip_offset + group_offset + c] = (val >> 20) & 0x3ff;
+	      _sample->tot[chip_offset + group_offset + c] = (val >> 10) & 0x3ff;
+	      _sample->toa[chip_offset + group_offset + c] = val & 0x3ff;
+	      o++;
+	      c++;
+	    }
+	  	  
 	  break; 
 	  
 	case 4:
 	  c = 29;
 	  o = 2;
 	  
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  _sample->ADC[chip_offset + group_offset + (c++)] = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  
-	  //	  crc32        = u4swap(d[o++]);
+	  // 7 values in line "3"
+	  for ( int j = 0; j < 7; j++)
+	    {
+	      val = u4swap(d[o]);
+	      _sample->ADC[chip_offset + group_offset + c] = (val >> 20) & 0x3ff;
+	      _sample->tot[chip_offset + group_offset + c] = (val >> 10) & 0x3ff;
+	      _sample->toa[chip_offset + group_offset + c] = val & 0x3ff;
+	      o++;
+	      c++;
+	    }
+	  	  
+	  _sample->crc32        = u4swap(d[o++]);
 	  break; 
 	  
 	default:

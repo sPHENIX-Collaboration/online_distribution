@@ -41,7 +41,7 @@ protected:
     unsigned int timestamp;
     unsigned int cmn;
     unsigned int calib;
-    //  unsigned int crc32;
+    unsigned int crc32;
   } ;
 
   sample *_sample;
