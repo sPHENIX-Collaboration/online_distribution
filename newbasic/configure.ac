@@ -64,7 +64,7 @@ fi
 
 case $CXX in
  clang++)
-   CXXFLAGS="$CXXFLAGS -Wno-unknown-warning-option"
+   CXXFLAGS="$CXXFLAGS -Wno-unknown-warning-option -Wno-nontrivial-memcall"
  ;;
 esac
 
