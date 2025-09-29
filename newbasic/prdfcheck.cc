@@ -86,14 +86,14 @@ main(int argc, char *argv[])
 
 	  if ( needs_swap ) 
 	    {
-	      std::cout << "buffer at record " << std::setw(4) << total_read 
+	      std::cout << "buffer " << std::setw(5) << buffer::i4swap(buffer[2]) << " at record " << std::setw(4) << total_read 
 	       << " length = " << std::setw(7) <<  buffer::i4swap(buffer[0]) 
 			<<  "  " << 	(buffer::i4swap(buffer[0]) + 8192)/8192	
 			<< " marker = " << std::hex <<  buffer::i4swap(buffer[1]) << std::dec << "  ";
 	    }
 	  else
 	    {
-	      std::cout << "buffer at record " << std::setw(4) << total_read 
+	      std::cout << "buffer " << std::setw(5) << buffer[2] << " at record " << std::setw(4) << total_read 
 	       << " length = " << std::setw(7) << buffer[0] 
 			<< "  " << 	( buffer[0] + 8192)/8192	
 			<< " marker = " << std::hex << buffer[1] << std::dec << "  ";
