@@ -108,7 +108,7 @@ int Packet_iddigitizerv3::decode ()
   for (int fem_index = 5; fem_index < dlength ; )  // we hop from FEM to FEM here
     {
 
-      if ( k[fem_index] == 0xa000ffff)
+      if ( k[fem_index] == 0xa000ffff || k[fem_index] == 0xa000fffe)
 	{
 	  // coutfl << " FEM_ start at  " << fem_index << "   " << hex << k[fem_index] << dec  << endl;
 	  
@@ -152,7 +152,7 @@ unsigned int Packet_iddigitizerv3::decode_FEM ( unsigned int *k, const int fem_n
 
   
   // should have been checked but let's be sure
-  if ( k[0] != 0xa000ffff) return 0;
+  if ( k[0] != 0xa000ffff && k[0] != 0xa000fffe) return 0;
   
   _fem_slot[fem_nr]  = k[1] & 0xffff;
   _fem_evtnr[fem_nr] = k[2] & 0xffff;
