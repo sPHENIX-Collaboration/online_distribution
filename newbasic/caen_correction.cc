@@ -66,6 +66,7 @@ caen_correction::caen_correction ( const char *calibdata)
 	      base [index][chip*9 + 7]= adccorr[7];
 	      base [index][chip*9 + 8]= adccorr[8];
 	      timevec[index][chip] = timecorr;
+	      //std::cout << __FILE__ << " " << __LINE__ << setw(3) << chip << setw(5) << index << " " << setw(5) << timecorr << endl;
 	    }
 	}
       IN.close();
@@ -74,23 +75,43 @@ caen_correction::caen_correction ( const char *calibdata)
 
 int caen_correction::init (Packet *p)
 {
-  int chip,c,i,idx;
+  int chip,c,i, idx;
 
   for ( chip = 0; chip < 4; chip++)
     {
 
       _samples = p->iValue(chip,"SAMPLES");
       int cell = p->iValue(chip,"INDEXCELL");
-
-      //correct time for each chip
       idx = cell;
-      for ( i = 0; i < _samples; i++)
+      
+      //correct time for each chip
+      double t0 = timevec[cell][chip];
+      double t_end = timevec[1023][chip];
+      
+      current_time[0][chip] = 0;
+      
+      for ( i = 1; i < _samples; i++)
 	{
-	  current_time[i][chip] = timevec[idx][chip];
-	  idx++;
-	  if (idx >=1024) idx=0;
+	  t0 = timevec[(i+cell)%1024][chip] -t0;
+	  if  (t0 >0)
+	    {
+	      current_time[i][chip] = current_time[i-1][chip] + t0;
+	    }
+	  else
+	    {
+	      current_time[i][chip] = current_time[i-1][chip] + t0 + t_end;
+	    }
+	  t0 = timevec[(cell+i)%1024][chip];
+
 	}
 
+      // cout << "Chip " << chip << endl;
+      // for ( i = 0; i < _samples; i++)
+      // 	{
+      // 	  std::cout << __FILE__ << " " << __LINE__ << setw(3) << chip << setw(5) << i << " " << setw(5) << current_time[i][chip] << endl;
+      // 	}
+      // cout << endl;
+      
       // the adc samples
       for ( c = 0; c < 8; c++)  
 	{
