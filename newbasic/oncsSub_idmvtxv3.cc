@@ -1,7 +1,6 @@
 #include "oncsSub_idmvtxv3.h"
 
 // for memset
-#include <cassert>
 #include <string>
 
 using namespace std;
@@ -228,7 +227,6 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
       log_error << "FeeId " << i
                 << " was not found in the feeId mapping for this packet"
                 << std::endl;
-      assert(false);
     }
     uint32_t lnkId = mFeeId2LinkID[i].entry;
     if (strcmp(what, "NR_HBF") == 0)
@@ -238,7 +236,6 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
         log_error << "Mismatch size for HBF from hbfData: "
                   << mGBTLinks[lnkId].hbf_count << " and link rawData Pieces: "
                   << mGBTLinks[lnkId].rawData.getNPieces() << std::endl;
-        assert(false);
       }
       return mGBTLinks[lnkId].hbf_count;
     }
@@ -293,7 +290,6 @@ int oncsSub_idmvtxv3::iValue(const int i_feeid, const int idx,
     log_error << "FeeId " << feeId
               << " was not found in the feeId mapping for this packet"
               << std::endl;
-    assert(false);
     return -1;
   }
   uint32_t lnkId = mFeeId2LinkID[feeId].entry;
@@ -340,7 +336,6 @@ int oncsSub_idmvtxv3::iValue(const int i_feeid, const int i_trg,
     log_error << "FeeId " << feeId
               << "was not found in the feeId mapping for this packet"
               << std::endl;
-    assert(false);
     return -1;
   }
   uint32_t lnkId = mFeeId2LinkID[feeId].entry;
@@ -392,7 +387,6 @@ long long int oncsSub_idmvtxv3::lValue(const int i_feeid, const char *what)
     log_error << "FeeId " << feeId
               << "was not found in the feeId mapping for this packet"
               << std::endl;
-    assert(false);
     return -1;
   }
   uint32_t lnkId = mFeeId2LinkID[feeId].entry;
@@ -432,7 +426,6 @@ long long int oncsSub_idmvtxv3::lValue(const int i_feeid, const int idx,
     log_error << "FeeId " << feeId
               << "was not found in the feeId mapping for this packet"
               << std::endl;
-    assert(false);
     return -1;
   }
   uint32_t lnkId = mFeeId2LinkID[feeId].entry;
