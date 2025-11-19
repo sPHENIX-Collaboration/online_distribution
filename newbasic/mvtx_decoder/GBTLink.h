@@ -350,7 +350,6 @@ namespace mvtx
           log_error << "Wrong dataOffset value " << dataOffset
                     << " at the start of a HBF" << std::endl;
           decoder_error_vector.push_back(std::make_pair(-1, 2));
-          assert(false);
           return CollectedDataStatus::AbortedOnError;
         }
         statistics.clear();
@@ -374,7 +373,6 @@ namespace mvtx
         {
           log_error << "Previous event was already completed" << std::endl;
           decoder_error_vector.push_back(std::make_pair(-1, 3));
-          assert(false);
           return CollectedDataStatus::AbortedOnError;
         }
       }
@@ -419,7 +417,6 @@ namespace mvtx
                         << gbtWord.activeLanes << "found in HBF " << hbfEntry
                         << ", " << gbtWord.asString().data() << std::endl;
               decoder_error_vector.push_back(std::make_pair(-1, 5));
-              assert(false);
               return CollectedDataStatus::AbortedOnError;
             }
           }
@@ -475,7 +472,6 @@ namespace mvtx
                           << n_no_continuation << " != " << n_packet_done
                           << std::endl;
                 decoder_error_vector.push_back(std::make_pair(-1, 6));
-                assert(false);
                 return CollectedDataStatus::AbortedOnError;
               }
             }
@@ -492,7 +488,6 @@ namespace mvtx
             {
               log_error << "" << std::endl;
               decoder_error_vector.push_back(std::make_pair(-1, 7));
-              assert(false);
               return CollectedDataStatus::AbortedOnError;
             }
           }
@@ -511,7 +506,6 @@ namespace mvtx
               log_error << "Trigger header not found before chip data"
                         << std::endl;
               decoder_error_vector.push_back(std::make_pair(-1, 8));
-              assert(false);
               return CollectedDataStatus::AbortedOnError;
             }
             auto lane = (gbtWord.data8[9] & 0x1F) % 3;
@@ -557,7 +551,6 @@ namespace mvtx
     {
       log_error << "chip data is too short: " << buffer.getSize() << std::endl;
       decoder_error_vector.push_back(std::make_pair(static_cast<int>(chipId), 9));
-      assert(false);
       return -1;
     }
 
@@ -608,7 +601,6 @@ namespace mvtx
                     << ") and chipId " << chipId << std::endl;
           decoder_error_vector.push_back(
               std::make_pair(static_cast<int>(chipId), 24));
-          assert(false);
           return -1;
         }
         buffer.next(bc);
@@ -627,7 +619,6 @@ namespace mvtx
                         << std::endl;
               decoder_error_vector.push_back(
                   std::make_pair(static_cast<int>(chipId), 25));
-              assert(false);
               return -1;
             }
             // TODO: move first region header out of loop, asserting its existence
@@ -638,7 +629,6 @@ namespace mvtx
             if (buffer.isEmpty())
             {
               log_error << "data short do not fit" << std::endl;
-              assert(false);
               return -1;
             }
             if (reg == 0xFF)
@@ -647,7 +637,6 @@ namespace mvtx
                         << " before region header" << std::endl;
               decoder_error_vector.push_back(
                   std::make_pair(static_cast<int>(chipId), 26));
-              assert(false);
               return -1;
             }
             dataS = (dataC << 8);
@@ -664,7 +653,6 @@ namespace mvtx
                         << std::endl;
               decoder_error_vector.push_back(
                   std::make_pair(static_cast<int>(chipId), 27));
-              assert(false);
               return -1;
             }
             if (reg == 0xFF)
@@ -673,7 +661,6 @@ namespace mvtx
                         << " before region header" << std::endl;
               decoder_error_vector.push_back(
                   std::make_pair(static_cast<int>(chipId), 28));
-              assert(false);
               return -1;
             }
             buffer.next(dataS);
@@ -685,7 +672,6 @@ namespace mvtx
               log_error << "Wrong bit before DATA LONG bit map" << std::endl;
               decoder_error_vector.push_back(
                   std::make_pair(static_cast<int>(chipId), 29));
-              assert(false);
               return -1;
             }
             while (hit_map != 0x00)
@@ -725,7 +711,6 @@ namespace mvtx
                         << ") and chipId " << chipId << std::endl;
               decoder_error_vector.push_back(
                   std::make_pair(static_cast<int>(chipId), 23));
-              assert(false);
               return -1;
             }
             buffer.next(bc);
