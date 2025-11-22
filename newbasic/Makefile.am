@@ -314,12 +314,13 @@ allsources = \
   packet_cdevbuckets.cc \
   packet_cdevdvm.cc \
   caen_correction.cc \
-  mvtx_decoder/InteractionRecord.cxx \
-  mvtx_decoder/PayLoadCont.cxx \
-  mvtx_decoder/PixelData.cxx \
-  mvtx_decoder/GBTWord.cxx \
-  mvtx_decoder/DecodingStat.cxx \
-  mvtx_decoder/GBTLink.cxx
+  mvtx_decoder/InteractionRecord.cc \
+  mvtx_decoder/PayLoadCont.cc \
+  mvtx_decoder/PixelData.cc \
+  mvtx_decoder/GBTWord.cc \
+  mvtx_decoder/DecodingStat.cc \
+  mvtx_decoder/RDH.cc \
+  mvtx_decoder/GBTLink.cc
 
 AM_LDFLAGS = -L$(libdir) -L$(ONLINE_MAIN)/lib -L$(OPT_SPHENIX)/lib
 

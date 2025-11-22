@@ -1,7 +1,6 @@
 // @file GBTLink.h
 // @brief Declarations of helper classes for the ITS/MFT raw data decoding
-// @sa
-// <O2/Detectors/ITSMFT/common/reconstruction/include/ITSMFTReconstruction/GBTLink.>
+// @sa <O2/Detectors/ITSMFT/common/reconstruction/include/ITSMFTReconstruction/GBTLink.>
 //     <760019308>
 
 #ifndef MVTXDECODER_GBTLINK_H
@@ -14,17 +13,14 @@
 #include "InteractionRecord.h"
 #include "PayLoadCont.h"
 #include "PayLoadSG.h"
+#include "RDH.h"
 #include "mvtx_utils.h"
-
-// #include "MVTXDecoder/RUDecodeData.h"
-// #include "MVTXDecoder/RUInfo.h"
-// #include "MVTXDecoder/RAWDataHeader.h"
-// #include "MVTXDecoder/RDHUtils.h"
-// #include "MVTXDecoder/PhysTrigger.h"
 
 #include <iomanip>
 #include <iostream>
 #include <memory>
+
+using mvtx_utils::FLXWordLength;
 
 #define GBTLINK_DECODE_ERRORCHECK(errRes, errEval)                            \
   errRes = errEval;                                                           \
@@ -41,8 +37,6 @@
 
 namespace mvtx
 {
-  using namespace mvtx_utils;
-
   struct TRGData
   {
     InteractionRecord ir = {};
@@ -136,8 +130,8 @@ namespace mvtx
 
     //------------------------------------------------------------------------
     GBTLink() = default;
-    GBTLink(uint16_t _flx, uint16_t _fee);
-    void clear(bool resetStat = true, bool resetTFRaw = false);
+    GBTLink(const uint16_t &_flx, const uint16_t &_fee);
+    void clear(const bool &resetStat = true, const bool &resetTFRaw = false);
 
     CollectedDataStatus collectROFCableData();
 
@@ -330,20 +324,19 @@ namespace mvtx
       }
 
       // here we always start with the RDH
-      RdhExt_t rdh = {};
       uint8_t *rdh_start = data.getPtr() + dataOffset;
-      rdh.decode(rdh_start);
-      if (!rdh.checkRDH(true))
+      const auto *rdhP = reinterpret_cast<const mvtx::RDH *>(rdh_start);
+      if (!mvtx::RDHUtils::checkRDH(mvtx::RDHAny::voidify(*rdhP), true, true))
       {
         dataOffset = currRawPiece->size;
         ++hbf_count;
         continue;
       }
 
-      size_t pagesize = (rdh.pageSize + 1) * FLXWordLength;
+      size_t pagesize = ((*rdhP).pageSize + 1) * FLXWordLength;
       const size_t nFlxWords = (pagesize - (2 * FLXWordLength)) / FLXWordLength;
       // Fill statistics
-      if (!rdh.packetCounter)
+      if (!(*rdhP).packetCounter)
       {
         if (dataOffset)
         {
@@ -357,7 +350,7 @@ namespace mvtx
         for (uint32_t trg = GBTLinkDecodingStat::BitMaps::ORBIT;
              trg < GBTLinkDecodingStat::nBitMap; ++trg)
         {
-          if ((rdh.trgType >> trg) & 1)
+          if (((*rdhP).trgType >> trg) & 1)
           {
             statistics.trgBitCounts[trg]++;
           }
@@ -367,7 +360,7 @@ namespace mvtx
                 .currentPieceId();  // in case of problems with RDH, dump full TF
         ++hbf_count;
       }
-      else if (!rdh.stopBit)
+      else if (!(*rdhP).stopBit)
       {
         if (prev_evt_complete)
         {
@@ -484,7 +477,7 @@ namespace mvtx
           }
           else if (gbtWord.isDDW())  // DIAGNOSTIC DATA WORD (DDW)
           {
-            if (!rdh.stopBit)
+            if (!(*rdhP).stopBit)
             {
               log_error << "" << std::endl;
               decoder_error_vector.push_back(std::make_pair(-1, 7));

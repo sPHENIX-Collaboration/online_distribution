@@ -16,7 +16,7 @@ using namespace mvtx;
 
 ///_________________________________________________________________
 /// create link with given ids
-GBTLink::GBTLink(uint16_t _flx, uint16_t _fee)
+GBTLink::GBTLink(const uint16_t &_flx, const uint16_t &_fee)
   : flxId(_flx)
   , feeId(_fee)
 {
@@ -38,7 +38,7 @@ GBTLink::GBTLink(uint16_t _flx, uint16_t _fee)
 
 ///_________________________________________________________________
 /// reset link
-void GBTLink::clear(bool resetStat, bool resetTFRaw)
+void GBTLink::clear(const bool &resetStat, const bool &resetTFRaw)
 {
   data.clear(RawBufferSize);
   if (resetTFRaw)

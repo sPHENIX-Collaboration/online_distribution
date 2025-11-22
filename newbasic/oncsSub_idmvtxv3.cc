@@ -1,4 +1,6 @@
 #include "oncsSub_idmvtxv3.h"
+#include "mvtx_decoder/RDH.h"
+#include "mvtx_decoder/mvtx_utils.h"
 
 // for memset
 #include <string>
@@ -9,7 +11,7 @@ using namespace std;
 size_t oncsSub_idmvtxv3::mEventId = 0;
 std::unordered_map<uint16_t, oncsSub_idmvtxv3::dumpEntry>
     oncsSub_idmvtxv3::mFeeId2LinkID = {};
-std::vector<mvtx::GBTLink> oncsSub_idmvtxv3::mGBTLinks = {};
+std::vector<mvtx::GBTLink> oncsSub_idmvtxv3::mGBTLinks;
 
 oncsSub_idmvtxv3::oncsSub_idmvtxv3(subevtdata_ptr data)
   : oncsSubevent_w1(data)
@@ -76,7 +78,6 @@ int oncsSub_idmvtxv3::decode()
 
 void oncsSub_idmvtxv3::setupLinks()
 {
-  mvtx_utils::RdhExt_t rdh = {};
   do
   {
     // Skip FLX padding
@@ -91,50 +92,47 @@ void oncsSub_idmvtxv3::setupLinks()
       if (*(reinterpret_cast<uint16_t *>(&payload_start[payload_position] +
                                          30)) == 0xAB01)
       {
-        rdh.decode(&payload_start[payload_position]);
+        const auto *rdhP = reinterpret_cast<const mvtx::RDH *>(&payload_start[payload_position]);
+        if (!mvtx::RDHUtils::checkRDH(mvtx::RDHAny::voidify(*rdhP), true, true))
+        {
+          payload_position += mvtx_utils::FLXWordLength;
+          continue;
+        }
         const size_t pageSizeInBytes =
-            (rdh.pageSize + 1) * mvtx_utils::FLXWordLength;
+            ((*rdhP).pageSize + 1ULL /*add Flx Hdr word*/) * mvtx_utils::FLXWordLength;
         if (pageSizeInBytes > (payload_length - payload_position))
         {
-          std::cout << "Incomplete Felix packet, remaining data "
-                    << (payload_length - payload_position);
-          std::cout << " bytes less than " << pageSizeInBytes << " bytes"
-                    << std::endl;
+          COUT << "Incomplete Felix packet, remaining data "
+               << (payload_length - payload_position);
+          COUT << " bytes less than " << pageSizeInBytes << " bytes"
+               << ENDL;
           break;  // skip incomplete felix packet
         }
         else
         {
-          feeid_set.insert(rdh.feeId);
-          auto &lnkref = mFeeId2LinkID[rdh.feeId];
+          feeid_set.insert((*rdhP).feeId);
+          auto &lnkref = mFeeId2LinkID[(*rdhP).feeId];
           if (lnkref.entry == -1)
           {
             lnkref.entry = mGBTLinks.size();
-            mGBTLinks.emplace_back(rdh.flxId, rdh.feeId);
+            mGBTLinks.emplace_back((*rdhP).flxId, (*rdhP).feeId);
           }
           auto &gbtLink = mGBTLinks[lnkref.entry];
 
-          if (!rdh.checkRDH(true))
+          if (((*rdhP).packetCounter) && (gbtLink.rawData.getNPieces()) &&
+              ((*rdhP).packetCounter != gbtLink.prev_pck_cnt + 1))
           {
-            // In case of corrupt RDH, skip felix word and continue to next
-            payload_position += mvtx_utils::FLXWordLength;
-            gbtLink.RDHErrors++;
-            continue;
-          }
-
-          if ((rdh.packetCounter) && (gbtLink.rawData.getNPieces()) &&
-              (rdh.packetCounter != gbtLink.prev_pck_cnt + 1))
-          {
-            log_error << "Incorrect pages count " << rdh.packetCounter
+            log_error << "Incorrect pages count " << (*rdhP).packetCounter
                       << ", previous page count was " << gbtLink.prev_pck_cnt
                       << std::endl;
             payload_position += pageSizeInBytes;
             continue;
           }
-          gbtLink.prev_pck_cnt = rdh.packetCounter;
+          gbtLink.prev_pck_cnt = (*rdhP).packetCounter;
 
           gbtLink.data.add((payload_start + payload_position), pageSizeInBytes);
 
-          if (!rdh.packetCounter)  // start HB
+          if (!(*rdhP).packetCounter)  // start HB
           {
             if (gbtLink.hbf_length)
             {
@@ -160,7 +158,7 @@ void oncsSub_idmvtxv3::setupLinks()
               gbtLink.hbf_error = true;
             }
             gbtLink.hbf_length += pageSizeInBytes;
-            if (rdh.stopBit)  // found HB end
+            if ((*rdhP).stopBit)  // found HB end
             {
               gbtLink.cacheData(gbtLink.hbf_length, gbtLink.hbf_error);
               gbtLink.hbf_length = 0;
@@ -175,21 +173,21 @@ void oncsSub_idmvtxv3::setupLinks()
         // (YCM)TODO: OK for OM but error otherwise
         if (0)
         {
-          std::cout << "Felix header: " << std::hex << "0x" << std::setfill('0')
-                    << std::setw(4);
-          std::cout << *(reinterpret_cast<uint16_t *>(
-                           &payload_start[payload_position] + 30))
-                    << std::dec << std::endl;
+          COUT << "Felix header: " << std::hex << "0x" << std::setfill('0')
+               << std::setw(4);
+          COUT << *(reinterpret_cast<uint16_t *>(
+                      &payload_start[payload_position] + 30))
+               << std::dec << ENDL;
         }
         payload_position += mvtx_utils::FLXWordLength;
       }
     }
     else
     {
-      std::cout << "Incomplete Felix header, remaining data "
-                << (payload_length - payload_position);
-      std::cout << " bytes less than " << (2 * mvtx_utils::FLXWordLength)
-                << std::endl;
+      COUT << "Incomplete Felix header, remaining data "
+           << (payload_length - payload_position);
+      COUT << " bytes less than " << (2 * mvtx_utils::FLXWordLength)
+           << ENDL;
       break;  // skip incomplete flx_header
     }
   } while (payload_position < payload_length);
@@ -210,7 +208,7 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
     }
     else
     {
-      std::cout << "Unknow option " << what << std::endl;
+      COUT << "Unknow option " << what << ENDL;
       return -1;
     }
   }
@@ -269,7 +267,7 @@ int oncsSub_idmvtxv3::iValue(const int n, const char *what)
     }
     else
     {
-      std::cout << "Unknow option " << what << std::endl;
+      COUT << "Unknow option " << what << ENDL;
       return -1;
     }
   }
@@ -314,7 +312,7 @@ int oncsSub_idmvtxv3::iValue(const int i_feeid, const int idx,
   }
   else
   {
-    std::cout << "Unknow option " << what << std::endl;
+    COUT << "Unknow option " << what << ENDL;
     return -1;
   }
   return 0;
@@ -368,7 +366,7 @@ int oncsSub_idmvtxv3::iValue(const int i_feeid, const int i_trg,
   }
   else
   {
-    std::cout << "Unknow option " << what << std::endl;
+    COUT << "Unknow option " << what << ENDL;
     return -1;
   }
   return 0;
@@ -404,7 +402,7 @@ long long int oncsSub_idmvtxv3::lValue(const int i_feeid, const char *what)
   }
   else
   {
-    std::cout << "Unknow option " << what << std::endl;
+    COUT << "Unknow option " << what << ENDL;
     return -1;
   }
 
@@ -444,7 +442,7 @@ long long int oncsSub_idmvtxv3::lValue(const int i_feeid, const int idx,
   }
   else
   {
-    std::cout << "Unknow option " << what << std::endl;
+    COUT << "Unknow option " << what << ENDL;
     return -1;
   }
 
