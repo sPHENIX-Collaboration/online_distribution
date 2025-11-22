@@ -13,6 +13,7 @@
 
 namespace mvtx
 {
+  using std::size_t;
 
   class PayLoadSG
   {

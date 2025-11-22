@@ -16,7 +16,7 @@ namespace mvtx_utils
   constexpr uint8_t FLXWordLength = 32;
 
   template <typename A, typename B>
-  bool comp(A a, B b)
+  bool comp(const A& a, const B& b)
   {
     return a.second < b.second;
   }

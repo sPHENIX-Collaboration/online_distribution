@@ -1,9 +1,8 @@
 #include "RDH.h"
 
-#include <stdexcept>
 #include <cstring>
 #include <iostream>
-#include <iomanip>
+#include <stdexcept>
 
 #if __cplusplus >= 202002L
 #include <format>
@@ -39,25 +38,30 @@ void RDHAny::copyFrom(const void* rdh)
 //_________________________________________________
 void RDHUtils::printRDH(const RDHv8& rdh)
 {
- // std::bitset<32> trb(rdh.trgType);
+  // std::bitset<32> trb(rdh.trgType);
   std::cout << std::format(
-    "FlxHdrCntr:{:d} flxId:{:d} pageSize:0x{:03x} gbtLink:0x{:02x} ",
-    (rdh.flxHdrCntr), (rdh.flxId), (rdh.pageSize), (rdh.gbtLink)).c_str();
+                   "FlxHdrCntr:{:d} flxId:{:d} pageSize:0x{:03x} gbtLink:0x{:02x} ",
+                   (rdh.flxHdrCntr), (rdh.flxId), (rdh.pageSize), (rdh.gbtLink))
+                   .c_str();
   std::cout << std::format(
-    "FlxHdrSize:0x{:02x} FlxHdrVersion:0x{:02x} FlxHdrCode:0x{:02x}",
-    (rdh.flxHdrSize), (rdh.flxHdrVersion), (rdh.flxHdrCode)).c_str();
+                   "FlxHdrSize:0x{:02x} FlxHdrVersion:0x{:02x} FlxHdrCode:0x{:02x}",
+                   (rdh.flxHdrSize), (rdh.flxHdrVersion), (rdh.flxHdrCode))
+                   .c_str();
   std::cout << std::endl;
   std::cout << std::format(
-    "RDHversion:0x{:02x} RDHsize:0x{:02x} FEEID:0x{:04x} SrcID:0x{:02x} ",
-    (rdh.rdhVersion), (rdh.rdhSize), (rdh.feeId), (rdh.sourceId)).c_str();
+                   "RDHversion:0x{:02x} RDHsize:0x{:02x} FEEID:0x{:04x} SrcID:0x{:02x} ",
+                   (rdh.rdhVersion), (rdh.rdhSize), (rdh.feeId), (rdh.sourceId))
+                   .c_str();
   std::cout << std::endl;
   std::cout << std::format(
-    "detField:0x{:08x} bc:0x{:03x} orbit:0x{:010x}",
-    (rdh.detectorField), (rdh.bc), (rdh.orbit)).c_str();
+                   "detField:0x{:08x} bc:0x{:03x} orbit:0x{:010x}",
+                   (rdh.detectorField), (rdh.bc), (rdh.orbit))
+                   .c_str();
   std::cout << std::endl;
   std::cout << std::format(
-    "trgType:0x{:08x} packetCounter:0x{:04x} stopBit:0x{:01x} priority:0x{:01x} RDHGBTCntr:0x{:04X} ",
-    (rdh.trgType), (rdh.packetCounter), (rdh.stopBit), (rdh.priority), (rdh.rdhGBTcounter)).c_str();
+                   "trgType:0x{:08x} packetCounter:0x{:04x} stopBit:0x{:01x} priority:0x{:01x} RDHGBTCntr:0x{:04X} ",
+                   (rdh.trgType), (rdh.packetCounter), (rdh.stopBit), (rdh.priority), (rdh.rdhGBTcounter))
+                   .c_str();
   std::cout << std::endl;
 }
 #else
@@ -71,15 +75,16 @@ void RDHUtils::printRDH(const RDHv8& /*rdh*/)
 void RDHUtils::printRDH(const void* rdhP)
 {
   int version = getVersion(rdhP);
-  if(version==8){
-      printRDH(*reinterpret_cast<const RDHv8*>(rdhP));
+  if (version == 8)
+  {
+    printRDH(*reinterpret_cast<const RDHv8*>(rdhP));
   }
-  else{
-      std::cerr << "Unexpected RDH version " << version << " from";
-      dumpRDH(rdhP);
-      throw std::runtime_error("invalid RDH provided");
+  else
+  {
+    std::cerr << "Unexpected RDH version " << version << " from";
+    dumpRDH(rdhP);
+    throw std::runtime_error("invalid RDH provided");
   }
-  
 }
 
 //_________________________________________________
@@ -91,8 +96,9 @@ void RDHUtils::dumpRDH(const void* rdhP)
   {
     int l = 4 * i;
     std::cout << std::format(
-      "[rdh{:d}] 0x{:08x} 0x{:08x} 0x{:08x} 0x{:08x}",
-      i, w32[l + 3], w32[l + 2], w32[l + 1], w32[l]).c_str();
+                     "[rdh{:d}] 0x{:08x} 0x{:08x} 0x{:08x} 0x{:08x}",
+                     i, w32[l + 3], w32[l + 2], w32[l + 1], w32[l])
+                     .c_str();
     std::cout << std::endl;
   }
 }
@@ -109,18 +115,21 @@ bool RDHUtils::checkRDH(const void* rdhP, bool verbose, bool checkZeros)
   int version = getVersion(rdhP);
   bool ok = true;
 
-  if(version==8){
-      ok = checkRDH(*reinterpret_cast<const RDHv8*>(rdhP), verbose, checkZeros);
-    }
-  else {
-      ok = false;
-      if (verbose)
-      {
-        std::cerr << "WARNING: "
-                  << "Unexpected RDH version " << version << " from" << std::endl;
-      }
+  if (version == 8)
+  {
+    ok = checkRDH(*reinterpret_cast<const RDHv8*>(rdhP), verbose, checkZeros);
   }
-  if (!ok && verbose) {
+  else
+  {
+    ok = false;
+    if (verbose)
+    {
+      std::cerr << "WARNING: "
+                << "Unexpected RDH version " << version << " from" << std::endl;
+    }
+  }
+  if (!ok && verbose)
+  {
     dumpRDH(rdhP);
   }
   return ok;
@@ -163,7 +172,8 @@ bool RDHUtils::checkRDH(const RDHv8& rdh, bool verbose, bool checkZeros)
   }
   if (rdh.rdhVersion != 8)
   {
-    if (verbose) {
+    if (verbose)
+    {
       std::cerr << "WARNING: "
                 << "RDH version 7 is expected instead of "
                 << int(rdh.rdhVersion) << std::endl;
@@ -172,19 +182,21 @@ bool RDHUtils::checkRDH(const RDHv8& rdh, bool verbose, bool checkZeros)
   }
   if (rdh.rdhSize != 32)
   {
-    if (verbose) {
+    if (verbose)
+    {
       std::cerr << "WARNING: "
                 << "RDH with header size of 32 B is expected instead of "
                 << int(rdh.rdhSize) << std::endl;
     }
     ok = false;
   }
-  if ((! rdh.packetCounter) && (rdh.stopBit))
+  if ((!rdh.packetCounter) && (rdh.stopBit))
   {
-    if (verbose) {
+    if (verbose)
+    {
       std::cerr << "WARNING: "
                 << "RDH stopBit is not expected in packetCounter 0 "
-                << int(rdh.packetCounter) << int(rdh.stopBit) <<  std::endl;
+                << int(rdh.packetCounter) << int(rdh.stopBit) << std::endl;
     }
     ok = false;
   }
