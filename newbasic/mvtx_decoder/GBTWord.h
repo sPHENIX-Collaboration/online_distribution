@@ -12,7 +12,6 @@
 
 namespace mvtx
 {
-
   constexpr uint64_t LANESMask = (0x1 << 9) - 1;  // at most 9 lanes
 
   /// GBT payload header flag

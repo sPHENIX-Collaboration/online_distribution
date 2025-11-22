@@ -20,14 +20,14 @@ namespace mvtx
 
   struct ChipStat
   {
-    enum ActionOnError : int
+    enum ActionOnError : uint8_t
     {
       ErrActNone = 0x0,       // do nothing
       ErrActPropagate = 0x1,  // propagate to decoded data
       ErrActDump = 0x2        // produce raw data dump
     };
 
-    enum DecErrors : int
+    enum DecErrors : uint8_t
     {
       BusyViolation,                 // Busy violation
       DataOverrun,                   // Data overrun

@@ -8,7 +8,6 @@
 
 namespace mvtx
 {
-
   //________________________________________________________________________________
   std::string InteractionRecord::asString() const
   {
