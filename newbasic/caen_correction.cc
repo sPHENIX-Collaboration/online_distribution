@@ -85,32 +85,33 @@ int caen_correction::init (Packet *p)
       idx = cell;
       
       //correct time for each chip
-      double t0 = timevec[cell][chip];
+      double tstart = timevec[cell][chip];
       double t_end = timevec[1023][chip];
       
       current_time[0][chip] = 0;
       
-      for ( i = 1; i < _samples; i++)
+      for ( i = 0; i < _samples; i++)
 	{
-	  t0 = timevec[(i+cell)%1024][chip] -t0;
-	  if  (t0 >0)
+	  double tc;
+	  if ( i+cell < 1024)
 	    {
-	      current_time[i][chip] = current_time[i-1][chip] + t0;
+	      int j = i+cell;
+	      tc = timevec[j][chip];
+	      current_time[i][chip] = tc - tstart;
 	    }
 	  else
 	    {
-	      current_time[i][chip] = current_time[i-1][chip] + t0 + t_end;
+	      int j = i+cell -1023;
+	      tc = timevec[j][chip];
+	      current_time[i][chip] = tc + t_end - tstart;	
 	    }
-	  t0 = timevec[(cell+i)%1024][chip];
+	  // if ( chip == 0) cout << setw(4) << i << "  "
+	  // 		       << setw(6) << current_time[i][chip] << " "
+	  // 		       << setw(6)  << tc <<  "  " << endl; 
+
 
 	}
 
-      // cout << "Chip " << chip << endl;
-      // for ( i = 0; i < _samples; i++)
-      // 	{
-      // 	  std::cout << __FILE__ << " " << __LINE__ << setw(3) << chip << setw(5) << i << " " << setw(5) << current_time[i][chip] << endl;
-      // 	}
-      // cout << endl;
       
       // the adc samples
       for ( c = 0; c < 8; c++)  
