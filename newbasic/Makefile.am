@@ -163,16 +163,6 @@ allheaders = \
   oncsSub_idfnalmwpcv2.h \
   oncsSub_iddrs4v1.h \
   oncsSub_iddigitizerv1.h \
-  oncsSub_idmvtxv0.h \
-  oncsSub_idtpcfeev1.h \
-  oncsSub_idtpcfeev2.h \
-  oncsSub_idtpcfeev3.h \
-  oncsSub_idtpcfeev4.h \
-  oncsSub_idinttv0.h \
-  oncsSub_iddreamv0.h \
-  oncsSub_idmvtxv1.h \
-  oncsSub_idmvtxv2.h \
-  oncsSub_idmvtxv3.h \
   oncsSub_idgl1v0.h \
   oncsSub_idgl1v1.h \
   oncsSub_idh2gcroc3.h \
@@ -208,8 +198,8 @@ allheaders = \
   packet_cdevringnopol.h \
   packet_cdevbuckets.h \
   packet_cdevdvm.h \
-  caen_correction.h \
-  mvtx_decoder/PayLoadCont.h
+  caen_correction.h 
+
 
 allsources = \
   Cframe.C \
@@ -268,17 +258,6 @@ allsources = \
   oncsSub_idfnalmwpc.cc \
   oncsSub_idfnalmwpcv2.cc \
   oncsSub_iddrs4v1.cc \
-  oncsSub_iddigitizerv1.cc \
-  oncsSub_idmvtxv0.cc \
-  oncsSub_idtpcfeev1.cc \
-  oncsSub_idtpcfeev2.cc \
-  oncsSub_idtpcfeev3.cc \
-  oncsSub_idtpcfeev4.cc \
-  oncsSub_idinttv0.cc \
-  oncsSub_iddreamv0.cc \
-  oncsSub_idmvtxv1.cc \
-  oncsSub_idmvtxv2.cc \
-  oncsSub_idmvtxv3.cc \
   oncsSub_idgl1v0.cc \
   oncsSub_idgl1v1.cc \
   oncsSub_idh2gcroc3.cc \
@@ -313,15 +292,10 @@ allsources = \
   packet_cdevringnopol.cc \
   packet_cdevbuckets.cc \
   packet_cdevdvm.cc \
-  caen_correction.cc \
-  mvtx_decoder/InteractionRecord.cxx \
-  mvtx_decoder/PayLoadCont.cxx \
-  mvtx_decoder/PixelData.cxx \
-  mvtx_decoder/GBTWord.cxx \
-  mvtx_decoder/DecodingStat.cxx \
-  mvtx_decoder/GBTLink.cxx
+  caen_correction.cc
 
-AM_LDFLAGS = -L$(libdir) -L$(ONLINE_MAIN)/lib -L$(OPT_SPHENIX)/lib
+
+AM_LDFLAGS = -L$(libdir) -L$(ONLINE_MAIN)/lib -L/opt/local/lib
 
 BUILT_SOURCES = ioselect.h
 
@@ -335,7 +309,7 @@ msgheaders = \
   remote_msg_buffer.h \
   strnstr.h
 
-AM_CPPFLAGS =  -I$(includedir)  -I@ROOTINC@ -I$(OPT_SPHENIX)/include
+AM_CPPFLAGS =  -I$(includedir)  -I@ROOTINC@ -I/opt/local/include
 
 noinst_HEADERS = \
   eventLinkDef.h \
