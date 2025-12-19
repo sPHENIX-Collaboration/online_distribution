@@ -88,7 +88,8 @@ int msgfrequency =1;
 pthread_mutex_t MapSem;
 pthread_mutex_t M_cout;
 
-#define RANGE (0x7ffff)
+//#define RANGE (0x7ffff)
+#define RANGE (0x1fffff)
 
 Event* eventarray[RANGE+1] = {0};
 
