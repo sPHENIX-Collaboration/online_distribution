@@ -19,12 +19,14 @@ public:
   int    iValue(const int ch, const int sample);
   int    iValue(const int ch, const int sample, const char *what);
   int    iValue(const int ,const char * what);
-
+  int    iValue(const int event, const int ch, const int sample);
+  
   void  dump ( OSTREAM& os = COUT);  
 
 protected:
   int decode ();
   int decode_line (unsigned int *);
+  int parse_timeline ();
   unsigned int u4swap(const unsigned int v);
 
   int is_decoded;
@@ -33,6 +35,10 @@ protected:
 
 
   unsigned int old_timestamp;
+
+  // this structure is the main datatset after we are done.
+  // it holds all ADC values for a given timestamp.
+  // once we see the timestamp move on, we declare that sample "closed"
   
   struct sample {
     unsigned int ADC[144];
@@ -48,7 +54,19 @@ protected:
   
   std::vector<sample *> waveform;
 
-  int nr_samples;
+  int _nr_events;
+
+  int _nr_samples;
+
+  // this structure is meant to parse the timeline into event boundaries.
+  struct event_bounds
+  {
+    unsigned int first;
+    unsigned int length;
+  };
+  
+  std::vector<event_bounds *> _eventlist;
+    
 };
 
 

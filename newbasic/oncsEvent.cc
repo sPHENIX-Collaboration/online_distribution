@@ -268,6 +268,11 @@ Packet *oncsEvent::makePacket(PHDWORD *pp, const int hitFormat)
 	oncsSub_idh2gcroc3( sevt_ptr );
       break;
 
+    case (IDASTROV1):
+      return new
+	oncsSub_idastrov1( sevt_ptr );
+      break;
+
     default:
       switch (sevt_ptr->sub_type)
 	{

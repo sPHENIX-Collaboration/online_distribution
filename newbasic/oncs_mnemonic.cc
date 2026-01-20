@@ -54,6 +54,7 @@ const char *oncs_get_mnemonic (const int structure, const int format)
     case(IDGL1V0):  return  "IDGL1V0";
     case(IDGL1V1):  return  "IDGL1V1";
     case(IDH2GCROC3):  return  "IDH2GCROC3";
+    case(IDASTROV1):  return  "IDASTROV1";
   
   }
   return "UNKNOWN";

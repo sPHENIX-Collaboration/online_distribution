@@ -5,6 +5,8 @@
 
 using namespace std;
 
+// this is the clock value for "contiguous samples. 
+#define CONTIGUOUS_CLOCK  41
 
 oncsSub_idh2gcroc3::oncsSub_idh2gcroc3(subevtdata_ptr data)
   :oncsSubevent_w4 (data)
@@ -14,7 +16,8 @@ oncsSub_idh2gcroc3::oncsSub_idh2gcroc3(subevtdata_ptr data)
   _broken = 0;
   old_timestamp = 0xffffffff;
   _sample =0;
-  nr_samples = 0;
+  _nr_samples = 0;
+  _nr_events = 0;
 }
 
 
@@ -56,6 +59,9 @@ int oncsSub_idh2gcroc3::decode_line( unsigned int d[10])
       // cout << std::setfill(' ') << endl;
       //	}
       
+
+      // on the first invocation, old_timestamp is -1 (or 0xfff... as an unsigned)
+      // initializing it this way will make the nexty check succeed.
       
       if ( old_timestamp == 0xffffffff )
 	{
@@ -64,7 +70,9 @@ int oncsSub_idh2gcroc3::decode_line( unsigned int d[10])
 	  memset (_sample, 0 , sizeof(sample) );
 	  _sample->timestamp = u4swap(d[1]);
 	}
-      
+
+      // if the time stamp changes, we are done with this smaple.
+      // me are pushing this on the stack and mobe on to the next. 
       if ( old_timestamp != u4swap(d[1]))
 	{
 	  waveform.push_back(_sample);
@@ -72,8 +80,13 @@ int oncsSub_idh2gcroc3::decode_line( unsigned int d[10])
 	  _sample = new sample;
 	  memset (_sample, 0 , sizeof(sample) );
 	  _sample->timestamp = u4swap(d[1]);
-	  nr_samples++;
+	  _nr_samples++;
 	  //coutfl << "*** complete, size of waveform " << waveform.size() << " timestamp: " << _sample->timestamp  << " sample nr " << nr_samples << endl;
+
+	  if ( u4swap(d[1]) - old_timestamp > CONTIGUOUS_CLOCK) // we jump to a new trigger here
+	    {
+	      _nr_events++;
+	    }
 
 	}
       old_timestamp = u4swap(d[1]);
@@ -87,6 +100,8 @@ int oncsSub_idh2gcroc3::decode_line( unsigned int d[10])
       int calib;
 
       unsigned int val;
+      
+      //for the next section, we continue to fill the various vlaues of that "sample" structure
       
       switch ( line_number)
 	{
@@ -202,9 +217,7 @@ int oncsSub_idh2gcroc3::decode_line( unsigned int d[10])
 	default:
 	  //cout << " invalid line number " << endl;
 	  break;
-	  
-	  
-	  
+	  	  
 	}
     }
   return 0;
@@ -289,6 +302,8 @@ int oncsSub_idh2gcroc3::decode()
       current_index = packet_end+1;
       //      coutfl << " number of lines: " << lines << endl;
     }
+
+  parse_timeline ();
   
   return 0;  
 }
@@ -326,6 +341,18 @@ int oncsSub_idh2gcroc3::iValue(const int n, const char *what)
       return (int) waveform.size();
     }
   
+  if ( strcmp(what,"NR_WF") == 0 )
+    {
+      return (int) _eventlist.size();
+    }
+
+  if ( strcmp(what,"SAMPLESIZE") == 0 )
+    {
+      if ( un > _eventlist.size()) return 0; // no such event number
+      event_bounds *eb = _eventlist[n];
+      return eb->length;
+    }
+  
   else if ( strcmp(what,"TIMESTAMP") == 0 )
     {
       if (n < 0 ||  un >= waveform.size() ) return 0;
@@ -359,6 +386,32 @@ int oncsSub_idh2gcroc3::iValue(const int ch, const int sample)
   if ( un >= waveform.size() ) return 0;
 
   return waveform[sample]->ADC[ch];
+}
+
+int oncsSub_idh2gcroc3::iValue(const int event, const int ch, const int sample)
+{
+  if ( ch < 0 || ch >=144 || sample < 0) return 0;
+  decode();
+
+  // only known once we decode
+  
+  unsigned int ue = event;  //preventing a warning as size() is unsigned
+  if ( event < 0 || ue > _eventlist.size() ) return 0;
+
+  unsigned int un = sample;   //preventing a warning as size() is unsigned
+  
+  if ( un >= waveform.size() ) return 0;
+
+  event_bounds *eb = _eventlist[event];
+  int n = eb->first;
+  int l = eb->length;
+  if (sample >= l)  return 0;   // this event has only l samnples
+  if ( (unsigned int) (n+sample) >= waveform.size())
+    {
+      coutfl << "elemoent out of bounds " << n + sample << "   size = " <<  waveform.size() << endl;
+      return 0;
+    }
+  return waveform[n+sample]->ADC[ch];
 }
   
 int oncsSub_idh2gcroc3::iValue(const int ch, const int sample, const char *what)
@@ -395,7 +448,7 @@ void oncsSub_idh2gcroc3::dump(std::ostream &os)
 
   decode();
 
-  
+  /*  
   os << "Nr of samples: " << iValue(0, "SAMPLES") << endl;
 
   for (int s = 0; s < iValue(0,"SAMPLES"); s++)
@@ -415,11 +468,62 @@ void oncsSub_idh2gcroc3::dump(std::ostream &os)
       os << endl;
     }
 
-
+  os << endl << "---------------------------------------------------------------------" << endl << endl;
+  */
+  
+  int e = iValue(0, "NR_WF");
+  os << " Number of Waveforms: " << e << endl;
+  for ( int n = 0; n < e; n++)
+    {
+      os << "----- Event " << n << " size: " << iValue(n, "SAMPLESIZE") << endl;
+      for ( int ic =72; ic < iValue(0,"CHANNELS"); ic++)
+	{
+	  os << setw(4) << ic << " | " ;
+	  for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
+	    {
+	      os << setw(4) << iValue (n, ic, is) << " ";
+	    }
+	  os << endl;
+	}
+    }
+  
   
 }
 
+int oncsSub_idh2gcroc3::parse_timeline ()
+{
+  auto itr =  waveform.begin();  // first one
+  if ( itr == waveform.end()) return -1;
+  
+  unsigned int old_timestamp = (*itr)->timestamp;  // get the initial timestamp
 
+  int pos = 0;
+  event_bounds *eb = new event_bounds;
+  eb->first = pos;
+  eb->length=1;
+    
+  ++itr;
+
+  for (; itr != waveform.end(); ++itr)
+    {
+      pos++;
+      if ( (*itr)->timestamp - old_timestamp !=  CONTIGUOUS_CLOCK)
+	{
+	  // coutfl << "adding new event boundary at index " << eb->first << " with length " <<  eb->length << " pos is " << pos
+	  // 	 << " old ts = " << old_timestamp << " new = " << (*itr)->timestamp << " diff: " << (*itr)->timestamp - old_timestamp << endl;
+	  _eventlist.push_back(eb);
+	  eb = new event_bounds;
+	  eb->first = pos;
+	  eb->length=1;
+	}
+      old_timestamp = (*itr)->timestamp;
+      eb->length++;
+    }
+  eb->length--;
+  // coutfl << "adding new event boundary at index " << eb->first << " with length " <<  eb->length << " pos is " << pos << endl;
+  //   _eventlist.push_back(eb);
+  return 0;
+}
 
 oncsSub_idh2gcroc3::~oncsSub_idh2gcroc3()
 {
@@ -428,6 +532,12 @@ oncsSub_idh2gcroc3::~oncsSub_idh2gcroc3()
     {
       delete *itr;
     }
+   for (auto itr =  _eventlist.begin(); itr != _eventlist.end(); ++itr)
+    {
+      delete *itr;
+    }
+ 
+
 }
 
 

@@ -101,6 +101,8 @@
 
 #define IDH2GCROC3     301
 
+#define IDASTROV1     350
+
 
 
 // the "level 0", meaning the raw untreated FEM data 
