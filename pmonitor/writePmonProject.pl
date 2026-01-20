@@ -125,7 +125,7 @@ SO = lib\$(PACKAGE).so
 .PHONY: clean
 
 clean: 
-	rm -f \$(SO) \$(PACKAGE)_dict.C \$(PACKAGE)_dict.h
+	rm -f \$(SO) \$(PACKAGE)_dict.C \$(PACKAGE)_dict.h *.pcm
 
 EOF
 
