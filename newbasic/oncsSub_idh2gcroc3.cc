@@ -408,7 +408,7 @@ int oncsSub_idh2gcroc3::iValue(const int event, const int ch, const int sample)
   if (sample >= l)  return 0;   // this event has only l samnples
   if ( (unsigned int) (n+sample) >= waveform.size())
     {
-      coutfl << "elemoent out of bounds " << n + sample << "   size = " <<  waveform.size() << endl;
+      coutfl << "element out of bounds " << n + sample << "   size = " <<  waveform.size() << endl;
       return 0;
     }
   return waveform[n+sample]->ADC[ch];
@@ -430,6 +430,43 @@ int oncsSub_idh2gcroc3::iValue(const int ch, const int sample, const char *what)
   else if ( strcmp(what,"TOA") == 0 )
     {
       return waveform[sample]->toa[ch];
+    }
+
+  return 0;
+}
+  
+// this is for the TOT and TOA values
+int oncsSub_idh2gcroc3::iValue(const int wf, const int ch, const int sample, const char *what)
+{
+  // these are the easy checks we can do w/o decoding the data
+  if ( ch < 0 || ch >=144 || sample < 0) return 0;
+  if ( wf < 0) return 0;
+
+  // now the ones where we need the decoded data
+  decode();
+
+  
+  
+  if ( (unsigned int ) wf  >= _eventlist.size()) return 0; // no such wf number
+  event_bounds *eb = _eventlist[wf];
+  if ( (unsigned int ) sample >= eb->length) return 0;
+
+  int n = eb->first;
+  
+  if ( (unsigned int) (n+sample) >= waveform.size())
+    {
+      coutfl << "element out of bounds " << n + sample << "   size = " <<  waveform.size() << endl;
+      return 0;
+    }
+
+ 
+  if ( strcmp(what,"TOT") == 0 )
+    {
+      return waveform[n+sample]->tot[ch];
+    }
+  else if ( strcmp(what,"TOA") == 0 )
+    {
+      return waveform[n+sample]->toa[ch];
     }
 
   return 0;
@@ -476,12 +513,12 @@ void oncsSub_idh2gcroc3::dump(std::ostream &os)
   for ( int n = 0; n < e; n++)
     {
       os << "----- Event " << n << " size: " << iValue(n, "SAMPLESIZE") << endl;
-      for ( int ic =72; ic < iValue(0,"CHANNELS"); ic++)
+      for ( int ic =0; ic < iValue(0,"CHANNELS"); ic++)
 	{
 	  os << setw(4) << ic << " | " ;
 	  for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
 	    {
-	      os << setw(4) << iValue (n, ic, is) << " ";
+	      os << setw(4) << iValue (n, ic, is) << " " << iValue (n, ic, is, "TOT") << " " << iValue (n, ic, is, "TOA") << "  "  ;
 	    }
 	  os << endl;
 	}

@@ -20,6 +20,7 @@ public:
   int    iValue(const int ch, const int sample, const char *what);
   int    iValue(const int ,const char * what);
   int    iValue(const int event, const int ch, const int sample);
+  int    iValue(const int wf, const int ch, const int sample, const char *what);
   
   void  dump ( OSTREAM& os = COUT);  
 
