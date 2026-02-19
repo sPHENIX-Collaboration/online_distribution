@@ -16,11 +16,12 @@ public:
   oncsSub_idh2gcroc3( subevtdata_ptr);
   ~oncsSub_idh2gcroc3();
 
-  int    iValue(const int ch, const int sample);
-  int    iValue(const int ch, const int sample, const char *what);
+  int    iValue(const int sample, const int ch);
+  int    iValue(const int sample, const int ch, const char *what);
   int    iValue(const int ,const char * what);
-  int    iValue(const int event, const int ch, const int sample);
-  int    iValue(const int wf, const int ch, const int sample, const char *what);
+  int    iValue(const int event, const int sample, const int ch);
+  int    iValue(const int wf, const int sample, const int ch, const char *what);
+  long long   lValue(const int wf, const int sample, const int ch);
   
   void  dump ( OSTREAM& os = COUT);  
 

@@ -376,7 +376,7 @@ int oncsSub_idh2gcroc3::iValue(const int n, const char *what)
 }
 
 
-int oncsSub_idh2gcroc3::iValue(const int ch, const int sample)
+int oncsSub_idh2gcroc3::iValue(const int sample, const int ch)
 {
   if ( ch < 0 || ch >=144 || sample < 0) return 0;
   decode();
@@ -388,7 +388,7 @@ int oncsSub_idh2gcroc3::iValue(const int ch, const int sample)
   return waveform[sample]->ADC[ch];
 }
 
-int oncsSub_idh2gcroc3::iValue(const int event, const int ch, const int sample)
+int oncsSub_idh2gcroc3::iValue(const int event, const int sample, const int ch)
 {
   if ( ch < 0 || ch >=144 || sample < 0) return 0;
   decode();
@@ -413,8 +413,36 @@ int oncsSub_idh2gcroc3::iValue(const int event, const int ch, const int sample)
     }
   return waveform[n+sample]->ADC[ch];
 }
+
+long long   oncsSub_idh2gcroc3::lValue(const int wf, const int sample, const int ch)
+{
+  if ( ch < 0 || ch >=144 || sample < 0) return 0;
+  decode();
   
-int oncsSub_idh2gcroc3::iValue(const int ch, const int sample, const char *what)
+  unsigned int ue = wf;  //preventing a warning as size() is unsigned
+  if ( wf < 0 || ue > _eventlist.size() ) return 0;
+
+  unsigned int un = sample;   //preventing a warning as size() is unsigned
+  
+  if ( un >= waveform.size() ) return 0;
+
+  event_bounds *eb = _eventlist[wf];
+  int n = eb->first;
+  int l = eb->length;
+  if (sample >= l)  return 0;   // this event has only l samnples
+  if ( (unsigned int) (n+sample) >= waveform.size())
+    {
+      coutfl << "element out of bounds " << n + sample << "   size = " <<  waveform.size() << endl;
+      return 0;
+    }
+  return (long long) waveform[n+sample]->timestamp;
+}
+
+
+
+
+
+int oncsSub_idh2gcroc3::iValue(const int sample, const int ch, const char *what)
 {
   if ( ch < 0 || ch >=144 || sample < 0) return 0;
   decode();
@@ -436,7 +464,7 @@ int oncsSub_idh2gcroc3::iValue(const int ch, const int sample, const char *what)
 }
   
 // this is for the TOT and TOA values
-int oncsSub_idh2gcroc3::iValue(const int wf, const int ch, const int sample, const char *what)
+int oncsSub_idh2gcroc3::iValue(const int wf, const int sample, const int ch, const char *what)
 {
   // these are the easy checks we can do w/o decoding the data
   if ( ch < 0 || ch >=144 || sample < 0) return 0;
@@ -509,23 +537,64 @@ void oncsSub_idh2gcroc3::dump(std::ostream &os)
   */
   
   int e = iValue(0, "NR_WF");
-  os << " Number of Waveforms: " << e << endl;
+  os << " Number of Waveforms: " << e << endl << endl;
+  
+
   for ( int n = 0; n < e; n++)
     {
-      os << "----- Event " << n << " size: " << iValue(n, "SAMPLESIZE") << endl;
+      os << " ----- Waveform  " << n << " Samples: " << iValue(n, "SAMPLESIZE") << "  Timestamp: 0x" << hex << lValue(n,0,0) << dec  << endl;
       for ( int ic =0; ic < iValue(0,"CHANNELS"); ic++)
 	{
-	  os << setw(4) << ic << " | " ;
+
+	  int show_this = 0;
 	  for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
 	    {
-	      os << setw(4) << iValue (n, ic, is) << " " << iValue (n, ic, is, "TOT") << " " << iValue (n, ic, is, "TOA") << "  "  ;
+	      if ( iValue (n, is, ic) || iValue (n, is, ic, "TOT") || iValue (n, is, ic, "TOA") ) show_this =1;
 	    }
-	  os << endl;
+	  
+	  if ( show_this)
+	    {
+	      os << setw(4) << ic << " | ADC | " << hex;
+	      for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
+		{
+		  os << " " << setw(4)  << iValue (n, is, ic);
+		}
+	      os << dec << endl;
+
+	      os << setw(4) << ic << " | TOT | " << hex;
+	      for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
+		{
+		  os << " " << setw(4) << iValue (n, is, ic, "TOT");
+		}
+	      os << dec << endl;
+	      
+	      os << setw(4) << ic << " | TOA | " << hex;
+	      for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
+		{
+		  os << " " << setw(4) << iValue (n, is, ic, "TOA");
+		}
+	      os << dec << endl;
+	      
+	      // os << "ECTR" << " | " ;
+	      // for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
+	      //   {
+	      //     os << " " << setw(4) << iValue (n, is, ic, "EVENT_COUNTER");
+	      //   }
+	      // os << dec << endl;
+	      // os << "TOUT" << " | " ;
+	      // for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
+	      //   {
+	      //     os << " " << setw(4) << iValue (n, is, ic, "TRIGGER_OUT");
+	      //   }
+	      // os << dec << endl;
+	      os << dec << endl;
+	    }
 	}
     }
   
   
 }
+
 
 int oncsSub_idh2gcroc3::parse_timeline ()
 {

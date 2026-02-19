@@ -1,4 +1,4 @@
-#include "oncsSub_idh2gcroc3.h"
+#include "oncsSub_idh2gcroc3_10G.h"
 
 #include <string.h>
 #include "buffer.h"
@@ -6,275 +6,212 @@
 using namespace std;
 
 // this is the clock value for "contiguous samples. 
-#define CONTIGUOUS_CLOCK  41
+#define CONTIGUOUS_CLOCK  164
 
-oncsSub_idh2gcroc3::oncsSub_idh2gcroc3(subevtdata_ptr data)
+oncsSub_idh2gcroc3_10G::oncsSub_idh2gcroc3_10G(subevtdata_ptr data)
   :oncsSubevent_w4 (data)
 {
 
   is_decoded = 0;
   _broken = 0;
-  old_timestamp = 0xffffffff;
+  old_timestamp   = 0xffffffffffffffff;
+  old_trigger_in  = 0xffffffff;
+  old_trigger_out = 0xffffffff;
   _sample =0;
   _nr_samples = 0;
   _nr_events = 0;
 }
 
 
-int oncsSub_idh2gcroc3::decode_line( unsigned int d[10])
+int oncsSub_idh2gcroc3_10G::decode_line( uint8_t d[4*48])
 {
 
       
-  int o,c;
-  //coutfl << "new line " << hex << u4swap(d[0]) << endl;;
+  //  int o,c;
+
+  if ( d[0] != 0xaa && d[1] != 0x5a) return 0;
+
+  // cout << "new line " << hex << " " ;
+  // for (int i = 0; i < 32; i++)
+  //   {
+  //     if ( i > 0 && i%4 == 0) cout << " ";
+  //     cout << setw(3) << (unsigned int) d[i];
+  //   }
+  // cout << dec << endl;
   
-  if ( (u4swap(d[0]) >> 28 ) == 0xa)
+
+  //      int ifpga = ((u4swap(d[0])>>16) & 0xff );
+  int ichip = d[2] & 0xf;
+  int group = d[3] - 36;  // needs check...
+  
+  uint32_t trigger_in = u4frombyte(&d[4]);
+  uint32_t trigger_out = u4frombyte(&d[8]);
+  uint32_t evt_ctr = u4frombyte(&d[12]);
+  uint64_t timestamp = u8frombyte(&d[16]);
+  //uint64_t spare = u8frombyte(&d[24]);
+  
+  
+  // cout << hex << " ichip = " << ichip
+  // 	   << " group " << group
+  // 	   << " trigger_in " << trigger_in
+  // 	   << " trigger_out " << trigger_out
+  // 	   << " evt_ctr " << evt_ctr
+  // 	   << " timestamp " << timestamp
+  // 	   << " spare " << spare 
+  // 	   << dec << endl;
+  
+  uint32_t ROC_HDR;
+  uint32_t CMN;
+  uint32_t CALIB;
+  uint32_t CRC;
+  uint32_t ch[36];
+  
+  ROC_HDR = u4frombyte(&d[32 + 0]);
+  CMN     = u4frombyte(&d[32 + 4]);
+  
+  // coutfl << "ROC_HDR " << hex << ROC_HDR << " CMN: " << CMN << dec << endl;
+  
+  for (int n = 0; n < 18; n++)
     {
-      
-      
-      int ichip = ((u4swap(d[0])>>24) & 0xf );
-      //      int ifpga = ((u4swap(d[0])>>16) & 0xff );
-      int group = ((u4swap(d[0])>>8) & 0xff ) - 36;
-      int line_number = (u4swap(d[0])) & 0xff;
-
-      // cout << " ifpga = " << ifpga
-      // 	   << " ichip = " << ichip
-      // 	   << " line number " << line_number
-      // 	   << " group " << group
-      // 	   << " timestamp " << u4swap(d[1])
-      // 	   << dec << endl;
-
-      //      if ( ichip == 0 && line_number == 0 && group == 0)
-      //	{
-
-      // for (int i = 0; i < 10; i++)
-      // 	{
-      // 	  cout << hex << std::setfill('0')
-      // 	       << setw(2) << ((d[i]     ) & 0xff) << " "
-      // 	       << setw(2) << ((d[i] >>8 ) & 0xff) << " "
-      // 	       << setw(2) << ((d[i] >>16) & 0xff) << " "
-      // 	       << setw(2) << ((d[i] >>24) & 0xff) << " "
-      // 	       << dec;
-      // 	}
-      // cout << std::setfill(' ') << endl;
-      //	}
-      
-
-      // on the first invocation, old_timestamp is -1 (or 0xfff... as an unsigned)
-      // initializing it this way will make the nexty check succeed.
-      
-      if ( old_timestamp == 0xffffffff )
-	{
-	  old_timestamp = u4swap(d[1]);
-	  _sample = new sample;
-	  memset (_sample, 0 , sizeof(sample) );
-	  _sample->timestamp = u4swap(d[1]);
-	}
-
-      // if the time stamp changes, we are done with this smaple.
-      // me are pushing this on the stack and mobe on to the next. 
-      if ( old_timestamp != u4swap(d[1]))
-	{
-	  waveform.push_back(_sample);
-	  //cout << endl;
-	  _sample = new sample;
-	  memset (_sample, 0 , sizeof(sample) );
-	  _sample->timestamp = u4swap(d[1]);
-	  _nr_samples++;
-	  //coutfl << "*** complete, size of waveform " << waveform.size() << " timestamp: " << _sample->timestamp  << " sample nr " << nr_samples << endl;
-
-	  if ( u4swap(d[1]) - old_timestamp > CONTIGUOUS_CLOCK) // we jump to a new trigger here
-	    {
-	      _nr_events++;
-	    }
-
-	}
-      old_timestamp = u4swap(d[1]);
-
-      int chip_offset =0;
-      if ( ichip) chip_offset = 72;
-
-      int group_offset =0;
-      if ( group) group_offset = 36;
-
-      int calib;
-
-      unsigned int val;
-      
-      //for the next section, we continue to fill the various vlaues of that "sample" structure
-      
-      switch ( line_number)
-	{
-	case 0:
-	  // header = u4swap(buffer[2]);
-	  // cmn    = u4swap(buffer[3]); 
-	  
-	  c = 0;
-	  o = 4;
-
-	  // 6 values in line "0"
-	  for ( int j = 0; j < 6; j++)
-	    {
-	      val = u4swap(d[o]);
-	      _sample->ADC[chip_offset + group_offset + c] = (val >> 20) & 0x3ff;
-	      _sample->tot[chip_offset + group_offset + c] = (val >> 10) & 0x3ff;
-	      _sample->toa[chip_offset + group_offset + c] = val & 0x3ff;
-	      coutfl << hex << "Value: 0x" << val << dec << "  ADC " << _sample->ADC[chip_offset + group_offset + c]
-		     << " TOT " << _sample->tot[chip_offset + group_offset + c]
-		     << " TOA " << _sample->toa[chip_offset + group_offset + c]
-		     << endl;
-	      o++;
-	      c++;
-	    }
-
-	  break; 
-	  
-	case 1:
-	  c = 6;
-	  o = 2;
-	  
-
-	  // 8 values in line "1"
-	  for ( int j = 0; j < 8; j++)
-	    {
-	      val = u4swap(d[o]);
-	      _sample->ADC[chip_offset + group_offset + c] = (val >> 20) & 0x3ff;
-	      _sample->tot[chip_offset + group_offset + c] = (val >> 10) & 0x3ff;
-	      _sample->toa[chip_offset + group_offset + c] = val & 0x3ff;
-	      o++;
-	      c++;
-	    }
-	  
-	  break; 
-	  
-	case 2:
-	  c = 14;
-	  o = 2;
-	  
-	  // 3 values in line "2"
-	  for ( int j = 0; j < 3; j++)
-	    {
-	      val = u4swap(d[o]);
-	      _sample->ADC[chip_offset + group_offset + c] = (val >> 20) & 0x3ff;
-	      _sample->tot[chip_offset + group_offset + c] = (val >> 10) & 0x3ff;
-	      _sample->toa[chip_offset + group_offset + c] = val & 0x3ff;
-	      o++;
-	      c++;
-	    }
-
-	  calib        = (u4swap(d[o++]) >> 20) & 0x3ff;
-	  
-	  // and 4 more values
-	  for ( int j = 0; j < 4; j++)
-	    {
-	      val = u4swap(d[o]);
-	      _sample->ADC[chip_offset + group_offset + c] = (val >> 20) & 0x3ff;
-	      _sample->tot[chip_offset + group_offset + c] = (val >> 10) & 0x3ff;
-	      _sample->toa[chip_offset + group_offset + c] = val & 0x3ff;
-	      o++;
-	      c++;
-	    }
-
-
-	  
-	  break; 
-	  
-	case 3:
-	  c = 21;
-	  o = 2;
-	  
-	  // 8 values in line "3"
-	  for ( int j = 0; j < 8; j++)
-	    {
-	      val = u4swap(d[o]);
-	      _sample->ADC[chip_offset + group_offset + c] = (val >> 20) & 0x3ff;
-	      _sample->tot[chip_offset + group_offset + c] = (val >> 10) & 0x3ff;
-	      _sample->toa[chip_offset + group_offset + c] = val & 0x3ff;
-	      o++;
-	      c++;
-	    }
-	  	  
-	  break; 
-	  
-	case 4:
-	  c = 29;
-	  o = 2;
-	  
-	  // 7 values in line "3"
-	  for ( int j = 0; j < 7; j++)
-	    {
-	      val = u4swap(d[o]);
-	      _sample->ADC[chip_offset + group_offset + c] = (val >> 20) & 0x3ff;
-	      _sample->tot[chip_offset + group_offset + c] = (val >> 10) & 0x3ff;
-	      _sample->toa[chip_offset + group_offset + c] = val & 0x3ff;
-	      o++;
-	      c++;
-	    }
-	  	  
-	  _sample->crc32        = u4swap(d[o++]);
-	  break; 
-	  
-	default:
-	  //cout << " invalid line number " << endl;
-	  break;
-	  	  
-	}
+      ch[n] = u4frombyte(&d[32 + 8 + n*4]);
     }
+  
+  CALIB = u4frombyte(&d[112]);
+  
+  for (int n = 0; n < 18; n++)
+    {
+      ch[n+18] = u4frombyte(&d[112 + 4 + n*4]);
+    }
+  
+  CRC = u4frombyte(&d[188]);
+  
+  // on the first invocation, old_timestamp is -1 (or 0xfff... as an unsigned)
+  // initializing it this way will make the next check succeed.
+  
+  if ( old_trigger_in == 0xffffffff || old_trigger_out == 0xffffffff) // first data
+    {
+      old_timestamp = timestamp;
+      old_trigger_in = trigger_in;
+      old_trigger_out = trigger_out;
+      _sample = new sample;
+      memset (_sample, 0 , sizeof(sample) );
+      _sample->timestamp = timestamp;
+    }
+  
+  // if the time stamp changes, we are done with this smaple.
+  // me are pushing this on the stack and move on to the next. 
+  //if ( old_trigger_out != trigger_out || old_trigger_in != trigger_in)
+  if ( old_timestamp != timestamp)
+    {
+      waveform.push_back(_sample);
+      _nr_samples++;
+      
+      // coutfl << "*** complete, size of waveform " << waveform.size() << " timestamp: " << _sample->timestamp  << " sample nr " << _nr_samples << endl;
+      _sample = new sample;
+      memset (_sample, 0 , sizeof(sample) );
+      _sample->timestamp = timestamp;
+      
+      // if ( timestamp - old_timestamp > CONTIGUOUS_CLOCK) // we jump to a new trigger here
+      // 	{
+      // 	  _nr_events++;
+      // 	}
+      
+    }
+  old_timestamp = timestamp;
+  old_trigger_in = trigger_in;
+  old_trigger_out = trigger_out;
+  
+  int chip_offset =0;
+  if ( ichip) chip_offset = 72;
+  
+  int group_offset =0;
+  if ( group) group_offset = 36;
+  
+  //for the next section, we continue to fill the various vlaues of that "sample" structure
+  for ( int c = 0; c< 36; c++)
+    {
+      _sample->ADC[chip_offset + group_offset + c] = (ch[c] >> 20) & 0x3ff;
+      _sample->tot[chip_offset + group_offset + c] = (ch[c] >> 10) & 0x3f;
+      _sample->toa[chip_offset + group_offset + c] = ch[c] & 0x3ff;
+      
+      // coutfl << setw(4) << chip_offset + group_offset + c << " " << hex
+	  // 		 << " ADC " << _sample->ADC[chip_offset + group_offset + c]
+	  // 		 << " TOT " << _sample->tot[chip_offset + group_offset + c]
+	  // 		 << " TOA " << _sample->toa[chip_offset + group_offset + c]
+	  // 		 << dec << endl;
+    }
+  
+  
+  _sample->trigger_in   = trigger_in;
+  _sample->trigger_out  = trigger_out;
+  _sample->event_counter  = evt_ctr;
+  _sample->cmn          = CMN;
+  _sample->calib        = CALIB;
+  _sample->crc32        = CRC;
+  
+  
   return 0;
 }
 
 
-int oncsSub_idh2gcroc3::decode()
+int oncsSub_idh2gcroc3_10G::decode()
 {
   if (is_decoded) return 0;
   is_decoded = 1;
 
   
-  unsigned int *buffer = ( unsigned int *)  &SubeventHdr->data;
+  //unsigned int *buffer = ( unsigned int *)  &SubeventHdr->data;
+  uint8_t *cbuffer = ( uint8_t *)  &SubeventHdr->data;
 
   
-  int current_index  = 0;
+  //int current_index  = 0;
+  int current_index_bytes =0;
+  
   int lines = 0;
   int pos;
   
   std::vector<unsigned int>  incomplete_line;
   
   
-  while ( current_index < getDataLength() )
+  while ( current_index_bytes < 4*getDataLength() )
     {
 
-      int packetlength = buffer[current_index+1]/4 + 2;
-
-      //unsigned int hdr0 = u4swap(buffer[current_index+2]);
-      //coutfl << "marker " << hex << buffer[current_index] << dec << " Length " << buffer[current_index+1] << " counter " << (hdr0 & 0xffff) << endl;
-      int packet_end = current_index + packetlength -1;
+      unsigned int packetstart = current_index_bytes; // we remember where the packet began
+      
+      unsigned int packetlength = u4swapfrombyte(&cbuffer[current_index_bytes + 4]);
 
 
+      packetlength += 8;
       
 
-      current_index += 5;
+      //unsigned int hdr0 = u4swap(buffer[current_index+2]);
+      // coutfl << "current_index_bytes = " << current_index_bytes << "  marker " << hex <<  setw(2) << cbuffer[current_index_bytes] << setw(2) << cbuffer[current_index_bytes+1]<< dec << " Length " << packetlength <<  endl;
+
+      int packet_end_bytes = current_index_bytes + packetlength -4;
+
+      current_index_bytes += 22;
 
       // coutfl << " incomplete_line_size " << incomplete_line.size() << endl;
       
-      if ( incomplete_line.size() )
-	{
-	  long unsigned int n = 0;
-	  for ( ; n < 10 - incomplete_line.size() ; n++)
-	    {
-	      incomplete_line.push_back(buffer[current_index + n]);
-	    }
-	  coutfl << " incomplete_line_size " << incomplete_line.size() << endl;
-	  decode_line(&incomplete_line[0]);
-	  incomplete_line.clear();
-	  current_index =n;
-	}
+      // if ( incomplete_line.size() )
+      // 	{
+      // 	  long unsigned int n = 0;
+      // 	  for ( ; n < 10 - incomplete_line.size() ; n++)
+      // 	    {
+      // 	      incomplete_line.push_back(buffer[current_index + n]);
+      // 	    }
+      // 	  coutfl << " incomplete_line_size " << incomplete_line.size() << endl;
+      // 	  decode_line(&incomplete_line[0]);
+      // 	  incomplete_line.clear();
+      // 	  current_index =n;
+      // 	}
 
 
 
       
-      // for ( n = current_index; n < packet_end ; n++)
+      // for ( n = current_index_bytes; n < packet_end_bytes ; n++)
       // 	{
-      // 	  if ( (buffer[n] & 0xffff) == 0x00a0 || (buffer[n] & 0xffff) == 0x00a1)
+      // 	  if ( (cbuffer[n] & 0xffff) == 0x00a0 || (buffer[n] & 0xffff) == 0x00a1)
       // 	    {
       // 	      coutfl << " found line start at " << n - current_index << " value " << hex << buffer[n] << dec << endl;
       // 	      break;
@@ -285,21 +222,21 @@ int oncsSub_idh2gcroc3::decode()
       lines = 0;
       // here we are at the beginning of an "a0 or "a1" line 
 
-      for ( pos = current_index; pos < packet_end; pos += 10)
+      for ( pos = current_index_bytes; pos < packet_end_bytes; pos += 4*48)
 	{
-	  //cout << "line start " << hex << buffer[pos] << dec << " at index " << pos << endl;
-	  decode_line(&buffer[pos]);
+	  // coutfl << "line start " << hex << (unsigned int) cbuffer[pos] << dec << " at index " << pos << endl;
+	  decode_line(&cbuffer[pos]);
 	  lines++;
 	}
 
-      current_index = pos;
-      for ( pos = current_index; pos < packet_end; pos++)
-	{
-	  incomplete_line.push_back(buffer[pos]);
-	}
+      // current_index = pos;
+      // for ( pos = current_index; pos < packet_end; pos++)
+      // 	{
+      // 	  incomplete_line.push_back(buffer[pos]);
+      // 	}
       
       
-      current_index = packet_end+1;
+      current_index_bytes = packetstart + packetlength;
       //      coutfl << " number of lines: " << lines << endl;
     }
 
@@ -309,24 +246,46 @@ int oncsSub_idh2gcroc3::decode()
 }
 
 
-unsigned int oncsSub_idh2gcroc3::u4swap(const unsigned int in)
+unsigned int oncsSub_idh2gcroc3_10G::u4swapfrombyte(uint8_t* v)
 {
-  union 
-  {
-    unsigned int i4;
-    char c[4];
-  } i,o;
+  unsigned int r = (v[3] << 24)
+	|  (v[2] << 16)
+	|  (v[1] << 8)
+	|  (v[0]);
 
-  i.i4 = in;
-  o.c[0] = i.c[3];
-  o.c[1] = i.c[2];
-  o.c[2] = i.c[1];
-  o.c[3] = i.c[0];
-  return o.i4;
+  return r;
+}
+
+unsigned int oncsSub_idh2gcroc3_10G::u4frombyte(uint8_t* v)
+{
+
+  unsigned int r = (v[0] << 24)
+	|  (v[1] << 16)
+	|  (v[2] << 8)
+	|  (v[3]);
+
+  return r;
+}
+
+unsigned long long oncsSub_idh2gcroc3_10G::u8frombyte(uint8_t* v)
+{
+
+  unsigned long long r = 0;
+  
+  for ( int i = 0; i < 8; i++)
+    {
+      unsigned long long x = v[i];
+      x <<= 8*(7-i);
+      r |= x;
+    }
+	
+  return r;
 }
 
 
-int oncsSub_idh2gcroc3::iValue(const int n, const char *what)
+
+
+int oncsSub_idh2gcroc3_10G::iValue(const int n, const char *what)
 {
   decode();
   unsigned int un = n;
@@ -376,7 +335,7 @@ int oncsSub_idh2gcroc3::iValue(const int n, const char *what)
 }
 
 
-int oncsSub_idh2gcroc3::iValue(const int ch, const int sample)
+int oncsSub_idh2gcroc3_10G::iValue(const int sample, const int ch)
 {
   if ( ch < 0 || ch >=144 || sample < 0) return 0;
   decode();
@@ -388,21 +347,47 @@ int oncsSub_idh2gcroc3::iValue(const int ch, const int sample)
   return waveform[sample]->ADC[ch];
 }
 
-int oncsSub_idh2gcroc3::iValue(const int event, const int ch, const int sample)
+long long   oncsSub_idh2gcroc3_10G::lValue(const int wf, const int sample, const int ch)
+{
+  if ( ch < 0 || ch >=144 || sample < 0) return 0;
+  decode();
+  
+  unsigned int ue = wf;  //preventing a warning as size() is unsigned
+  if ( wf < 0 || ue > _eventlist.size() ) return 0;
+
+  unsigned int un = sample;   //preventing a warning as size() is unsigned
+  
+  if ( un >= waveform.size() ) return 0;
+
+  event_bounds *eb = _eventlist[wf];
+  int n = eb->first;
+  int l = eb->length;
+  if (sample >= l)  return 0;   // this event has only l samnples
+  if ( (unsigned int) (n+sample) >= waveform.size())
+    {
+      coutfl << "element out of bounds " << n + sample << "   size = " <<  waveform.size() << endl;
+      return 0;
+    }
+  return (long long) waveform[n+sample]->timestamp;
+}
+
+
+
+int oncsSub_idh2gcroc3_10G::iValue(const int wf, const int sample, const int ch)
 {
   if ( ch < 0 || ch >=144 || sample < 0) return 0;
   decode();
 
   // only known once we decode
   
-  unsigned int ue = event;  //preventing a warning as size() is unsigned
-  if ( event < 0 || ue > _eventlist.size() ) return 0;
+  unsigned int ue = wf;  //preventing a warning as size() is unsigned
+  if ( wf < 0 || ue > _eventlist.size() ) return 0;
 
   unsigned int un = sample;   //preventing a warning as size() is unsigned
   
   if ( un >= waveform.size() ) return 0;
 
-  event_bounds *eb = _eventlist[event];
+  event_bounds *eb = _eventlist[wf];
   int n = eb->first;
   int l = eb->length;
   if (sample >= l)  return 0;   // this event has only l samnples
@@ -414,7 +399,7 @@ int oncsSub_idh2gcroc3::iValue(const int event, const int ch, const int sample)
   return waveform[n+sample]->ADC[ch];
 }
   
-int oncsSub_idh2gcroc3::iValue(const int ch, const int sample, const char *what)
+int oncsSub_idh2gcroc3_10G::iValue(const int sample, const int ch, const char *what)
 {
   if ( ch < 0 || ch >=144 || sample < 0) return 0;
   decode();
@@ -436,7 +421,7 @@ int oncsSub_idh2gcroc3::iValue(const int ch, const int sample, const char *what)
 }
   
 // this is for the TOT and TOA values
-int oncsSub_idh2gcroc3::iValue(const int wf, const int ch, const int sample, const char *what)
+int oncsSub_idh2gcroc3_10G::iValue(const int wf, const int sample, const int ch, const char *what)
 {
   // these are the easy checks we can do w/o decoding the data
   if ( ch < 0 || ch >=144 || sample < 0) return 0;
@@ -468,13 +453,25 @@ int oncsSub_idh2gcroc3::iValue(const int wf, const int ch, const int sample, con
     {
       return waveform[n+sample]->toa[ch];
     }
+  else if ( strcmp(what,"TRIGGER_IN") == 0 )
+    {
+      return waveform[n+sample]->trigger_in;
+    }
+  else if ( strcmp(what,"TRIGGER_OUT") == 0 )
+    {
+      return waveform[n+sample]->trigger_out;
+    }
+  else if ( strcmp(what,"EVENT_COUNTER") == 0 )
+    {
+      return waveform[n+sample]->event_counter;
+    }
 
   return 0;
 }
   
   
 
-void oncsSub_idh2gcroc3::dump(std::ostream &os)
+void oncsSub_idh2gcroc3_10G::dump(std::ostream &os)
 {
   identify(os);
   if ( _broken) 
@@ -509,60 +506,109 @@ void oncsSub_idh2gcroc3::dump(std::ostream &os)
   */
   
   int e = iValue(0, "NR_WF");
-  os << " Number of Waveforms: " << e << endl;
+  os << " Number of Waveforms: " << e << endl << endl;
+  
   for ( int n = 0; n < e; n++)
     {
-      os << "----- Event " << n << " size: " << iValue(n, "SAMPLESIZE") << endl;
+      os << " ----- Waveform  " << n << " Samples: " << iValue(n, "SAMPLESIZE") << "  Timestamp: 0x" << hex << lValue(n,0,0) << dec  << endl;
       for ( int ic =0; ic < iValue(0,"CHANNELS"); ic++)
 	{
-	  os << setw(4) << ic << " | " ;
+
+	  int show_this = 0;
 	  for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
 	    {
-	      os << setw(4) << iValue (n, ic, is) << " " << iValue (n, ic, is, "TOT") << " " << iValue (n, ic, is, "TOA") << "  "  ;
+	      if ( iValue (n, is, ic) || iValue (n, is, ic, "TOT") || iValue (n, is, ic, "TOA") ) show_this =1;
 	    }
-	  os << endl;
+	  
+	  if ( show_this)
+	    {
+	      os << setw(4) << ic << " | ADC | " << hex;
+	      for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
+		{
+		  os << " " << setw(4)  << iValue (n, is, ic);
+		}
+	      os << dec << endl;
+
+	      os << setw(4) << ic << " | TOT | " << hex;
+	      for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
+		{
+		  os << " " << setw(4) << iValue (n, is, ic, "TOT");
+		}
+	      os << dec << endl;
+	      
+	      os << setw(4) << ic << " | TOA | " << hex;
+	      for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
+		{
+		  os << " " << setw(4) << iValue (n, is, ic, "TOA");
+		}
+	      os << dec << endl;
+	      
+	      // os << "ECTR" << " | " ;
+	      // for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
+	      //   {
+	      //     os << " " << setw(4) << iValue (n, is, ic, "EVENT_COUNTER");
+	      //   }
+	      // os << dec << endl;
+	      // os << "TOUT" << " | " ;
+	      // for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
+	      //   {
+	      //     os << " " << setw(4) << iValue (n, is, ic, "TRIGGER_OUT");
+	      //   }
+	      // os << dec << endl;
+	      os << dec << endl;
+	    }
 	}
     }
   
   
 }
 
-int oncsSub_idh2gcroc3::parse_timeline ()
+int oncsSub_idh2gcroc3_10G::parse_timeline ()
 {
+  //coutfl << "Waveform size " << waveform.size() << endl; // first one
   auto itr =  waveform.begin();  // first one
   if ( itr == waveform.end()) return -1;
   
-  unsigned int old_timestamp = (*itr)->timestamp;  // get the initial timestamp
+  uint64_t old_timestamp = (*itr)->timestamp;  // get the initial values
+  //  unsigned int old_trigger_in = (*itr)->trigger_in;  // get the initial values
+  //unsigned int old_trigger_out = (*itr)->trigger_out;  // get the initial values
 
   int pos = 0;
   event_bounds *eb = new event_bounds;
   eb->first = pos;
   eb->length=1;
-    
+
   ++itr;
 
   for (; itr != waveform.end(); ++itr)
     {
-      pos++;
-      if ( (*itr)->timestamp - old_timestamp !=  CONTIGUOUS_CLOCK)
+      // coutfl << "sample trigger " << (*itr)->trigger_out << " pos " << pos << " diff: " << (*itr)->timestamp - old_timestamp << endl;
+
+      //      if ( (*itr)->trigger_in  != old_trigger_in ||  (*itr)->trigger_out  != old_trigger_out)
+      if ( (*itr)->timestamp - old_timestamp > CONTIGUOUS_CLOCK )
 	{
+	  eb->length--;
 	  // coutfl << "adding new event boundary at index " << eb->first << " with length " <<  eb->length << " pos is " << pos
-	  // 	 << " old ts = " << old_timestamp << " new = " << (*itr)->timestamp << " diff: " << (*itr)->timestamp - old_timestamp << endl;
+	  //  	 << " old ts = " << old_timestamp << " new = " << (*itr)->timestamp << " diff: " << (*itr)->timestamp - old_timestamp << endl;
 	  _eventlist.push_back(eb);
 	  eb = new event_bounds;
 	  eb->first = pos;
 	  eb->length=1;
 	}
       old_timestamp = (*itr)->timestamp;
+      //old_trigger_in = (*itr)->trigger_in;  // get the initial values
+      //old_trigger_out = (*itr)->trigger_out;  // get the initial values
       eb->length++;
+      pos++;
     }
+  
   eb->length--;
-  // coutfl << "adding new event boundary at index " << eb->first << " with length " <<  eb->length << " pos is " << pos << endl;
-  //   _eventlist.push_back(eb);
+  //  coutfl << "adding new event boundary at index " << eb->first << " with length " <<  eb->length << " pos is " << pos << endl;
+  _eventlist.push_back(eb);
   return 0;
 }
 
-oncsSub_idh2gcroc3::~oncsSub_idh2gcroc3()
+oncsSub_idh2gcroc3_10G::~oncsSub_idh2gcroc3_10G()
 {
 
   for (auto itr =  waveform.begin(); itr != waveform.end(); ++itr)

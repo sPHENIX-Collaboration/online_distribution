@@ -166,6 +166,7 @@ allheaders = \
   oncsSub_idgl1v0.h \
   oncsSub_idgl1v1.h \
   oncsSub_idh2gcroc3.h \
+  oncsSub_idh2gcroc3_10G.h \
   oncsSub_idastrov1.h \
   oncsSubevent.h \
   packet.h \
@@ -262,6 +263,7 @@ allsources = \
   oncsSub_idgl1v0.cc \
   oncsSub_idgl1v1.cc \
   oncsSub_idh2gcroc3.cc \
+  oncsSub_idh2gcroc3_10G.cc \
   oncsSub_idastrov1.cc \
   oncsSubevent.cc \
   oncs_mnemonic.cc \
