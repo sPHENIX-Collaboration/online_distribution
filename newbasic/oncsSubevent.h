@@ -49,6 +49,8 @@ public:
 
   int    iValue(const int channel,const int iy, const int iz, const char *what) {return 0;};
 
+  long long    lValue(const int channel,const int iy, const int iz) {return 0;};
+
   float  rValue(const int);
   float  rValue(const int,const char *);
   float  rValue(const int,const int);

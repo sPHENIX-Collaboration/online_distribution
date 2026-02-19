@@ -112,6 +112,9 @@ class  Packet
   virtual long long  lValue(const int channel, const int iy)
   {return iValue(channel, iy);};
 
+  virtual long long  lValue(const int channel, const int iy, const int iz)
+  {return iValue(channel, iy, iz);};
+
   virtual long long  lValue(const int channel, const int iy, const char *what)
   {return iValue(channel, iy, what);};
 
