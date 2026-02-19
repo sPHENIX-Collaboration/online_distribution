@@ -100,6 +100,7 @@
 #define IDGL1V1      143
 
 #define IDH2GCROC3     301
+#define IDH2GCROC3_10G 302
 
 #define IDASTROV1     350
 
