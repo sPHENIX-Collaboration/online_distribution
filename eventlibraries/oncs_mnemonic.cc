@@ -19,6 +19,7 @@ const char *oncs_get_mnemonic (const int structure, const int format)
     case(IDCSTR): return "IDCSTR";
     case(ID2EVT): return "ID2EVT";
     case(ID4EVT): return "ID4EVT";
+    case(IDRTCLOCK): return "IDRTCLOCK";
     case(ID2SUP): return "ID2SUP";
     case(IDHAMMOND): return "IDHAMMOND";
     case(IDSAM): return "IDSAM";

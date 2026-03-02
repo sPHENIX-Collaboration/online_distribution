@@ -149,6 +149,7 @@ allheaders = \
   oncsSubConstants.h \
   oncsSub_id2evt.h \
   oncsSub_id4evt.h \
+  oncsSub_idrtclock.h \
   oncsSub_idsis3300.h \
   oncsSub_idsis3300r.h \
   oncsSub_idcaenv792.h \
@@ -247,6 +248,7 @@ allsources = \
   oncsSub_idcstr.cc \
   oncsSub_id2evt.cc \
   oncsSub_id4evt.cc \
+  oncsSub_idrtclock.cc \
   oncsSub_idsis3300.cc \
   oncsSub_idsis3300r.cc \
   oncsSub_idcaenv792.cc \

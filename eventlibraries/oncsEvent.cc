@@ -185,6 +185,11 @@ Packet *oncsEvent::makePacket(PHDWORD *pp, const int hitFormat)
 	oncsSub_idcstr( sevt_ptr );
       break;
 
+    case (IDRTCLOCK):
+      return new
+	oncsSub_idrtclock( sevt_ptr );
+      break;
+
     case (IDSIS3300):
       return new
 	oncsSub_idsis3300( sevt_ptr );

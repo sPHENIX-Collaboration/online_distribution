@@ -41,6 +41,7 @@ int oncsSub_idh2gcroc3_10G::decode_line( uint8_t d[4*48])
   
 
   //      int ifpga = ((u4swap(d[0])>>16) & 0xff );
+  coutfl << " d[2] " << (unsigned int) d[2] << endl;
   int ichip = d[2] & 0xf;
   int group = d[3] - 36;  // needs check...
   
@@ -514,7 +515,7 @@ void oncsSub_idh2gcroc3_10G::dump(std::ostream &os)
       for ( int ic =0; ic < iValue(0,"CHANNELS"); ic++)
 	{
 
-	  int show_this = 0;
+	  int show_this = 1;
 	  for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
 	    {
 	      if ( iValue (n, is, ic) || iValue (n, is, ic, "TOT") || iValue (n, is, ic, "TOA") ) show_this =1;
