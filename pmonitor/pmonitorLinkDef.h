@@ -23,5 +23,6 @@
 #pragma link C++ function pstop;
 #pragma link C++ function ptestopen;
 #pragma link C++ function pwait;
+#pragma link C++ function updatePad;
 
 #endif /* __CINT__ */
