@@ -1,3 +1,4 @@
+
 #ifndef __ONCSSUB_IDCAENV1742_H__
 #define __ONCSSUB_IDCAENV1742_H__
 
@@ -16,6 +17,7 @@ public:
   int    iValue(const int ch);
   int    iValue(const int sample, const int ch);
   int    iValue(const int,const char *);
+  long long  lValue(const int,const char *);
   void  dump ( OSTREAM& os = COUT) ;
 
 protected:
@@ -25,8 +27,11 @@ protected:
   int evnr;
   int freq;
   int group_mask;
+  int LVDSPattern;
   int index_cell[4];
   int tr_present[4];
+  unsigned long long GroupTriggerTime[4];
+  unsigned int EvtTimeTag;
 
 };
 

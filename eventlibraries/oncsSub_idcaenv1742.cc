@@ -7,7 +7,8 @@ oncsSub_idcaenv1742::oncsSub_idcaenv1742(subevtdata_ptr data)
 {
   samples = 0;
   dlength = 0;
-
+  EvtTimeTag = 0;
+  LVDSPattern = 0;
   evnr = 0;
   freq=3;
   group_mask=0;
@@ -16,6 +17,7 @@ oncsSub_idcaenv1742::oncsSub_idcaenv1742(subevtdata_ptr data)
     {
       index_cell[i] = 0;
       tr_present[i] = 0;
+      GroupTriggerTime[i] = 0;
     }
 
 }
@@ -25,7 +27,7 @@ int *oncsSub_idcaenv1742::decode ( int *nwout)
   int *p;
 
 
-  int *SubeventData = &SubeventHdr->data;
+  unsigned int *SubeventData = (unsigned int *) &SubeventHdr->data;
 
 
   // the first word must have  0xa in the MSB, and
@@ -39,13 +41,15 @@ int *oncsSub_idcaenv1742::decode ( int *nwout)
  
   // word 1 has the group enable pattern
   group_mask = SubeventData[1] & 0xf;
+
+  LVDSPattern = (SubeventData[1]>>8) & 0xffff;
   
   // word 2 has the event counter in bits 0-21
   evnr = SubeventData[2] & 0x3fffff;
   //  std::cout << "Evnt nr: " << evnr << std::endl;
 
-  // and we ignore word 3 for now
-
+  EvtTimeTag = (unsigned int) SubeventData[3];
+	  
   // before we go through the groups indexed by group_index,
   // we take a peek into the first group to figure out how many samples we have.
   // the sample count is the same for all groups, although each group encodes this  
@@ -80,7 +84,7 @@ int *oncsSub_idcaenv1742::decode ( int *nwout)
 
       if  ( (group_mask >> group_nr) &1) // we have that group present
 	{
-	  int *groupdata = &(SubeventData[group_offset]); // first group
+	  unsigned int *groupdata = &(SubeventData[group_offset]); // first group
 	  tr_present[group_nr] = (groupdata[0] >> 12) & 1;
 	  index_cell[group_nr] = (groupdata[0] >> 20) & 0x3ff;
 
@@ -127,9 +131,24 @@ int *oncsSub_idcaenv1742::decode ( int *nwout)
 		  pos +=3;
 		}
 	    }
+	  GroupTriggerTime[group_nr] = groupdata[pos] & 0x3fffffff;
 	  group_offset += pos + 1;
+	  
 	}
     }
+
+  // now see if we have an extended trigger time setting
+  if ( GroupTriggerTime[0] != GroupTriggerTime[1])
+    {
+      GroupTriggerTime[0] |= ( GroupTriggerTime[1] << 30);
+      GroupTriggerTime[1] = 0;
+    }
+  if ( GroupTriggerTime[2] != GroupTriggerTime[3])
+    {
+      GroupTriggerTime[2] |= ( GroupTriggerTime[3] << 30);
+      GroupTriggerTime[3] = 0;
+    }
+  
   *nwout = samples*8 *4;
 
   return p;
@@ -240,9 +259,40 @@ int oncsSub_idcaenv1742::iValue(const int n,const char *what)
     return (group_mask >> n) &1;
   }
 
+  if ( strcmp(what,"LVDSPATTERN") == 0 )
+  {
+    return LVDSPattern;
+  }
+
+  if ( strcmp(what,"EVENTTIME") == 0 )
+  {
+    return EvtTimeTag;
+  }
+
+  // if ( strcmp(what,"GROUPTRIGGERTIME") == 0 )
+  // {
+  //   if ( n <0 || n >=4) return 0;
+  //   return GroupTriggerTime[n];
+  // }
+
+
   return 0;
 
 }
+
+long long oncsSub_idcaenv1742::lValue(const int n, const char *what)
+{
+  if ( decoded_data1 == 0 ) decoded_data1 = decode(&data1_length);
+  
+  if ( strcmp(what,"GROUPTRIGGERTIME") == 0 )
+  {
+    if ( n <0 || n >=4) return 0;
+    return GroupTriggerTime[n];
+  }
+
+  return 0;
+}
+
 
 
 void  oncsSub_idcaenv1742::dump ( OSTREAM& os )
@@ -250,8 +300,10 @@ void  oncsSub_idcaenv1742::dump ( OSTREAM& os )
   int i,j;
   //  int *SubeventData = &SubeventHdr->data;
   
-  os << "Samples: " << iValue(0,"SAMPLES") << std::endl;
-  os << "Evt Nr:  " << iValue(0,"EVNR") << std::endl;
+  os << "Samples:  " << iValue(0,"SAMPLES") << std::endl;
+  os << "Evt Nr:   " << iValue(0,"EVNR") << std::endl;
+  os << "Evt Time: " << iValue(0,"EVENTTIME") << std::endl;
+  //os << "LVDS:      " << iValue(0,"LVDSPATTERN") << std::endl;
   int f = iValue(0,"FREQUENCY") ;
   os << "Sample Frequency ";
   switch (f)
@@ -295,6 +347,12 @@ void  oncsSub_idcaenv1742::dump ( OSTREAM& os )
       os<<  iValue(i, "INDEXCELL") << "  ";
     }
   os << std::endl;
+
+  os << "Group Trigger time       ";
+  for ( i = 0; i < 4; i++)
+    {
+      os<<  std::setw(10) << lValue(i, "GROUPTRIGGERTIME") << "  ";
+    }
   os << std::endl;
 
   
