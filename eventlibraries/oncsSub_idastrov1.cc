@@ -18,29 +18,29 @@ oncsSub_idastrov1::oncsSub_idastrov1(subevtdata_ptr data)
 
 int oncsSub_idastrov1::decode_line( unsigned char *cp)
 {
-  struct AstroStruct *as = new AstroStruct;
+  struct AstroStruct as;
   
-  as->layer = cp[1];
+  as.layer = cp[1];
   
-  as->id = cp[2] >> 3;
-  as->payload = cp[2] & 0x7;
+  as.id = cp[2] >> 3;
+  as.payload = cp[2] & 0x7;
 
-  as->location = cp[3] & 0x3f;
-  as->iscol = cp[3] >>7 &1;
-  as->timestamp = cp[4];
-  as->tot = cp[5] & 0xf;
-  as->tot <<=8;
-  as->tot |= cp[6];
+  as.location = cp[3] & 0x3f;
+  as.iscol = cp[3] >>7 &1;
+  as.timestamp = cp[4];
+  as.tot = cp[5] & 0xf;
+  as.tot <<=8;
+  as.tot |= cp[6];
   
   unsigned int x0,x1,x2,x3;
-  x0 = cp[10];
-  x1 = cp[9];
-  x2 = cp[8];
-  x3 = cp[7];
+  x0 = cp[7];
+  x1 = cp[8];
+  x2 = cp[9];
+  x3 = cp[10];
 
-  as->fpga_ts = (x0<<24) | (x1<< 16) | (x2 <<8) | x3;
+  as.fpga_ts = (x0<<24) | (x1<< 16) | (x2 <<8) | x3;
 
-  _unitlist.push_back(as);
+  _TheSet.insert(as);
   
   return 0;
 }
@@ -89,7 +89,27 @@ int oncsSub_idastrov1::decode()
   return 0;  
 }
 
+long long oncsSub_idastrov1::lValue(const int unit)
+{
 
+  decode();
+
+  unsigned int un = unit; // the size() is unsigned
+
+  if ( un >= _TheSet.size()) return 0;
+
+  auto it = _TheSet.begin();
+  std::advance(it, un);
+  return (*it).fpga_ts;
+}
+
+int oncsSub_idastrov1::iValue(const int dummy)
+{
+
+  decode();
+  return _TheSet.size();
+}
+  
 int oncsSub_idastrov1::iValue(const int unit, const int field)
 {
 
@@ -103,13 +123,17 @@ int oncsSub_idastrov1::iValue(const int unit, const int field)
   // 5 - iscol
   // 6 - timestamp
   // 7 - tot
-  // 8 - fpga_ts
+  //  --- moved to lValue - fpga_ts
   
   unsigned int un = unit; // the size() is unsigned
 
-  // here we gop through the individual units
+  if ( un >= _TheSet.size()) return 0;
 
-  if ( un >= _unitlist.size()) return 0;
+  auto it = _TheSet.begin();
+  std::advance(it, un);
+
+
+
   
   switch (field)
     { 
@@ -117,36 +141,36 @@ int oncsSub_idastrov1::iValue(const int unit, const int field)
       break;
 
     case 1:
-      return _unitlist[un]->layer;
+      return (*it).layer;
       break;
 
     case 2:
-      return _unitlist[un]->id;
+      return (*it).id;
       break;
      
     case 3:
-      return _unitlist[un]->payload;
+      return (*it).payload;
       break;
      
     case 4:
-      return _unitlist[un]->location;
+      return (*it).location;
       break;
      
     case 5:
-      return _unitlist[un]->iscol;
+      return (*it).iscol;
       break;
      
     case 6:
-      return _unitlist[un]->timestamp;
+      return (*it).timestamp;
       break;
      
     case 7:
-      return _unitlist[un]->tot;
+      return (*it).tot;
       break;
      
-    case 8:
-      return _unitlist[un]->fpga_ts;
-      break;
+    // case 8:
+    //   return (*it).fpga_ts;
+    //   break;
     }
   
   return 0;
@@ -158,7 +182,7 @@ int oncsSub_idastrov1::iValue(const int unit, const char *what)
 
   if ( strcmp(what,"NR_UNITS") == 0 )
     {
-      return _unitlist.size(); 
+      return _TheSet.size(); 
     }
   
   if ( strcmp(what,"LAYER") == 0 )
@@ -191,10 +215,11 @@ int oncsSub_idastrov1::iValue(const int unit, const char *what)
     {
       return iValue(unit,7);
     }
-  else if ( strcmp(what,"FPGA_TS") == 0 )
-    {
-      return iValue(unit,8);
-    }
+  // moved to lValue
+  // else if ( strcmp(what,"FPGA_TS") == 0 )
+  //   {
+  //     return iValue(unit,8);
+  //   }
 
 
   return 0;
@@ -220,13 +245,14 @@ void oncsSub_idastrov1::dump(std::ostream &os)
 
   os << "    # |   layer    id payload location iscol   ts    ToT fpga_ts" << endl;
 
-  for (int s = 0; s < iValue(0,"NR_UNITS"); s++)
+  for (int s = 0; s < iValue(0); s++)
     {
       os << setw(5) << s << " | ";
-      for (int i = 1; i <=8; i++) 
+      for (int i = 1; i <=7; i++) 
 	{
 	  os << setw(6) << iValue(s, i) << " ";
 	}
+      os << setw(6) << lValue(s) << " ";
       os << endl;
     }
   
@@ -238,10 +264,10 @@ void oncsSub_idastrov1::dump(std::ostream &os)
 oncsSub_idastrov1::~oncsSub_idastrov1()
 {
 
-  for (auto itr =  _unitlist.begin(); itr != _unitlist.end(); ++itr)
-    {
-      delete *itr;
-    }
+  // for (auto itr =  _unitlist.begin(); itr != _unitlist.end(); ++itr)
+  //   {
+  //     delete *itr;
+  //   }
 }
 
 
