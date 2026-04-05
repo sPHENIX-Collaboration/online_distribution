@@ -17,7 +17,9 @@ oncsSub_idh2gcroc3_10G::oncsSub_idh2gcroc3_10G(subevtdata_ptr data)
   old_timestamp   = 0xffffffffffffffff;
   old_trigger_in  = 0xffffffff;
   old_trigger_out = 0xffffffff;
+
   _sample =0;
+  _nr_channels = 0;
   _nr_samples = 0;
   _nr_events = 0;
 }
@@ -41,7 +43,7 @@ int oncsSub_idh2gcroc3_10G::decode_line( uint8_t d[4*48])
   
 
   //      int ifpga = ((u4swap(d[0])>>16) & 0xff );
-  coutfl << " d[2] " << (unsigned int) d[2] << endl;
+  //coutfl << " d[2] " << (unsigned int) d[2] << endl;
   int ichip = d[2] & 0xf;
   int group = d[3] - 36;  // needs check...
   
@@ -53,13 +55,13 @@ int oncsSub_idh2gcroc3_10G::decode_line( uint8_t d[4*48])
   
   
   // cout << hex << " ichip = " << ichip
-  // 	   << " group " << group
-  // 	   << " trigger_in " << trigger_in
-  // 	   << " trigger_out " << trigger_out
-  // 	   << " evt_ctr " << evt_ctr
-  // 	   << " timestamp " << timestamp
-  // 	   << " spare " << spare 
-  // 	   << dec << endl;
+  //      << " group " << group
+  //      << " trigger_in " << trigger_in
+  //      << " trigger_out " << trigger_out
+  //      << " evt_ctr " << evt_ctr
+  //      << " timestamp " << timestamp
+  //      << " spare " << spare 
+  //      << dec << endl;
   
   uint32_t ROC_HDR;
   uint32_t CMN;
@@ -88,6 +90,11 @@ int oncsSub_idh2gcroc3_10G::decode_line( uint8_t d[4*48])
   
   // on the first invocation, old_timestamp is -1 (or 0xfff... as an unsigned)
   // initializing it this way will make the next check succeed.
+
+  if ( ichip >=MAX_CHIPS) return 0;
+
+  //let's see if we need to update our nr of channels
+  if ( (ichip+1) *72 > _nr_channels) _nr_channels = (ichip+1) *72;
   
   if ( old_trigger_in == 0xffffffff || old_trigger_out == 0xffffffff) // first data
     {
@@ -97,17 +104,21 @@ int oncsSub_idh2gcroc3_10G::decode_line( uint8_t d[4*48])
       _sample = new sample;
       memset (_sample, 0 , sizeof(sample) );
       _sample->timestamp = timestamp;
+
     }
   
   // if the time stamp changes, we are done with this smaple.
   // me are pushing this on the stack and move on to the next. 
   //if ( old_trigger_out != trigger_out || old_trigger_in != trigger_in)
-  if ( old_timestamp != timestamp)
+
+  //coutfl << "new, old timestamp " << timestamp << "  " <<  old_timestamp << " diff " << timestamp - old_timestamp  << endl;
+
+  if (  ( timestamp >= old_timestamp && timestamp - old_timestamp >  5 ) || ( timestamp < old_timestamp && old_timestamp - timestamp >  5 ))
     {
       waveform.push_back(_sample);
       _nr_samples++;
       
-      // coutfl << "*** complete, size of waveform " << waveform.size() << " timestamp: " << _sample->timestamp  << " sample nr " << _nr_samples << endl;
+      //      coutfl << "*** complete, size of waveform " << waveform.size() << " timestamp: " << _sample->timestamp  << " sample nr " << _nr_samples << endl;
       _sample = new sample;
       memset (_sample, 0 , sizeof(sample) );
       _sample->timestamp = timestamp;
@@ -123,7 +134,7 @@ int oncsSub_idh2gcroc3_10G::decode_line( uint8_t d[4*48])
   old_trigger_out = trigger_out;
   
   int chip_offset =0;
-  if ( ichip) chip_offset = 72;
+  chip_offset = ichip * 72;
   
   int group_offset =0;
   if ( group) group_offset = 36;
@@ -293,7 +304,7 @@ int oncsSub_idh2gcroc3_10G::iValue(const int n, const char *what)
   
   if ( strcmp(what,"CHANNELS") == 0 )
     {
-      return 144; // might be dynamic in the future
+      return _nr_channels; // might be dynamic in the future
     }
   
   if ( strcmp(what,"SAMPLES") == 0 )
@@ -338,8 +349,8 @@ int oncsSub_idh2gcroc3_10G::iValue(const int n, const char *what)
 
 int oncsSub_idh2gcroc3_10G::iValue(const int sample, const int ch)
 {
-  if ( ch < 0 || ch >=144 || sample < 0) return 0;
   decode();
+  if ( ch < 0 || ch >=_nr_channels || sample < 0) return 0;
 
   unsigned int un = sample;
   
@@ -350,8 +361,8 @@ int oncsSub_idh2gcroc3_10G::iValue(const int sample, const int ch)
 
 long long   oncsSub_idh2gcroc3_10G::lValue(const int wf, const int sample, const int ch)
 {
-  if ( ch < 0 || ch >=144 || sample < 0) return 0;
   decode();
+  if ( ch < 0 || ch >= _nr_channels || sample < 0) return 0;
   
   unsigned int ue = wf;  //preventing a warning as size() is unsigned
   if ( wf < 0 || ue > _eventlist.size() ) return 0;
@@ -376,8 +387,8 @@ long long   oncsSub_idh2gcroc3_10G::lValue(const int wf, const int sample, const
 
 int oncsSub_idh2gcroc3_10G::iValue(const int wf, const int sample, const int ch)
 {
-  if ( ch < 0 || ch >=144 || sample < 0) return 0;
   decode();
+  if ( ch < 0 || ch >=_nr_channels || sample < 0) return 0;
 
   // only known once we decode
   
@@ -402,8 +413,8 @@ int oncsSub_idh2gcroc3_10G::iValue(const int wf, const int sample, const int ch)
   
 int oncsSub_idh2gcroc3_10G::iValue(const int sample, const int ch, const char *what)
 {
-  if ( ch < 0 || ch >=144 || sample < 0) return 0;
   decode();
+  if ( ch < 0 || ch >=_nr_channels || sample < 0) return 0;
 
   unsigned int un = sample;
   if ( un >= waveform.size() ) return 0;
@@ -425,7 +436,7 @@ int oncsSub_idh2gcroc3_10G::iValue(const int sample, const int ch, const char *w
 int oncsSub_idh2gcroc3_10G::iValue(const int wf, const int sample, const int ch, const char *what)
 {
   // these are the easy checks we can do w/o decoding the data
-  if ( ch < 0 || ch >=144 || sample < 0) return 0;
+  if ( ch < 0 || ch >=_nr_channels || sample < 0) return 0;
   if ( wf < 0) return 0;
 
   // now the ones where we need the decoded data
@@ -507,8 +518,9 @@ void oncsSub_idh2gcroc3_10G::dump(std::ostream &os)
   */
   
   int e = iValue(0, "NR_WF");
+  os << " Number of Channels:  " << iValue(0, "CHANNELS") << endl;
   os << " Number of Waveforms: " << e << endl << endl;
-  
+
   for ( int n = 0; n < e; n++)
     {
       os << " ----- Waveform  " << n << " Samples: " << iValue(n, "SAMPLESIZE") << "  Timestamp: 0x" << hex << lValue(n,0,0) << dec  << endl;

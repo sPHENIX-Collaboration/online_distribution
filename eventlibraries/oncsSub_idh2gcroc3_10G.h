@@ -37,7 +37,7 @@ protected:
   
   int _broken;
 
-
+  #define MAX_CHIPS 4
   unsigned int  old_trigger_in;
   unsigned int  old_trigger_out;
   uint64_t      old_timestamp;
@@ -47,9 +47,9 @@ protected:
   // once we see the timestamp move on, we declare that sample "closed"
   
   struct sample {
-    unsigned int ADC[144];
-    unsigned int tot[144];
-    unsigned int toa[144];
+    unsigned int ADC[72*MAX_CHIPS];
+    unsigned int tot[72*MAX_CHIPS];
+    unsigned int toa[72*MAX_CHIPS];
     unsigned int trigger_in ;
     unsigned int trigger_out;
     unsigned int event_counter;
@@ -63,6 +63,8 @@ protected:
   
   std::vector<sample *> waveform;
 
+  
+  int _nr_channels;
   int _nr_events;
 
   int _nr_samples;
