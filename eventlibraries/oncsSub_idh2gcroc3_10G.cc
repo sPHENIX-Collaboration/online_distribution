@@ -197,7 +197,12 @@ int oncsSub_idh2gcroc3_10G::decode()
       
 
       //unsigned int hdr0 = u4swap(buffer[current_index+2]);
-      // coutfl << "current_index_bytes = " << current_index_bytes << "  marker " << hex <<  setw(2) << cbuffer[current_index_bytes] << setw(2) << cbuffer[current_index_bytes+1]<< dec << " Length " << packetlength <<  endl;
+      // coutfl << "current_index_bytes = " << current_index_bytes << "  marker " << hex
+      // 	     <<  setw(2) << (short) cbuffer[current_index_bytes+4] << " "
+      // 	     << setw(2) << (short) cbuffer[current_index_bytes+4+1] << " "
+      // 	     << setw(2) << (short) cbuffer[current_index_bytes+4+2] << " "
+      // 	     << setw(2) << (short) cbuffer[current_index_bytes+4+3] << " "
+      // 	     << dec << " Length " << packetlength <<  endl;
 
       int packet_end_bytes = current_index_bytes + packetlength -4;
 
@@ -523,11 +528,11 @@ void oncsSub_idh2gcroc3_10G::dump(std::ostream &os)
 
   for ( int n = 0; n < e; n++)
     {
-      os << " ----- Waveform  " << n << " Samples: " << iValue(n, "SAMPLESIZE") << "  Timestamp: 0x" << hex << lValue(n,0,0) << dec  << endl;
+      os << " ----- Waveform  " << n << " Samples: " << iValue(n, "SAMPLESIZE") << "  Timestamp: 0x" << hex << lValue(n,0,0) << "  " << dec << lValue(n,0,0)  << endl;
       for ( int ic =0; ic < iValue(0,"CHANNELS"); ic++)
 	{
 
-	  int show_this = 1;
+	  int show_this = 0;
 	  for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
 	    {
 	      if ( iValue (n, is, ic) || iValue (n, is, ic, "TOT") || iValue (n, is, ic, "TOA") ) show_this =1;
@@ -542,6 +547,15 @@ void oncsSub_idh2gcroc3_10G::dump(std::ostream &os)
 		}
 	      os << dec << endl;
 
+	      // for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
+	      // 	{
+	      // 	  os << " " << setw(10)  <<  lValue(n,is,ic);;
+	      // 	}
+	      // os << dec << endl;
+
+
+
+	      
 	      os << setw(4) << ic << " | TOT | " << hex;
 	      for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
 		{
@@ -591,18 +605,22 @@ int oncsSub_idh2gcroc3_10G::parse_timeline ()
   eb->first = pos;
   eb->length=1;
 
-  ++itr;
 
   for (; itr != waveform.end(); ++itr)
     {
       // coutfl << "sample trigger " << (*itr)->trigger_out << " pos " << pos << " diff: " << (*itr)->timestamp - old_timestamp << endl;
 
       //      if ( (*itr)->trigger_in  != old_trigger_in ||  (*itr)->trigger_out  != old_trigger_out)
+
+      //coutfl << " sample   " << pos  << " ts " << (*itr)->timestamp << " diff: " << (*itr)->timestamp - old_timestamp << endl;
+
+
+
       if ( (*itr)->timestamp - old_timestamp > CONTIGUOUS_CLOCK )
 	{
 	  eb->length--;
-	  // coutfl << "adding new event boundary at index " << eb->first << " with length " <<  eb->length << " pos is " << pos
-	  //  	 << " old ts = " << old_timestamp << " new = " << (*itr)->timestamp << " diff: " << (*itr)->timestamp - old_timestamp << endl;
+	   // coutfl << "adding new event boundary at index " << eb->first << " with length " <<  eb->length << " pos is " << pos
+	   // 	  << " old ts = " << old_timestamp << " new = " << (*itr)->timestamp << " diff: " << (*itr)->timestamp - old_timestamp << endl;
 	  _eventlist.push_back(eb);
 	  eb = new event_bounds;
 	  eb->first = pos;
