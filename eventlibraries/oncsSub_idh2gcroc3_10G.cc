@@ -324,7 +324,7 @@ int oncsSub_idh2gcroc3_10G::iValue(const int n, const char *what)
 
   if ( strcmp(what,"SAMPLESIZE") == 0 )
     {
-      if ( un > _eventlist.size()) return 0; // no such event number
+      if ( un >= _eventlist.size()) return 0; // no such event number
       event_bounds *eb = _eventlist[n];
       return eb->length;
     }
