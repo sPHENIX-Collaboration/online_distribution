@@ -323,12 +323,20 @@ noinst_HEADERS = \
 
 pkginclude_HEADERS = $(installedheaders) $(msgheaders)
 
-if ! MAKEROOT6
-  ROOT5_MSGDICTS = \
-    msg_Dict.C
+# NOTE: previously gated "if ! MAKEROOT6" (ROOT5 only). The rootcint
+# recipes for msg_Dict.C/event_Dict.C below work fine on ROOT6 too (its
+# rootcint is a rootcling wrapper) - the guard just meant
+# libRootmessage_la_SOURCES/libEvent_la_SOURCES stayed empty on any
+# ROOT6 host, so those libraries built as dictionary-less shells even
+# though nobase_dist_pcm_DATA still installed their .pcm files (that
+# install rule was never gated, so rootcint still ran as a side effect
+# of the %_Dict_rdict.pcm: %_Dict.C ; dependency - it just never got
+# compiled into the library). Confirmed on a ROOT 6.40 build:
+# TClass::GetClass("Event")->HasDictionary() was false before this fix.
+ROOT5_MSGDICTS = \
+  msg_Dict.C
 ROOT5_EVENTDICTS = \
-    event_Dict.C
-endif
+  event_Dict.C
 
 CLEANFILES = \
   ioselect.h \

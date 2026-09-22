@@ -6,10 +6,20 @@ project(eventlibraries CXX)
 # as you build out-of-source here (cmake -S . -B build).
 #
 # This builds the non-ROOT event/packet library (NoRootEvent), its
-# message-handling dependency (message), and the bin_PROGRAMS command
-# line tools from Makefile.am. The ROOT-dictionary libraries (Event,
-# Rootmessage) are not built here; they still build fine via autotools
-# if needed.
+# message-handling dependency (message), the ROOT-dictionary libraries
+# (Event, Rootmessage), and the bin_PROGRAMS command line tools from
+# Makefile.am.
+#
+# Event/Rootmessage here actually work, which Makefile.am's currently
+# don't on ROOT6: its rootcint recipes for event_Dict.C/msg_Dict.C are
+# only wired into libEvent_la_SOURCES/libRootmessage_la_SOURCES `if !
+# MAKEROOT6`, so on a ROOT6 host those libraries build as
+# dictionary-less shells - confirmed against the Automake production
+# install with `TClass::GetClass("Event")->HasDictionary()` returning
+# false, even though its .pcm file is present (nobase_dist_pcm_DATA is
+# unconditional, so rootcint still runs as a side effect of that
+# dependency - it just never gets compiled into the library). See
+# Makefile.am for the matching fix.
 #
 # Known gap carried over from Makefile.am: oncsSub_idmvtxv0-3.cc/h and
 # mvtx_decoder/ are not part of allsources there either, so they are
@@ -220,6 +230,51 @@ target_link_libraries(NoRootEvent PUBLIC message
   PRIVATE ZLIB::ZLIB BZip2::BZip2 ${LZO_LIBRARY})
 
 # ----------------------------------------------------------------------
+# libRootmessage / libEvent - ROOT dictionaries. eventLinkDef.h/
+# msgLinkDef.h mark every class "-!;" (no auto-Streamer): these classes
+# are only ever consumed in-memory, never (de)serialized, so the
+# dictionary exists for TClass/interactive-CINT use, not I/O.
+# ----------------------------------------------------------------------
+find_package(ROOT REQUIRED)
+
+ROOT_GENERATE_DICTIONARY(msg_Dict
+  ioselect.h
+  msg_control.h
+  date_filter_msg_buffer.h
+  filter_msg_buffer.h
+  remote_msg_buffer.h
+  LINKDEF msgLinkDef.h
+  MODULE Rootmessage)
+
+add_library(Rootmessage SHARED ${CMAKE_CURRENT_BINARY_DIR}/msg_Dict.cxx)
+target_include_directories(Rootmessage PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+target_link_libraries(Rootmessage PUBLIC message ROOT::Core)
+
+ROOT_GENERATE_DICTIONARY(event_Dict
+  ioselect.h
+  Event.h
+  Eventiterator.h
+  fileEventiterator.h
+  listEventiterator.h
+  oncsEventiterator.h
+  rcdaqEventiterator.h
+  packet.h
+  testEventiterator.h
+  eventReceiverClient.h
+  LINKDEF eventLinkDef.h
+  MODULE Event)
+
+add_library(Event SHARED ${CMAKE_CURRENT_BINARY_DIR}/event_Dict.cxx)
+target_include_directories(Event PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+target_link_libraries(Event PUBLIC NoRootEvent Rootmessage ROOT::Core)
+
+# ----------------------------------------------------------------------
 # bin_PROGRAMS in Makefile.am
 # ----------------------------------------------------------------------
 find_package(Boost REQUIRED)  # header-only use: algorithm/string.hpp, lexical_cast.hpp
@@ -282,9 +337,15 @@ set(EVENTLIB_INSTALL_HEADERS
   msg_control.h msg_profile.h msg_buffer.h date_filter_msg_buffer.h
   filter_msg_buffer.h remote_msg_buffer.h strnstr.h)
 
-install(TARGETS NoRootEvent message ${EVENTLIB_TOOLS}
+install(TARGETS NoRootEvent message Event Rootmessage ${EVENTLIB_TOOLS}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/libEvent_rdict.pcm
+  ${CMAKE_CURRENT_BINARY_DIR}/libEvent.rootmap
+  ${CMAKE_CURRENT_BINARY_DIR}/libRootmessage_rdict.pcm
+  ${CMAKE_CURRENT_BINARY_DIR}/libRootmessage.rootmap
+  DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES ${EVENTLIB_INSTALL_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES ${IOSELECT_H} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
