@@ -5,12 +5,11 @@ project(eventlibraries CXX)
 # use one or the other, they don't interfere with each other as long
 # as you build out-of-source here (cmake -S . -B build).
 #
-# This only builds the non-ROOT event/packet library (NoRootEvent) and
-# its message-handling dependency (message) - the pieces JANA2/EICrecon
-# actually need. The ROOT-dictionary libraries (Event, Rootmessage) and
-# the standalone command-line tools (ddump, dlist, eventServer, ...)
-# from Makefile.am are not built here; they still build fine via
-# autotools if needed.
+# This builds the non-ROOT event/packet library (NoRootEvent), its
+# message-handling dependency (message), and the bin_PROGRAMS command
+# line tools from Makefile.am. The ROOT-dictionary libraries (Event,
+# Rootmessage) are not built here; they still build fine via autotools
+# if needed.
 #
 # Known gap carried over from Makefile.am: oncsSub_idmvtxv0-3.cc/h and
 # mvtx_decoder/ are not part of allsources there either, so they are
@@ -18,6 +17,7 @@ project(eventlibraries CXX)
 
 include(GNUInstallDirs)
 include(CheckCXXSourceCompiles)
+include(CheckIncludeFileCXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -26,6 +26,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   # mirrors configure.ac's `CPPFLAGS="$CPPFLAGS -DLinux"` for the
   # *-*-linux* host case
   add_compile_definitions(Linux)
+endif()
+
+# mirrors configure.ac's AC_CHECK_HEADERS(getopt.h) - under Automake
+# this ends up in $(DEFS) and applies project-wide, which is what
+# eventClient.cc's #ifdef HAVE_GETOPT_H (no #else) relies on.
+check_include_file_cxx(getopt.h HAVE_GETOPT_H)
+if(HAVE_GETOPT_H)
+  add_compile_definitions(HAVE_GETOPT_H)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
@@ -212,6 +220,47 @@ target_link_libraries(NoRootEvent PUBLIC message
   PRIVATE ZLIB::ZLIB BZip2::BZip2 ${LZO_LIBRARY})
 
 # ----------------------------------------------------------------------
+# bin_PROGRAMS in Makefile.am
+# ----------------------------------------------------------------------
+find_package(Boost REQUIRED)  # header-only use: algorithm/string.hpp, lexical_cast.hpp
+
+function(add_eventlib_tool name)
+  add_executable(${name} ${name}.cc)
+  target_link_libraries(${name} PRIVATE NoRootEvent dl)
+endfunction()
+
+add_eventlib_tool(dpipe)
+add_eventlib_tool(dlist)
+add_eventlib_tool(changeid)
+add_eventlib_tool(changehitformat)
+add_eventlib_tool(eventcombiner)
+add_eventlib_tool(prdf2prdf)
+add_eventlib_tool(prdfcheck)
+add_eventlib_tool(prdfsplit)
+add_eventlib_tool(eventClient)
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  target_link_options(dpipe PRIVATE -Wl,-export-dynamic)
+endif()
+
+add_executable(ddump ddump.cc)
+target_link_libraries(ddump PRIVATE NoRootEvent dl Boost::boost)
+
+add_executable(lastEvent lastEvent.cc)
+target_link_libraries(lastEvent PRIVATE NoRootEvent dl Boost::boost)
+
+add_executable(eventServer eventServer.cc)
+target_link_libraries(eventServer PRIVATE NoRootEvent dl pthread)
+
+add_executable(eventServer_classic eventServer_classic.cc)
+target_link_libraries(eventServer_classic PRIVATE NoRootEvent dl pthread)
+
+set(EVENTLIB_TOOLS
+  dpipe dlist changeid changehitformat eventcombiner prdf2prdf
+  prdfcheck prdfsplit eventClient ddump lastEvent eventServer
+  eventServer_classic)
+
+# ----------------------------------------------------------------------
 # install - mirrors pkginclude_HEADERS (installedheaders + msgheaders)
 # ----------------------------------------------------------------------
 set(EVENTLIB_INSTALL_HEADERS
@@ -233,8 +282,9 @@ set(EVENTLIB_INSTALL_HEADERS
   msg_control.h msg_profile.h msg_buffer.h date_filter_msg_buffer.h
   filter_msg_buffer.h remote_msg_buffer.h strnstr.h)
 
-install(TARGETS NoRootEvent message
+install(TARGETS NoRootEvent message ${EVENTLIB_TOOLS}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES ${EVENTLIB_INSTALL_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES ${IOSELECT_H} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
