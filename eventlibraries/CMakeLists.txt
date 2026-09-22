@@ -115,7 +115,7 @@ add_library(message SHARED
 target_include_directories(message PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/Event>)
 if(RDBUF_ACCEPTS_STREAMBUF)
   target_compile_definitions(message PRIVATE RDBUF_ACCEPTS_STREAMBUF)
 endif()
@@ -223,7 +223,7 @@ add_library(NoRootEvent SHARED
 target_include_directories(NoRootEvent PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/Event>
   PRIVATE ${LZO_INCLUDE_DIR})
 
 target_link_libraries(NoRootEvent PUBLIC message
@@ -236,6 +236,11 @@ target_link_libraries(NoRootEvent PUBLIC message
 # dictionary exists for TClass/interactive-CINT use, not I/O.
 # ----------------------------------------------------------------------
 find_package(ROOT REQUIRED)
+
+# ROOT_GENERATE_DICTIONARY looks up headers via the current directory's
+# plain INCLUDE_DIRECTORIES property, not target_include_directories()
+# (the MODULE targets below don't exist yet at this point anyway).
+include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 ROOT_GENERATE_DICTIONARY(msg_Dict
   ioselect.h
@@ -250,7 +255,7 @@ add_library(Rootmessage SHARED ${CMAKE_CURRENT_BINARY_DIR}/msg_Dict.cxx)
 target_include_directories(Rootmessage PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/Event>)
 target_link_libraries(Rootmessage PUBLIC message ROOT::Core)
 
 ROOT_GENERATE_DICTIONARY(event_Dict
@@ -271,7 +276,7 @@ add_library(Event SHARED ${CMAKE_CURRENT_BINARY_DIR}/event_Dict.cxx)
 target_include_directories(Event PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/Event>)
 target_link_libraries(Event PUBLIC NoRootEvent Rootmessage ROOT::Core)
 
 # ----------------------------------------------------------------------
@@ -347,5 +352,8 @@ install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/libRootmessage_rdict.pcm
   ${CMAKE_CURRENT_BINARY_DIR}/libRootmessage.rootmap
   DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(FILES ${EVENTLIB_INSTALL_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-install(FILES ${IOSELECT_H} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+# nested under Event/, matching Automake's pkgincludedir ($(includedir)/Event,
+# from AC_INIT(Event,...)) - pmonitor.h and other real consumers use
+# #include <Event/Event.h>, not a flat #include <Event.h>.
+install(FILES ${EVENTLIB_INSTALL_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Event)
+install(FILES ${IOSELECT_H} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Event)

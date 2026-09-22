@@ -25,10 +25,15 @@ lib_LTLIBRARIES = libpmonitor.la
 
 LDFLAGS = -Wl,--no-as-needed 
 
-if ! MAKEROOT6
-  ROOT5_DICTS = \
-    pmonitor_Dict.C
-endif
+# NOTE: previously gated "if ! MAKEROOT6" (ROOT5 only), same stale-gap
+# pattern as eventlibraries/Makefile.am - see that file's fix for the
+# full explanation. Also, configure.ac's MAKEROOT6 test had a broken
+# awk syntax ($1>=6. is a syntax error) that made the test always fail
+# and MAKEROOT6 always evaluate false, which accidentally took this
+# branch anyway on ROOT6 - fixed separately in configure.ac, so this
+# guard is no longer needed for the right reason either.
+ROOT5_DICTS = \
+  pmonitor_Dict.C
 
 libpmonitor_la_SOURCES = \
   $(ROOT5_DICTS) \
