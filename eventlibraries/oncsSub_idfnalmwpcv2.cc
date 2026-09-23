@@ -120,8 +120,9 @@ int *oncsSub_idfnalmwpcv2::decode ( int *nwout)
   // for each trigger so we know that we have one for each event
   for ( i = 0; i< spillinfo.triggercount; i++)
     {
-      te = new TDCEvent;
-      memset ( te, 0, sizeof(TDCEvent) );
+      // value-initialize: zeroes the plain fields and properly constructs
+      // the std::vector members (memset would clobber their internals)
+      te = new TDCEvent{};
       TDCEventVector.push_back ( te);
     }
 

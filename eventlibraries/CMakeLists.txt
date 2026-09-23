@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.10)
 project(eventlibraries CXX)
 
+# default to -O2 -g, matching Automake's default CXXFLAGS - without this,
+# CMake builds with no optimization at all
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build." FORCE)
+endif()
+
 # This coexists with the Automake build (autogen.sh/configure/make) -
 # use one or the other, they don't interfere with each other as long
 # as you build out-of-source here (cmake -S . -B build).
@@ -224,7 +230,10 @@ target_include_directories(NoRootEvent PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/Event>
-  PRIVATE ${LZO_INCLUDE_DIR})
+  # PUBLIC: installed headers (lzobuffer.h, olzoBuffer.h) include
+  # <lzo/...>, so consumers like dpipe need this too - invisible on hosts
+  # where lzo lives in /usr/include, breaks when it's in a custom prefix
+  ${LZO_INCLUDE_DIR})
 
 target_link_libraries(NoRootEvent PUBLIC message
   PRIVATE ZLIB::ZLIB BZip2::BZip2 ${LZO_LIBRARY})
