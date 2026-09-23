@@ -15,6 +15,7 @@
 #include "olzoBuffer.h"
 #include "oamlBuffer.h"
 #include "ophBuffer.h"
+#include "ospBuffer.h"
 #include "dpipe_filter.h"
 
 #include "phenixTypes.h"
@@ -160,6 +161,7 @@ main(int argc, char *argv[])
   int eventnr = 0;
   int gzipcompress = 0;
   int lzocompress = 0;
+  int oncsformat = 0;
   int eventnumber =0;
   int countnumber =0;
   void *voidpointer;
@@ -178,7 +180,7 @@ main(int argc, char *argv[])
   //	COUT << "parsing input" << std::endl;
 
 #ifndef WIN32
-  while ((c = getopt(argc, argv, "e:b:c:s:d:n:w:x:vhizl")) != EOF)
+  while ((c = getopt(argc, argv, "e:b:c:s:d:n:w:x:vhizlo")) != EOF)
     {
       switch (c) 
 	{
@@ -235,6 +237,10 @@ main(int argc, char *argv[])
 
 	case 'l':   // lzo-compress
 	  lzocompress = 1;
+	  break;
+
+	case 'o':   // oncs format
+	  oncsformat = 1;
 	  break;
 
 	case 'x':   // load a filter shared lib
@@ -336,6 +342,7 @@ main(int argc, char *argv[])
 
   if ( eventnumber && countnumber) evtcountexitmsg();
   if ( gzipcompress && lzocompress ) compressionexitmsg();
+  if ( (gzipcompress || lzocompress) && oncsformat ) compressionexitmsg();
 
   // install some handlers for the most common signals
 #ifndef WIN32
@@ -409,7 +416,11 @@ main(int argc, char *argv[])
 	{
 	  ob = new olzoBuffer (fd, buffer, buffer_size);
 	}
-      else
+      else if ( oncsformat) 
+	{
+	  ob = new ospBuffer (fd, buffer, buffer_size);
+	}
+      else 
 	{
 	  ob = new ophBuffer (fd, buffer, buffer_size);
 	}
