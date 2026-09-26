@@ -1,0 +1,7 @@
+# LaTeX byproducts of building the manual (pdflatex pmonitor_doc.tex).
+# Only the built manual is listed by name - the figures are PDFs, too.
+*.aux
+*.log
+*.out
+*.toc
+pmonitor_doc.pdf
