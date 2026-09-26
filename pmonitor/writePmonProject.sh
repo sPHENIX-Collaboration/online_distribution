@@ -1,21 +1,31 @@
-#! /usr/bin/perl
+#!/bin/bash
+#
+# writePmonProject.sh - create a new pmonitor project
+# (replaces writePmonProject.pl, same output)
+#
+#   writePmonProject.sh <projectname>
+#
+# creates in the current directory
+#   <projectname>.cc         pinit() and process_event()
+#   <projectname>.h
+#   <projectname>LinkDef.h
+#   <projectname>.Makefile   (and a Makefile link to it, if there is no Makefile yet)
+#   <projectname>.C          ROOT macro that loads the library and opens a file
+#   <projectname>.sh         starts root with that macro
 
-# deprecated - kept so that existing habits and scripts keep working
-print STDERR "Note: writePmonProject.pl is deprecated, please use writePmonProject.sh in the future\n";
+if [ $# -lt 1 ]
+then
+    echo "Usage: writePmonProject.sh <projectname>"
+    echo "   e.g writePmonProject.sh MyAnalysis "
+    exit 1
+fi
 
-if (@ARGV < 1) {
-   print "Usage: writePmonProject.pl <projectname>\n" ;
-   print "   e.g writePmonProject.pl MyAnalysis \n" ;
-   exit 1;
-}
+projectname=$1
+PROJECTNAME=$(echo "$projectname" | tr '[:lower:]' '[:upper:]')
 
-$projectname=$ARGV[0];
+echo "creating project $projectname"
 
-print "creating project $projectname\n";
-
-open (CC, "> $projectname.cc");
-
-print CC <<EOF;
+cat > "$projectname.cc" <<EOF
 
 #include <iostream>
 #include <pmonitor/pmonitor.h>
@@ -28,8 +38,8 @@ int init_done = 0;
 
 using namespace std;
 
-//TH1F *h1; 
-//TH2F *h2; 
+//TH1F *h1;
+//TH2F *h2;
 
 
 int pinit()
@@ -38,8 +48,8 @@ int pinit()
   if (init_done) return 1;
   init_done = 1;
 
-  // h1 = new TH1F ( "h1","test histogram", 400, -50, 50); 
-  // h2 = new TH2F ( "h2","test histogram 2D", 100, -50.5, 49.5, 100, -500, 500);  
+  // h1 = new TH1F ( "h1","test histogram", 400, -50, 50);
+  // h2 = new TH2F ( "h2","test histogram 2D", 100, -50.5, 49.5, 100, -500, 500);
 
   return 0;
 
@@ -63,37 +73,21 @@ int process_event (Event * e)
 
 EOF
 
-close CC;
-
-open (HH, "> $projectname.h");
-
-
-print HH "#ifndef __";
-print HH uc($projectname);
-print HH "_H__\n";
-print HH "#define __";
-print HH uc($projectname);
-print HH "_H__\n";
-
-print HH <<EOF;
+cat > "$projectname.h" <<EOF
+#ifndef __${PROJECTNAME}_H__
+#define __${PROJECTNAME}_H__
 
 #include <pmonitor/pmonitor.h>
 #include <Event/Event.h>
 #include <Event/EventTypes.h>
 
-int process_event (Event *e); //++CINT 
+int process_event (Event *e); //++CINT
 
+#endif /* __${PROJECTNAME}_H__ */
 EOF
-print HH "#endif /* __";
-print HH uc($projectname);
-print HH "_H__ */\n";
 
-
-close HH;
-
-open (MF, "> $projectname.Makefile");
-
-print MF <<EOF;
+# the Makefile's own $(...) must reach the file unexpanded, hence \$
+cat > "$projectname.Makefile" <<EOF
 PACKAGE = $projectname
 
 ROOTFLAGS = \$(shell root-config --cflags)
@@ -111,8 +105,8 @@ HDRFILES = \$(PACKAGE).h
 LINKFILE = \$(PACKAGE)LinkDef.h
 
 
-ADDITIONAL_SOURCES = 
-ADDITIONAL_LIBS = 
+ADDITIONAL_SOURCES =
+ADDITIONAL_LIBS =
 
 
 SO = lib\$(PACKAGE).so
@@ -127,21 +121,17 @@ SO = lib\$(PACKAGE).so
 
 .PHONY: clean
 
-clean: 
+clean:
 	rm -f \$(SO) \$(PACKAGE)_dict.C \$(PACKAGE)_dict.h *.pcm
 
 EOF
 
-close MF;
+if [ ! -e Makefile ]
+then
+    ln -s "$projectname.Makefile" Makefile
+fi
 
-if (! -e Makefile)
-{
-    symlink ("$projectname.Makefile", "Makefile");
-}
-	     
-$lfname = $projectname . "LinkDef.h";
-open (LF, "> $lfname");
-print LF <<EOF;
+cat > "${projectname}LinkDef.h" <<EOF
 #ifdef __CINT__
 
 #pragma link C++ defined_in "$projectname.h";
@@ -149,10 +139,7 @@ print LF <<EOF;
 #endif /* __CINT__ */
 EOF
 
-close LF;
-
-open (HC, "> $projectname.C");
-print HC <<EOF;
+cat > "$projectname.C" <<EOF
 #include "$projectname.h"
 R__LOAD_LIBRARY(lib$projectname.so)
 
@@ -165,19 +152,16 @@ void $projectname(const char * filename)
 }
 EOF
 
-
-open (HS, "> $projectname.sh");
-print HS <<EOF;
+cat > "$projectname.sh" <<EOF
 #! /bin/bash
 
-FILE=\"\$1\"
+FILE="\$1"
 
-if [ -z \"\$FILE\" ] ; then
+if [ -z "\$FILE" ] ; then
 
     root --web=off -l $projectname.C\\(0\\)
 else
 
-    root --web=off -l $projectname.C\\(\\\"\$FILE\\\"\\)
+    root --web=off -l $projectname.C\\(\\"\$FILE\\"\\)
 fi
 EOF
-    

@@ -97,4 +97,4 @@ install(FILES
 # include/Event/
 install(FILES pmonitor.h pmonstate.h pMutex.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/pmonitor)
-install(PROGRAMS writePmonProject.pl DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(PROGRAMS writePmonProject.sh writePmonProject.pl DESTINATION ${CMAKE_INSTALL_BINDIR})

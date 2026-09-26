@@ -71,7 +71,7 @@ nobase_dist_pcm_DATA = \
 pmonitor_Dict.C: pmonitor.h pmonstate.h  $(LINKFILE)
 	$(ROOTCINT) -f $@ @CINTDEFS@ -c $(DEFAULT_INCLUDES) -I$(includedir) $^
 
-bin_SCRIPTS = writePmonProject.pl
+bin_SCRIPTS = writePmonProject.sh writePmonProject.pl
 
 
 # get the dependency for the pcm files
