@@ -1058,15 +1058,18 @@ with lots of apparent dead code, consider starting over.
 
 In order to get a fresh, empty project, get yourself a new, empty
 directory, pick a name for your project, say, ``MyTest'', and run
-\verb|writePmonProject.pl|:
+\verb|writePmonProject.sh|:
 
 \begin{verbatim}
 $ mkdir MyTest
 $ cd MyTest
-$ writePmonProject.pl MyTest
+$ writePmonProject.sh MyTest
 creating project MyTest
 $
 \end{verbatim}
+
+(The older \verb|writePmonProject.pl| still works and creates the same
+project, but it is deprecated.)
 
 The directory name and project name are completely independent. You
 should always choose a fresh, empty directory unless you know exactly
