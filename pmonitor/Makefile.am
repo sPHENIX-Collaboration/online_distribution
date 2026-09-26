@@ -2,15 +2,16 @@ AUTOMAKE_OPTIONS = foreign
 
 PACKAGE = pmonitor
 
-include_HEADERS = \
+# headers go only under $(includedir)/pmonitor/ (pkgincludedir), used as
+# #include <pmonitor/pmonitor.h> - previously they were also installed flat
+# into $(includedir) via include_HEADERS
+pkginclude_HEADERS = \
   pmonitor.h \
   pmonstate.h \
   pMutex.h
 
 
 LINKFILE = pmonitorLinkDef.h
-
-pkginclude_HEADERS = $(include_HEADERS)
 
 noinst_HEADERS = $(LINKFILE)
 

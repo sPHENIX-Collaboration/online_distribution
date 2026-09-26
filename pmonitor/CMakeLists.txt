@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.10)
 project(pmonitor CXX)
 
+# default to -O2 -g, matching Automake's default CXXFLAGS - without this,
+# CMake builds with no optimization at all
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build." FORCE)
+endif()
+
 # This coexists with the Automake build (autogen.sh/configure/make) -
 # use one or the other, they don't interfere with each other as long
 # as you build out-of-source here (cmake -S . -B build).
@@ -85,5 +91,10 @@ install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/libpmonitor_rdict.pcm
   ${CMAKE_CURRENT_BINARY_DIR}/libpmonitor.rootmap
   DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(FILES pmonitor.h pmonstate.h pMutex.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+# headers go under include/pmonitor/ (Automake's pkgincludedir, from
+# AC_INIT(pmonitor,...)), matching #include <pmonitor/pmonitor.h> as used
+# by writePmonProject.pl's template - same convention as eventlibraries'
+# include/Event/
+install(FILES pmonitor.h pmonstate.h pMutex.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/pmonitor)
 install(PROGRAMS writePmonProject.pl DESTINATION ${CMAKE_INSTALL_BINDIR})
