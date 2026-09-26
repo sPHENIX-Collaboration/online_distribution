@@ -370,7 +370,7 @@ long long   oncsSub_idh2gcroc3_10G::lValue(const int wf, const int sample, const
   if ( ch < 0 || ch >= _nr_channels || sample < 0) return 0;
   
   unsigned int ue = wf;  //preventing a warning as size() is unsigned
-  if ( wf < 0 || ue > _eventlist.size() ) return 0;
+  if ( wf < 0 || ue >= _eventlist.size() ) return 0;
 
   unsigned int un = sample;   //preventing a warning as size() is unsigned
   
@@ -398,7 +398,7 @@ int oncsSub_idh2gcroc3_10G::iValue(const int wf, const int sample, const int ch)
   // only known once we decode
   
   unsigned int ue = wf;  //preventing a warning as size() is unsigned
-  if ( wf < 0 || ue > _eventlist.size() ) return 0;
+  if ( wf < 0 || ue >= _eventlist.size() ) return 0;
 
   unsigned int un = sample;   //preventing a warning as size() is unsigned
   
