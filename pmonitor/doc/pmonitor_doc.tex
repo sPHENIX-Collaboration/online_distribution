@@ -1080,14 +1080,23 @@ anything useful yet, of course. The above command gets you
 
 \begin{verbatim}
 $ ls -l
-total 16
-lrwxrwxrwx 1 purschke rphenix  15 May  8 18:18 Makefile -> MyTest.Makefile
--rw-r--r-- 1 purschke rphenix 849 May  8 18:18 MyTest.Makefile
--rw-r--r-- 1 purschke rphenix 615 May  8 18:18 MyTest.cc
--rw-r--r-- 1 purschke rphenix 197 May  8 18:18 MyTest.h
--rw-r--r-- 1 purschke rphenix  80 May  8 18:18 MyTestLinkDef.h
+total 24
+lrwxrwxrwx 1 purschke sphenix  15 Sep 26 16:42 Makefile -> MyTest.Makefile
+-rw-r--r-- 1 purschke sphenix 154 Sep 26 16:42 MyTest.C
+-rw-r--r-- 1 purschke sphenix 610 Sep 26 16:42 MyTest.cc
+-rw-r--r-- 1 purschke sphenix 196 Sep 26 16:42 MyTest.h
+-rw-r--r-- 1 purschke sphenix  80 Sep 26 16:42 MyTestLinkDef.h
+-rw-r--r-- 1 purschke sphenix 852 Sep 26 16:42 MyTest.Makefile
+-rw-r--r-- 1 purschke sphenix 140 Sep 26 16:42 MyTest.sh
 $
 \end{verbatim}
+
+Besides the source files, you also get \verb|MyTest.C|, a small ROOT
+macro that loads the library and opens a data file with
+\verb|pfileopen()|, and \verb|MyTest.sh|, which starts root with that
+macro, so that \verb|bash MyTest.sh myfile.evt| gets you a running
+\pmonitor\ session in one step. Below we go through these steps by
+hand first, so you see what is happening.
 
 While the project doesn't do anything useful yet, it already
 compiles. We will go through the mechanics of \pmonitor\ with this
@@ -1098,15 +1107,17 @@ shared library \verb|libMyTest.so| that you can load in root.
 
 \begin{verbatim}
 $ ls -l
-total 60
-lrwxrwxrwx 1 purschke rphenix    15 May  8 18:18 Makefile -> MyTest.Makefile
--rw-r--r-- 1 purschke rphenix   849 May  8 18:18 MyTest.Makefile
--rw-r--r-- 1 purschke rphenix   615 May  8 18:18 MyTest.cc
--rw-r--r-- 1 purschke rphenix   197 May  8 18:18 MyTest.h
--rw-r--r-- 1 purschke rphenix    80 May  8 18:18 MyTestLinkDef.h
--rw-r--r-- 1 purschke rphenix  2633 May  8 18:27 MyTest_dict.C
--rw-r--r-- 1 purschke rphenix   999 May  8 18:27 MyTest_dict_rdict.pcm
--rwxr-xr-x 1 purschke rphenix 34144 May  8 18:27 libMyTest.so
+total 68
+-rwxr-xr-x 1 purschke sphenix 32960 Sep 26 16:42 libMyTest.so
+lrwxrwxrwx 1 purschke sphenix    15 Sep 26 16:42 Makefile -> MyTest.Makefile
+-rw-r--r-- 1 purschke sphenix   154 Sep 26 16:42 MyTest.C
+-rw-r--r-- 1 purschke sphenix   610 Sep 26 16:42 MyTest.cc
+-rw-r--r-- 1 purschke sphenix  2974 Sep 26 16:42 MyTest_dict.C
+-rw-r--r-- 1 purschke sphenix   849 Sep 26 16:42 MyTest_dict_rdict.pcm
+-rw-r--r-- 1 purschke sphenix   196 Sep 26 16:42 MyTest.h
+-rw-r--r-- 1 purschke sphenix    80 Sep 26 16:42 MyTestLinkDef.h
+-rw-r--r-- 1 purschke sphenix   852 Sep 26 16:42 MyTest.Makefile
+-rw-r--r-- 1 purschke sphenix   140 Sep 26 16:42 MyTest.sh
 $
 \end{verbatim}
 
