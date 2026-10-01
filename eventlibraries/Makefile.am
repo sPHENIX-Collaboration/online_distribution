@@ -319,6 +319,7 @@ AM_CPPFLAGS =  -I$(includedir)  -I@ROOTINC@ -I/opt/local/include
 
 noinst_HEADERS = \
   eventLinkDef.h \
+  rangeParser.h \
   all.h
 
 pkginclude_HEADERS = $(installedheaders) $(msgheaders)

@@ -24,8 +24,8 @@ using namespace std;
 #endif
 
 #include<vector>
-#include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
+#include <cstring>
+#include "rangeParser.h"
 
 #define RCDAQEVENTITERATOR 1
 #define FILEEVENTITERATOR 2
@@ -42,7 +42,6 @@ std::vector<int> packetSelection;
 
 
 
-int rangeParser ( const std::string string, std::vector<int> &selection);
 int subeventid=0;
 
 
@@ -346,36 +345,3 @@ void dlist(Event * evt)
 
 
 
-int rangeParser ( const std::string string, std::vector<int> &selection)
-{
-  std::vector<std::string>::const_iterator it, itr;
-  std::vector<std::string> strs,r;
-
-//  std::vector<int>::const_iterator vit;
-  int low,high,i;
-  boost::split(strs,string, boost::is_any_of(","));
-
-  for (it= strs.begin(); it!= strs.end(); ++it)
-    {
-      boost::split(r,*it,boost::is_any_of("-"));
-
-      itr = r.begin();
-      low = high =boost::lexical_cast<int>(r[0]);
-      itr++;
-      if(itr!=r.end())
-	{
-	  high = boost::lexical_cast<int>(r[1]);
-	}
-      for(i=low;i<=high;++i)
-	{
-	  selection.push_back(i);
-	}
-    }
-
-  //  for(vit= selection.begin(); vit!= selection.end(); ++vit)
-  //  {
-  //    std::cout<<*vit<<std::endl;
-  //  }
-  return 0;
-
-}

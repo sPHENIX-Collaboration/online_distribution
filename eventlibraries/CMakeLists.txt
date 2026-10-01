@@ -291,8 +291,6 @@ target_link_libraries(Event PUBLIC NoRootEvent Rootmessage ROOT::Core)
 # ----------------------------------------------------------------------
 # bin_PROGRAMS in Makefile.am
 # ----------------------------------------------------------------------
-find_package(Boost REQUIRED)  # header-only use: algorithm/string.hpp, lexical_cast.hpp
-
 function(add_eventlib_tool name)
   add_executable(${name} ${name}.cc)
   target_link_libraries(${name} PRIVATE NoRootEvent dl)
@@ -313,10 +311,10 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 endif()
 
 add_executable(ddump ddump.cc)
-target_link_libraries(ddump PRIVATE NoRootEvent dl Boost::boost)
+target_link_libraries(ddump PRIVATE NoRootEvent dl)
 
 add_executable(lastEvent lastEvent.cc)
-target_link_libraries(lastEvent PRIVATE NoRootEvent dl Boost::boost)
+target_link_libraries(lastEvent PRIVATE NoRootEvent dl)
 
 add_executable(eventServer eventServer.cc)
 target_link_libraries(eventServer PRIVATE NoRootEvent dl pthread)
