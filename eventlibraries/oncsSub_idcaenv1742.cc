@@ -5,6 +5,7 @@
 oncsSub_idcaenv1742::oncsSub_idcaenv1742(subevtdata_ptr data)
   :oncsSubevent_w4 (data)
 {
+  channels = 32;
   samples = 0;
   dlength = 0;
   EvtTimeTag = 0;
@@ -20,6 +21,21 @@ oncsSub_idcaenv1742::oncsSub_idcaenv1742(subevtdata_ptr data)
       GroupTriggerTime[i] = 0;
     }
 
+  unsigned int *SubeventData = (unsigned int *) &SubeventHdr->data;
+  // word 1 has the group enable pattern
+  group_mask = SubeventData[1] & 0xf;
+  if ( group_mask)
+    {
+      const int b=1;
+      int highestBit = 0;
+      for (int i = 0; i< 4; i++)
+	{
+	  if ( (b<<i) &  group_mask) highestBit =i;
+	}
+      channels = 8*(highestBit+1);
+    }
+  
+  
 }
   
 int *oncsSub_idcaenv1742::decode ( int *nwout)
@@ -39,8 +55,8 @@ int *oncsSub_idcaenv1742::decode ( int *nwout)
     }
   dlength  = *SubeventData  & 0x0fffffff; 
  
-  // word 1 has the group enable pattern
-  group_mask = SubeventData[1] & 0xf;
+  // word 1 has the group enable pattern (we get this already in the constructor)
+  //  group_mask = SubeventData[1] & 0xf;
 
   LVDSPattern = (SubeventData[1]>>8) & 0xffff;
   
@@ -190,6 +206,11 @@ int oncsSub_idcaenv1742::iValue(const int n,const char *what)
     return samples;
   }
 
+  if ( strcmp(what,"CHANNELS") == 0 )
+  {
+    return channels;
+  }
+
   if ( strcmp(what,"EVNR") == 0 )
   {
     return evnr;
@@ -299,10 +320,12 @@ void  oncsSub_idcaenv1742::dump ( OSTREAM& os )
 {
   int i,j;
   //  int *SubeventData = &SubeventHdr->data;
+  identify();
   
+  os << "Channels: " << iValue(0,"CHANNELS") << std::endl;
   os << "Samples:  " << iValue(0,"SAMPLES") << std::endl;
   os << "Evt Nr:   " << iValue(0,"EVNR") << std::endl;
-  os << "Evt Time: " << iValue(0,"EVENTTIME") << std::endl;
+  os << "Evt Time: " << (unsigned int) iValue(0,"EVENTTIME") << std::endl;
   //os << "LVDS:      " << iValue(0,"LVDSPATTERN") << std::endl;
   int f = iValue(0,"FREQUENCY") ;
   os << "Sample Frequency ";
@@ -351,7 +374,7 @@ void  oncsSub_idcaenv1742::dump ( OSTREAM& os )
   os << "Group Trigger time       ";
   for ( i = 0; i < 4; i++)
     {
-      os<<  std::setw(10) << lValue(i, "GROUPTRIGGERTIME") << "  ";
+      os<<  std::setw(10) << (unsigned long long) lValue(i, "GROUPTRIGGERTIME") << "  ";
     }
   os << std::endl;
 
@@ -360,12 +383,14 @@ void  oncsSub_idcaenv1742::dump ( OSTREAM& os )
     {
       os  << std::setw(4) << i << " |  ";
 
-      for ( j = 0; j < 32 ; j++)
+      for ( j = 0; j < iValue(0,"CHANNELS") ; j++)
 	{
 	  
 	  os << std::setw(4) << iValue(i,j) << " ";
 	}
-      os << " tr: " << std::setw(5) << iValue(i, "TR0") << " " << std::setw(5) << iValue(i, "TR1")<< std::endl;
+      if ( iValue(0, "TRPRESENT")) os << " tr0: " << std::setw(5) << iValue(i, "TR0") << " "; 
+      if ( iValue(2, "TRPRESENT")) os << " tr1: " << std::setw(5) << iValue(i, "TR1");
+      os << std::endl;
     }
   
   os << std::endl;

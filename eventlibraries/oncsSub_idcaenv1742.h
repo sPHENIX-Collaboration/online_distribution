@@ -22,6 +22,7 @@ public:
 
 protected:
   int *decode (int *);
+  int channels;
   int samples;
   int dlength;
   int evnr;
