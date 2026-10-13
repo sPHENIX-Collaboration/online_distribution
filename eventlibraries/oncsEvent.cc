@@ -278,6 +278,11 @@ Packet *oncsEvent::makePacket(PHDWORD *pp, const int hitFormat)
 	oncsSub_idh2gcroc3_10G( sevt_ptr );
       break;
 
+    case (IDCALOROC1B):
+      return new
+	oncsSub_idcaloroc1b( sevt_ptr );
+      break;
+
     case (IDASTROV1):
       return new
 	oncsSub_idastrov1( sevt_ptr );

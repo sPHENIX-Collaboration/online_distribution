@@ -102,6 +102,7 @@
 
 #define IDH2GCROC3     301
 #define IDH2GCROC3_10G 302
+#define IDCALOROC1B    310
 
 #define IDASTROV1     350
 

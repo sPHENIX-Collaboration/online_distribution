@@ -191,6 +191,7 @@ add_library(NoRootEvent SHARED
   oncsSub_idgl1v1.cc
   oncsSub_idh2gcroc3.cc
   oncsSub_idh2gcroc3_10G.cc
+  oncsSub_idcaloroc1b.cc
   oncsSub_idastrov1.cc
   oncsSubevent.cc
   oncs_mnemonic.cc
