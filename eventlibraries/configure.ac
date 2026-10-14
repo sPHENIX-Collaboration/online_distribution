@@ -59,8 +59,12 @@ AC_PROG_INSTALL
 dnl   no point in suppressing warnings people should
 dnl   at least see them, so here we go for g++: -Wall
 if test $ac_cv_prog_gxx = yes; then
-  CXXFLAGS="$CXXFLAGS -Wall -Werror -Wno-overloaded-virtual -Wno-class-memaccess -Wno-unused-parameter -Wno-type-limits -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-deprecated-declarations"
+  CXXFLAGS="$CXXFLAGS -Wall -Werror -Wno-overloaded-virtual -Wno-unused-parameter -Wno-type-limits -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-deprecated-declarations"
 fi
+
+dnl C++20, the standard ROOT is built with here and in the EIC container -
+dnl ROOT's headers (in the dictionaries) refuse a different one
+CXXFLAGS="$CXXFLAGS -std=c++20"
 
 case $CXX in
  clang++)
@@ -74,7 +78,10 @@ AC_CHECK_HEADERS(getopt.h)
 
 AC_CHECK_FUNCS(setenv)
 
-ROOTGLIBS=`root-config --glibs`
+dnl without -pthread: it does nothing on libtool's -nostdlib link of libEvent
+dnl (and threads are part of glibc anyway), but clang reports it as unused,
+dnl which -Werror turns into an error
+ROOTGLIBS=`root-config --glibs | sed 's/ *-pthread//'`
 ROOTINC=`root-config --incdir`
 AC_SUBST(ROOTGLIBS)
 AC_SUBST(ROOTINC)

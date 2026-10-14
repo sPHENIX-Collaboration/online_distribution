@@ -303,7 +303,7 @@ allsources = \
   caen_correction.cc
 
 
-AM_LDFLAGS = -L$(libdir) -L$(ONLINE_MAIN)/lib -L/opt/local/lib
+AM_LDFLAGS = -L$(libdir) -L$(ONLINE_MAIN)/lib
 
 BUILT_SOURCES = ioselect.h
 
@@ -317,7 +317,7 @@ msgheaders = \
   remote_msg_buffer.h \
   strnstr.h
 
-AM_CPPFLAGS =  -I$(includedir)  -I@ROOTINC@ -I/opt/local/include
+AM_CPPFLAGS =  -I$(includedir)  -I@ROOTINC@
 
 noinst_HEADERS = \
   eventLinkDef.h \

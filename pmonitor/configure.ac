@@ -21,10 +21,13 @@ if test $ac_cv_prog_gxx = yes; then
   CXXFLAGS="$CXXFLAGS -Wall -Werror -Wno-vexing-parse -Wno-unused-parameter"
 fi
 
-ROOTCFLAGS=`root-config --cflags`
-ROOTLIBS=`root-config --libs`
+dnl without -pthread: libtool also passes it to the -nostdlib link of
+dnl libpmonitor, where it does nothing (threads come from -lpthread in
+dnl Makefile.am, and are part of glibc anyway), but clang reports it as
+dnl unused, which -Werror turns into an error
+ROOTCFLAGS=`root-config --cflags | sed 's/ *-pthread//'`
+ROOTLIBS=`root-config --libs | sed 's/ *-pthread//'`
 ROOTINC=`root-config --incdir`
-ROOTCFLAGS=`root-config --cflags`
 AC_SUBST(ROOTLIBS)
 AC_SUBST(ROOTINC)
 AC_SUBST(ROOTCFLAGS)

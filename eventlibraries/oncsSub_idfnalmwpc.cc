@@ -191,7 +191,11 @@ int *oncsSub_idfnalmwpc::decode ( int *nwout)
 	      te->absolute_time <<= 3;
 	      te->absolute_time += ( te->evt_timestamp &0x3);
 	      // and we clear the TDCData structures
-	      memset ( te->td, 0, MAXNROFTDCS * sizeof( TDCData) );
+	      // (TDCData holds a std::vector, so no memset - assign fresh, empty ones)
+	      for (int itd = 0; itd < MAXNROFTDCS; itd++)
+	        {
+	          te->td[itd] = TDCData{};
+	        }
 	      
 	      // we are done with filling in the new event "header" structure
 	      // now we fill in the TCDData structure. some of this 

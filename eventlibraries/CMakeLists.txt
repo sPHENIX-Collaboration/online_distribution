@@ -35,7 +35,7 @@ include(GNUInstallDirs)
 include(CheckCXXSourceCompiles)
 include(CheckIncludeFileCXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
@@ -56,7 +56,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   add_compile_options(
     -Wall -Werror
     -Wno-overloaded-virtual
-    -Wno-class-memaccess
     -Wno-unused-parameter
     -Wno-type-limits
     -Wno-unused-but-set-parameter
