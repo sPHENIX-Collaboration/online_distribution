@@ -49,7 +49,7 @@ if FROG
 libpmonitor_la_LIBADD = \
   -L$(libdir) \
   -L$(ONLINE_MAIN)/lib \
-  -lEvent -lmessage \
+  -lEvent -lNoRootEvent -lmessage \
   $(ROOTLIBS) -lThread -lpthread \
   -L$(OFFLINE_MAIN)/lib 
 
@@ -59,7 +59,7 @@ else
 libpmonitor_la_LIBADD = \
   -L$(libdir) \
   -L$(ONLINE_MAIN)/lib \
-  -lEvent -lmessage \
+  -lEvent -lNoRootEvent -lmessage \
   $(ROOTLIBS) -lThread -lpthread 
 
 endif
