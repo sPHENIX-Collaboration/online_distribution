@@ -257,6 +257,15 @@ int oncsSub_idh2gcroc3_10G::decode()
       //      coutfl << " number of lines: " << lines << endl;
     }
 
+  // the last sample is complete too - no later timestamp will come
+  // along to close it
+  if ( _sample)
+    {
+      waveform.push_back(_sample);
+      _nr_samples++;
+      _sample = 0;
+    }
+
   parse_timeline ();
   
   return 0;  
