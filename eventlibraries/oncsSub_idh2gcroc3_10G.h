@@ -50,6 +50,7 @@ protected:
     unsigned int ADC[72*MAX_CHIPS];
     unsigned int tot[72*MAX_CHIPS];
     unsigned int toa[72*MAX_CHIPS];
+    unsigned int error[2*MAX_CHIPS];  // H1 H2 H3 hamming error bits per half-chip
     unsigned int trigger_in ;
     unsigned int trigger_out;
     unsigned int event_counter;

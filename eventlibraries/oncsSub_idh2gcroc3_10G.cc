@@ -154,6 +154,11 @@ int oncsSub_idh2gcroc3_10G::decode_line( uint8_t d[4*48])
     }
   
   
+  // the ROC header is 0101 + 12b Bx + 6b Event + 3b Orbit + H1 H2 H3 + 0101
+  // (H2GCROC3 datasheet p. 30); H1 = error in the header, H2 in CM and
+  // channels 0-17, H3 in Calib and channels 18-35 of this half-chip
+  _sample->error[(chip_offset + group_offset) / 36] = (ROC_HDR >> 4) & 0x7;
+
   _sample->trigger_in   = trigger_in;
   _sample->trigger_out  = trigger_out;
   _sample->event_counter  = evt_ctr;
@@ -479,6 +484,10 @@ int oncsSub_idh2gcroc3_10G::iValue(const int wf, const int sample, const int ch,
     {
       return waveform[n+sample]->toa[ch];
     }
+  else if ( strcmp(what,"ERROR") == 0 )
+    {
+      return waveform[n+sample]->error[ch / 36];
+    }
   else if ( strcmp(what,"TRIGGER_IN") == 0 )
     {
       return waveform[n+sample]->trigger_in;
@@ -538,6 +547,25 @@ void oncsSub_idh2gcroc3_10G::dump(std::ostream &os)
   for ( int n = 0; n < e; n++)
     {
       os << " ----- Waveform  " << n << " Samples: " << iValue(n, "SAMPLESIZE") << "  Timestamp: 0x" << hex << lValue(n,0,0) << "  " << dec << lValue(n,0,0)  << endl;
+
+      // the hamming error bits (H1 H2 H3) per half-chip, only if there are any
+      for ( int h = 0; h < iValue(0,"CHANNELS") / 36; h++)
+	{
+	  int has_error = 0;
+	  for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
+	    {
+	      if ( iValue (n, is, h*36, "ERROR") ) has_error = 1;
+	    }
+	  if ( has_error)
+	    {
+	      os << " chip " << h/2 << " half " << h%2 << " ERR | ";
+	      for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
+		{
+		  os << " " << setw(4) << iValue (n, is, h*36, "ERROR");
+		}
+	      os << endl;
+	    }
+	}
       for ( int ic =0; ic < iValue(0,"CHANNELS"); ic++)
 	{
 
