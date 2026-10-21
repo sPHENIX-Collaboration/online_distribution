@@ -143,7 +143,7 @@ int oncsSub_idh2gcroc3_10G::decode_line( uint8_t d[4*48])
   for ( int c = 0; c< 36; c++)
     {
       _sample->ADC[chip_offset + group_offset + c] = (ch[c] >> 20) & 0x3ff;
-      _sample->tot[chip_offset + group_offset + c] = (ch[c] >> 10) & 0x3f;
+      _sample->tot[chip_offset + group_offset + c] = (ch[c] >> 10) & 0x3ff;
       _sample->toa[chip_offset + group_offset + c] = ch[c] & 0x3ff;
       
       // coutfl << setw(4) << chip_offset + group_offset + c << " " << hex
