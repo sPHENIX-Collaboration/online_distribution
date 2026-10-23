@@ -72,25 +72,37 @@ void exithelp()
   COUT << "   predictable packets 1001, 1002, 1003, and 1008); we dump packet 1002:" << std::endl;
   COUT << std::endl;
   COUT << "   > ddump -p 1002 -T" << std::endl;
-  COUT << "   Packet  1002    16  0 (Unformatted)  30005 (ID2EVT)" << std::endl;
-  COUT << "       0 |     1    2    3    4    5    6    7    8 " << std::endl;
-  COUT << "       8 |     9    a    b    c    d    e    f   10 " << std::endl;
-  COUT << "      10 |    11   12   13   14 " << std::endl;
+  COUT << "   Packet  1002    36 -1 (ePIC Packet)   5 (ID2EVT)" << std::endl;
+  COUT << "       0 |  0000 0001 0002 0003 0004 0005 0006 0007" << std::endl;
+  COUT << "       8 |  0008 0009 000a 000b 000c 000d 000e 000f" << std::endl;
+  COUT << "      16 |  0010 0011 0012 0013 0014 0015 0016 0017" << std::endl;
+  COUT << "      24 |  0018 0019 001a 001b 001c 001d 001e 001f" << std::endl;
+  COUT << "      32 |  0020 0021 0022 0023 0024 0025 0026 0027" << std::endl;
+  COUT << "      40 |  0028 0029 002a 002b 002c 002d 002e 002f" << std::endl;
+  COUT << "      48 |  0030 0031 0032 0033 0034 0035 0036 0037" << std::endl;
+  COUT << "      56 |  0038 0039 003a 003b 003c 003d 003e 003f" << std::endl;
   COUT << std::endl;
   COUT << "   The -i option also lets the event identify itself." << std::endl;
   COUT << "   The -I option gets you an in-depth identification of the packets." << std::endl;
 
   COUT << std::endl;
   COUT << "   > ddump -p 1002 -T -i" << std::endl;
-  COUT << "    -- Event     1 Run:  1331 length:    68 frames:   1 type:  1 (Data Event)" << std::endl;
-  COUT << "   Packet  1002    16  0 (Unformatted)  30005 (ID2EVT)" << std::endl;
-  COUT << "       0 |     1    2    3    4    5    6    7    8 " << std::endl;
-  COUT << "       8 |     9    a    b    c    d    e    f   10 " << std::endl;
-  COUT << "      10 |    11   12   13   14 " << std::endl;
+  COUT << "   -- Event     1 Run:  1331 length:   144 type:  1 (Data Event)  1792717476" << std::endl;
+  COUT << "   Packet  1002    36 -1 (ePIC Packet)   5 (ID2EVT)" << std::endl;
+  COUT << "       0 |  0000 0001 0002 0003 0004 0005 0006 0007" << std::endl;
+  COUT << "       8 |  0008 0009 000a 000b 000c 000d 000e 000f" << std::endl;
+  COUT << "      16 |  0010 0011 0012 0013 0014 0015 0016 0017" << std::endl;
+  COUT << "      24 |  0018 0019 001a 001b 001c 001d 001e 001f" << std::endl;
+  COUT << "      32 |  0020 0021 0022 0023 0024 0025 0026 0027" << std::endl;
+  COUT << "      40 |  0028 0029 002a 002b 002c 002d 002e 002f" << std::endl;
+  COUT << "      48 |  0030 0031 0032 0033 0034 0035 0036 0037" << std::endl;
+  COUT << "      56 |  0038 0039 003a 003b 003c 003d 003e 003f" << std::endl;
 
-  COUT << " The -F option also causes the frames in the event to be listed." << std::endl;
-  COUT << " If you list a particular packet, you will get the frame where" << std::endl; 
-  COUT << " this packet is in." << std::endl; 
+  COUT << std::endl;
+  COUT << "   The -F option also causes the frames in the event to be listed." << std::endl;
+  COUT << "   If you list a particular packet, you will get the frame where" << std::endl; 
+  COUT << "   this packet is in. This only applies to the legacy PHENIX-format" << std::endl; 
+  COUT << "   packets; the ePIC packets have no frames." << std::endl; 
 
   COUT << std::endl;
 
