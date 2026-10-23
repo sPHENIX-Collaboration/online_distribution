@@ -416,6 +416,10 @@ oncsSubevent_w4::oncsSubevent_w4(subevtdata_ptr sevt_ptr)
   : oncsSubevent(sevt_ptr)
 {}
 
+oncsSubevent_w8::oncsSubevent_w8(subevtdata_ptr sevt_ptr)
+  : oncsSubevent(sevt_ptr)
+{}
+
 // ---- and the dump routines, which just call the 
 // ---- generic dump routines, but may be overloaded
 // ---- by the subclasses.
@@ -423,6 +427,7 @@ oncsSubevent_w4::oncsSubevent_w4(subevtdata_ptr sevt_ptr)
 void oncsSubevent_w1::dump(OSTREAM& out)  { gdump(2,out);}
 void oncsSubevent_w2::dump(OSTREAM& out)  { gdump(2,out);}
 void oncsSubevent_w4::dump(OSTREAM& out)  { gdump(2,out);}
+void oncsSubevent_w8::dump(OSTREAM& out)  { gdump(2,out);}
 
 void oncsSubevent_w4::gdump(const int i, OSTREAM& out) const
 {
@@ -475,6 +480,57 @@ void oncsSubevent_w4::gdump(const int i, OSTREAM& out) const
 	    }
 	  out << std::endl;
 	  if (j>=SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) break;
+	}
+      break;
+
+    default: 
+      break;
+    }
+  out << std::endl;
+
+}
+
+// ---------------------------------------------------------------------
+
+void oncsSubevent_w8::gdump(const int i, OSTREAM& out) const
+{
+  long long *SubeventData = (long long *) &SubeventHdr->data;
+
+  if ( i == EVT_RAW)
+    {
+      fwrite(SubeventData, sizeof(int), getDataLength(), stdout);
+      return;
+    }
+
+  if ( i == EVT_RAW_WH)
+    {
+      fwrite(SubeventHdr, sizeof(int), getLength(), stdout);
+      return;
+    }
+
+  identify(out);
+
+  // the padding is counted in 8-byte words
+  int n = ( SubeventHdr->sub_length - SEVTHEADERLENGTH ) / 2 - SubeventHdr->sub_padding;
+
+  int j;
+  switch (i)
+    {
+    case (EVT_HEXADECIMAL):
+      for ( j = 0; j < n; j++)
+	{
+	  if ( j%4 == 0) out << SETW(5) << j << " |  ";
+	  out << std::hex << SETW(16) << std::setfill ('0') << SubeventData[j] << std::setfill(' ') << " " << std::dec;
+	  if ( j%4 == 3 || j == n-1) out << std::endl;
+	}
+      break;
+
+    case (EVT_DECIMAL):
+      for ( j = 0; j < n; j++)
+	{
+	  if ( j%4 == 0) out << std::dec << SETW(5) << j << " |  ";
+	  out << SETW(20) << SubeventData[j] << " ";
+	  if ( j%4 == 3 || j == n-1) out << std::endl;
 	}
       break;
 

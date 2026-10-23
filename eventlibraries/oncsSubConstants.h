@@ -37,6 +37,7 @@
 #define ID2EVT    5 
 #define ID4EVT    6 
 #define ID2SUP    7 
+#define ID8EVT    8 
 #define IDRTCLOCK    9 
 
 // ---------------------------------------------------------------------

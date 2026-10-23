@@ -180,6 +180,11 @@ Packet *oncsEvent::makePacket(PHDWORD *pp, const int hitFormat)
 	oncsSub_id2evt( sevt_ptr );
       break;
 
+    case (ID8EVT):
+      return new
+	oncsSub_id8evt( sevt_ptr );
+      break;
+
     case (IDCSTR):
       return new
 	oncsSub_idcstr( sevt_ptr );
@@ -299,6 +304,9 @@ Packet *oncsEvent::makePacket(PHDWORD *pp, const int hitFormat)
 	  break;
 	case 4:
 	  return new oncsSubevent_w4(sevt_ptr);
+	  break;
+	case 8:
+	  return new oncsSubevent_w8(sevt_ptr);
 	  break;
 	default:
 	  return new oncsSubevent_w4(sevt_ptr);

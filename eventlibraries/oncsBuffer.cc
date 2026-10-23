@@ -109,6 +109,16 @@ int oncsBuffer::buffer_swap()
 		  p++;
 		}
 	      break;
+
+	    case 8:  // swap the bytes of each half, and the two halves
+	      for (i=0; i<sevtptr->sub_length - SEVTHEADERLENGTH - 1; i+=2)
+		{
+		  int lo = i4swap(p[1]);
+		  p[1] = i4swap(p[0]);
+		  p[0] = lo;
+		  p += 2;
+		}
+	      break;
       
 	    default: 
 	      COUT << "unknown data type " << sevtptr->sub_type << std::endl;

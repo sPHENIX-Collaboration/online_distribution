@@ -143,5 +143,25 @@ protected:
 
 };
 
+// ----------------------------------------------------
+
+
+#ifndef __CINT__
+class WINDOWSEXPORT oncsSubevent_w8 : public oncsSubevent {
+#else
+class  oncsSubevent_w8 : public oncsSubevent {
+#endif
+public:
+  oncsSubevent_w8(subevtdata_ptr);
+
+  virtual void  dump ( OSTREAM& os = COUT) ;
+
+  virtual void  gdump (const int how=EVT_HEXADECIMAL, OSTREAM& os = COUT) const;
+
+protected:
+  inline virtual int *decode (int *) {return 0;};
+
+};
+
 
 #endif /* __ONCSSUBEVENT_H__ */
