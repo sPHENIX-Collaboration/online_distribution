@@ -12,6 +12,11 @@ class  oncsSub_id4evt : public  oncsSubevent_w4 {
 public:
   oncsSub_id4evt( subevtdata_ptr);
 
+  // iValue(0,"CHANNELS") is the number of values ("channels" of an ADC);
+  // any other "what" gives value ch, as before
+  using oncsSubevent::iValue;
+  int iValue(const int ch, const char *what);
+
 protected:
   int *decode (int *);
 };

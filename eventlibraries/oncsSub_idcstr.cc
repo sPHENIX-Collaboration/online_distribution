@@ -29,6 +29,17 @@ int oncsSub_idcstr::iValue ( const int i)
 
 }
 
+int oncsSub_idcstr::iValue ( const int i, const char *what)
+{
+  if ( strcmp(what, "CHANNELS") == 0)
+    {
+      int n;
+      if ( ! sarray ) decode ( &n);
+      return allocated_length;
+    }
+  return iValue(i);
+}
+
 void oncsSub_idcstr::dump ( OSTREAM &os)
 {
   //  identify(os);

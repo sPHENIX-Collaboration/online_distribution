@@ -1,4 +1,5 @@
 #include "oncsSub_id4evt.h"
+#include <string.h>
 
 oncsSub_id4evt::oncsSub_id4evt(subevtdata_ptr data)
   :oncsSubevent_w4 (data){}
@@ -34,3 +35,9 @@ int *oncsSub_id4evt::decode ( int *nwout)
 
 
 
+
+int oncsSub_id4evt::iValue(const int ch, const char *what)
+{
+  if ( strcmp(what, "CHANNELS") == 0) return getArraylength(what);
+  return oncsSubevent::iValue(ch, what);
+}

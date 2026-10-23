@@ -14,6 +14,8 @@ public:
   oncsSub_idcstr( subevtdata_ptr);
   ~oncsSub_idcstr();
   int iValue (const int i);
+  // iValue(0,"CHANNELS") is the number of characters
+  int iValue (const int i, const char *what);
   void  dump ( OSTREAM& os = COUT) ;
 
 
