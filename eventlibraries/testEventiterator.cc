@@ -10,6 +10,7 @@
 
 #include "testEventiterator.h"
 #include <stdlib.h>
+#include <string.h>
 
 #include "oncsEvent.h"
 
@@ -119,6 +120,24 @@ typedef struct subevt_data
   s1003->data[3] = 0;
   
   e->evt_length += s1003->sub_length;
+
+
+  // 1008 - ID8EVT, 32 signed 64-bit values, again n in channel n
+  s_ptr s1008 = (s_ptr) &s1003->data[4];
+  s1008->sub_length    = 4;
+  s1008->sub_id        = 1008;
+  s1008->sub_type      = 8;
+  s1008->sub_decoding  = 8;
+  s1008->sub_padding   = 0;
+  s1008->reserved      = 0;
+
+  for (long long i = 0; i < 32; i++)
+    {
+      memcpy( &s1008->data[2*i], &i, sizeof(i));
+    }
+
+  s1008->sub_length += 64;
+  e->evt_length += s1008->sub_length;
   
 }
 

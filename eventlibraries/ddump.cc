@@ -68,8 +68,8 @@ void exithelp()
   COUT << std::endl;
   COUT << "   Example:" << std::endl;
   COUT << std::endl;
-  COUT << "   -T says that the input stream is a test stream (where events have 3 " << std::endl;
-  COUT << "   predictable packets 1001, 1002, and 1003); we dump packet 1002:" << std::endl;
+  COUT << "   -T says that the input stream is a test stream (where events have 4 " << std::endl;
+  COUT << "   predictable packets 1001, 1002, 1003, and 1008); we dump packet 1002:" << std::endl;
   COUT << std::endl;
   COUT << "   > ddump -p 1002 -T" << std::endl;
   COUT << "   Packet  1002    16  0 (Unformatted)  30005 (ID2EVT)" << std::endl;
