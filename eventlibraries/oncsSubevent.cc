@@ -574,11 +574,11 @@ void oncsSubevent_w2::gdump(const int i, OSTREAM& out) const
 	  for (l=0;l<8;l++)
 	    {
 	      out << std::hex << SETW(4) << std::setfill ('0') << SubeventData[j++] << std::setfill(' ') << " " << std::dec;
-	      if (j>=2*(SubeventHdr->sub_length-SEVTHEADERLENGTH  - SubeventHdr->sub_padding) ) break;
+	      if (j>=2*(SubeventHdr->sub_length-SEVTHEADERLENGTH) - SubeventHdr->sub_padding ) break;
 	    }
 	    out << std::endl;
 
-	  if (j>=2*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) break;
+	  if (j>=2*(SubeventHdr->sub_length-SEVTHEADERLENGTH) - SubeventHdr->sub_padding ) break;
 	}
       break;
 
@@ -590,10 +590,10 @@ void oncsSubevent_w2::gdump(const int i, OSTREAM& out) const
 	  for (l=0;l<8;l++)
 	    {
 	      out << std::dec << SETW(6) << SubeventData[j++] << " ";
-	      if (j>=2*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) break;
+	      if (j>=2*(SubeventHdr->sub_length-SEVTHEADERLENGTH) - SubeventHdr->sub_padding ) break;
 	    }
 	  out << std::endl;
-	  if (j>=2*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) break;
+	  if (j>=2*(SubeventHdr->sub_length-SEVTHEADERLENGTH) - SubeventHdr->sub_padding ) break;
 	}
       break;
 
@@ -606,7 +606,8 @@ void oncsSubevent_w2::gdump(const int i, OSTREAM& out) const
 
 void oncsSubevent_w1::gdump(const int i, OSTREAM& out) const
 {
-  char *SubeventData = (char *) &SubeventHdr->data;
+  // unsigned, so that bytes >= 0x80 (e.g. in a gif) print as 2 hex digits
+  unsigned char *SubeventData = (unsigned char *) &SubeventHdr->data;
 
 
   if ( i == EVT_RAW)
@@ -639,7 +640,7 @@ void oncsSubevent_w1::gdump(const int i, OSTREAM& out) const
 	  out << std::dec <<  SETW(5) << j << " |  ";
 	  for (l=0;l<16;l++)
 	    {
-	      if (j < 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) 
+	      if (j < 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH) - SubeventHdr->sub_padding ) 
 		{
 		  out << std::hex << SETW(2) << (int) SubeventData[j] << " ";
 		  if (SubeventData[j] >=32 && SubeventData[j] <=127) 
@@ -657,7 +658,7 @@ void oncsSubevent_w1::gdump(const int i, OSTREAM& out) const
 	  *c = 0;
 	  out << "  | " << cstring;
 	  out << std::endl;
-	  if (j >= 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) break;
+	  if (j >= 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH) - SubeventHdr->sub_padding ) break;
 	}
       break;
 
@@ -668,7 +669,7 @@ void oncsSubevent_w1::gdump(const int i, OSTREAM& out) const
 	  out << std::dec <<  SETW(5) << j << " |  ";
 	  for (l=0;l<16;l++)
 	    {
-	      if (j < 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) 
+	      if (j < 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH) - SubeventHdr->sub_padding ) 
 		{
 		  out  << SETW(3) << (int) SubeventData[j] << " ";
 		  if (SubeventData[j] >=32 && SubeventData[j] <=127) 
@@ -686,7 +687,7 @@ void oncsSubevent_w1::gdump(const int i, OSTREAM& out) const
 	  *c = 0;
 	  out << "  | " << cstring;
 	  out << std::endl;
-	  if (j >= 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH - SubeventHdr->sub_padding) ) break;
+	  if (j >= 4*(SubeventHdr->sub_length-SEVTHEADERLENGTH) - SubeventHdr->sub_padding ) break;
 	}
       break;
       
