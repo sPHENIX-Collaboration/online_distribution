@@ -56,8 +56,9 @@ public:
   int _warned_id;
   int _status[NSPEEDS];
 
-  // [speed][cell][channel] and [speed][cell][chip]
+  // [speed][cell][channel], [speed][sample][channel] and [speed][cell][chip]
   std::vector<short> _offset;
+  std::vector<short> _nsample;
   std::vector<float> _timevec;
 
   int _samples;
@@ -67,6 +68,8 @@ public:
 
   short offset(const int speed, const int cell, const int ch) const
   { return _offset[ (speed*NCELLS + cell) * NCHANNELS + ch]; };
+  short nsample(const int speed, const int sample, const int ch) const
+  { return _nsample[ (speed*NCELLS + sample) * NCHANNELS + ch]; };
   float timevec(const int speed, const int cell, const int chip) const
   { return _timevec[ (speed*NCELLS + cell) * NCHIPS + chip]; };
 

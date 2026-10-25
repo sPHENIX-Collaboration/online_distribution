@@ -12,7 +12,8 @@
 // numbered as the data packet's iValue(0,"FREQUENCY"): 0 = 5GS, 1 = 2.5GS, 2 = 1GS.
 //
 //   iValue(cell, ch, speed, "OFFSET")   cell offset (ADC counts)
-//   iValue(cell, ch, speed, "NSAMPLE")  correction by position in the readout window
+//   iValue(sample, ch, speed, "NSAMPLE")  correction by sample number in the readout
+//                                        window (counted from the index cell), not by cell
 //   dValue(cell, ch, speed)             time of the cell (ns)
 //   iValue(speed, "STATUS")             0 if the tables for this speed were read ok
 //   iValue(0, "SERIAL"), "READOUTID", "MODEL", "VERSION"

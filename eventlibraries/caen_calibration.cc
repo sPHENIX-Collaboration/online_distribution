@@ -7,6 +7,9 @@
 
 using namespace std;
 
+// the time of one turn of the 1024-cell DRS4 ring, in ns, for each speed
+static const double ring_period[] = { 1024 * 0.2, 1024 * 0.4, 1024 * 1.0 };
+
 caen_calibration::caen_calibration(Packet *calib)
 {
   _broken = 0;
@@ -18,6 +21,7 @@ caen_calibration::caen_calibration(Packet *calib)
   for ( int s = 0; s < NSPEEDS; s++) _status[s] = -1;
 
   _offset.assign(NSPEEDS * NCELLS * NCHANNELS, 0);
+  _nsample.assign(NSPEEDS * NCELLS * NCHANNELS, 0);
   _timevec.assign(NSPEEDS * NCELLS * NCHIPS, 0);
   _current_wave.assign(NCELLS * NCHANNELS, 0);
   _current_time.assign(NCELLS * NCHIPS, 0);
@@ -48,6 +52,8 @@ caen_calibration::caen_calibration(Packet *calib)
 	  for ( int ch = 0; ch < NCHANNELS; ch++)
 	    {
 	      _offset[ (s*NCELLS + cell) * NCHANNELS + ch] = calib->iValue(cell, ch, s, "OFFSET");
+	      // this one goes by sample number, the index is not a cell here
+	      _nsample[ (s*NCELLS + cell) * NCHANNELS + ch] = calib->iValue(cell, ch, s, "NSAMPLE");
 	    }
 	  for ( int chip = 0; chip < NCHIPS; chip++)
 	    {
@@ -85,22 +91,19 @@ int caen_calibration::init (Packet *p)
       const int cell = p->iValue(chip,"INDEXCELL");
       if ( cell < 0 || cell >= NCELLS ) return -1;
 
-      // the time for each chip
+      // the time for each chip, as CAEN's ApplyDataCorrection: past cell
+      // 1023 the readout wraps around to cell 0, one full turn of the ring later
       const double tstart = timevec(speed, cell, chip);
-      const double t_end = timevec(speed, NCELLS-1, chip);
 
       for ( int i = 0; i < _samples; i++)
 	{
-	  double tc;
 	  if ( i+cell < NCELLS)
 	    {
-	      tc = timevec(speed, i+cell, chip);
-	      _current_time[i*NCHIPS + chip] = tc - tstart;
+	      _current_time[i*NCHIPS + chip] = timevec(speed, i+cell, chip) - tstart;
 	    }
 	  else
 	    {
-	      tc = timevec(speed, i+cell - (NCELLS-1), chip);
-	      _current_time[i*NCHIPS + chip] = tc + t_end - tstart;
+	      _current_time[i*NCHIPS + chip] = timevec(speed, i+cell - NCELLS, chip) + ring_period[speed] - tstart;
 	    }
 	}
 
@@ -111,7 +114,7 @@ int caen_calibration::init (Packet *p)
 	  int idx = cell;
 	  for ( int i = 0; i < _samples; i++)
 	    {
-	      _current_wave[i*NCHANNELS + ch] = p->iValue(i, ch) - offset(speed, idx, ch);
+	      _current_wave[i*NCHANNELS + ch] = p->iValue(i, ch) - offset(speed, idx, ch) - nsample(speed, i, ch);
 	      idx++;
 	      if (idx >= NCELLS) idx = 0;
 	    }

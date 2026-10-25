@@ -7,6 +7,19 @@
 
 using namespace std;
 
+// the time of one turn of the 1024-cell DRS4 ring, in ns, from the
+// FREQUENCY of the data packet (0 = 5GS, 1 = 2.5GS, 2 = 1GS, 3 = 750MS)
+static double ring_period(const int frequency)
+{
+  switch (frequency)
+    {
+    case 0: return 1024 * 0.2;
+    case 1: return 1024 * 0.4;
+    case 2: return 1024 * 1.0;
+    }
+  return 1024 * 1000.0/750.0;
+}
+
 caen_correction::caen_correction ( const char *calibdata) 
 { 
 
@@ -66,6 +79,8 @@ caen_correction::caen_correction ( const char *calibdata)
 	      base [index][chip*9 + 7]= adccorr[7];
 	      base [index][chip*9 + 8]= adccorr[8];
 	      timevec[index][chip] = timecorr;
+	      // the nsample correction goes by sample number, not by cell
+	      for ( int c = 0; c < 9; c++) nsamp[index][chip*9 + c] = nsample[c];
 	      //std::cout << __FILE__ << " " << __LINE__ << setw(3) << chip << setw(5) << index << " " << setw(5) << timecorr << endl;
 	    }
 	}
@@ -77,6 +92,8 @@ int caen_correction::init (Packet *p)
 {
   int chip,c,i, idx;
 
+  const double period = ring_period(p->iValue(0,"FREQUENCY"));
+
   for ( chip = 0; chip < 4; chip++)
     {
 
@@ -84,32 +101,21 @@ int caen_correction::init (Packet *p)
       int cell = p->iValue(chip,"INDEXCELL");
       idx = cell;
       
-      //correct time for each chip
+      // correct time for each chip, as CAEN's ApplyDataCorrection: past
+      // cell 1023 the readout wraps around to cell 0, one full turn of the
+      // ring later
       double tstart = timevec[cell][chip];
-      double t_end = timevec[1023][chip];
-      
-      current_time[0][chip] = 0;
       
       for ( i = 0; i < _samples; i++)
 	{
-	  double tc;
 	  if ( i+cell < 1024)
 	    {
-	      int j = i+cell;
-	      tc = timevec[j][chip];
-	      current_time[i][chip] = tc - tstart;
+	      current_time[i][chip] = timevec[i+cell][chip] - tstart;
 	    }
 	  else
 	    {
-	      int j = i+cell -1023;
-	      tc = timevec[j][chip];
-	      current_time[i][chip] = tc + t_end - tstart;	
+	      current_time[i][chip] = timevec[i+cell-1024][chip] + period - tstart;
 	    }
-	  // if ( chip == 0) cout << setw(4) << i << "  "
-	  // 		       << setw(6) << current_time[i][chip] << " "
-	  // 		       << setw(6)  << tc <<  "  " << endl; 
-
-
 	}
 
       
@@ -119,7 +125,7 @@ int caen_correction::init (Packet *p)
 	  idx = cell;
 	  for ( i = 0; i < _samples; i++)
 	    {
-	      current_wave[i][chip*8+c] = p->iValue(i,chip*8+c) - base[idx][chip*9+c];
+	      current_wave[i][chip*8+c] = p->iValue(i,chip*8+c) - base[idx][chip*9+c] - nsamp[i][chip*9+c];
 	      idx++;
 	      if (idx >=1024) idx=0;
 	    }
@@ -130,7 +136,7 @@ int caen_correction::init (Packet *p)
 	idx = cell;
 	for ( i = 0; i < _samples; i++)
 	  {
-	    current_wave[i][32+chip] = p->iValue(i,32+chip) - base[idx][chip*9+8];
+	    current_wave[i][32+chip] = p->iValue(i,32+chip) - base[idx][chip*9+8] - nsamp[i][chip*9+8];
 	    idx++;
 	    if (idx >=1024) idx=0;
 	  }

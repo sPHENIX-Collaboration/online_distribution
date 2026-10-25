@@ -30,7 +30,8 @@ public:
   int _broken;
   int _samples;
   
-  int base[1024][4*9];
+  int base[1024][4*9];    // [cell]
+  int nsamp[1024][4*9];   // [sample number]
   float timevec[1024][4];
 
   int current_wave[1024][4*9];
