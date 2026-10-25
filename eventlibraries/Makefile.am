@@ -74,6 +74,7 @@ installedheaders = \
   framePublic.h \
   frameV1Public.h \
   caen_correction.h \
+  caen_calibration.h \
   md5.h
 
 allheaders = \
@@ -204,7 +205,8 @@ allheaders = \
   packet_cdevringnopol.h \
   packet_cdevbuckets.h \
   packet_cdevdvm.h \
-  caen_correction.h 
+  caen_correction.h \
+  caen_calibration.h
 
 
 allsources = \
@@ -304,7 +306,8 @@ allsources = \
   packet_cdevringnopol.cc \
   packet_cdevbuckets.cc \
   packet_cdevdvm.cc \
-  caen_correction.cc
+  caen_correction.cc \
+  caen_calibration.cc
 
 
 AM_LDFLAGS = -L$(libdir) -L$(ONLINE_MAIN)/lib
