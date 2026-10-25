@@ -215,6 +215,11 @@ Packet *oncsEvent::makePacket(PHDWORD *pp, const int hitFormat)
 	oncsSub_idcaenv1742( sevt_ptr );
       break;
 
+    case (IDCAENV1742CALIB):
+      return new
+	oncsSub_idcaenv1742calib( sevt_ptr );
+      break;
+
 
     case (IDRCPETDATA):
       return new

@@ -7,6 +7,7 @@
 #include "oncsSub_idsis3300r.h"
 #include "oncsSub_idcaenv792.h"
 #include "oncsSub_idcaenv1742.h"
+#include "oncsSub_idcaenv1742calib.h"
 #include "oncsSub_idrcpetdata.h"
 #include "oncsSub_idbspetdata.h"
 #include "oncsSub_iduppetdata.h"

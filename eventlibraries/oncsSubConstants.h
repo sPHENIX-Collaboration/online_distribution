@@ -70,6 +70,7 @@
 
 #define IDDRS4V1        81
 #define IDCAENV1742     85
+#define IDCAENV1742CALIB 86
 
 #define IDPCONTAINER     89
 

@@ -155,6 +155,7 @@ allheaders = \
   oncsSub_idsis3300r.h \
   oncsSub_idcaenv792.h \
   oncsSub_idcaenv1742.h \
+  oncsSub_idcaenv1742calib.h \
   oncsSub_idbspetdata.h \
   oncsSub_idrcpetdata.h \
   oncsSub_iduppetdata.h \
@@ -256,6 +257,7 @@ allsources = \
   oncsSub_idsis3300r.cc \
   oncsSub_idcaenv792.cc \
   oncsSub_idcaenv1742.cc \
+  oncsSub_idcaenv1742calib.cc \
   oncsSub_idbspetdata.cc \
   oncsSub_idrcpetdata.cc \
   oncsSub_iduppetdata.cc \
