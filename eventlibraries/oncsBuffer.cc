@@ -186,6 +186,14 @@ Event * oncsBuffer::getEvent()
 {
   if ( current_index < 0 ) return 0;
 
+  // an empty buffer starts with the end-of-buffer record; the rest
+  // of its last block is not data
+  if (bptr->data[current_index] == 2 && bptr->data[current_index+1] == 0)
+    {
+      current_index = -1;
+      return 0;
+    }
+
   Event *evt;
   evt =  new oncsEvent( &bptr->data[current_index]);
   evt->setOriginBuffer(getBufferSequence());
