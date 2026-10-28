@@ -45,14 +45,14 @@ int *oncsSub_iddrs4v1::decode ( int *nwout)
 
 float oncsSub_iddrs4v1::rValue ( const int isample,const char * what)
 {
-  if ( isample < 0 || isample > samples) return 0;
-  
-  if ( ! wave) 
+  if ( ! wave)
     {
       int dummy;
       decode (&dummy);
     }
 
+  // samples is only known after the decode
+  if ( isample < 0 || isample >= samples) return 0;
 
   if ( strcmp(what,"TIME") == 0 )
   {
@@ -85,18 +85,21 @@ int oncsSub_iddrs4v1::iValue ( const int i,const char * what)
 
 float oncsSub_iddrs4v1::rValue ( const int isample,const int ich)
 {
-  if ( isample < 0 || isample > 1023) return 0;
   if ( ich < 0 || ich > 4) return 0;
 
   if (ich == 4) return rValue(isample,"TIME");
-  
-  if ( ! wave) 
+
+  if ( ! wave)
     {
       int dummy;
       decode (&dummy);
     }
 
-  return wave[channel_offset[ich] +isample]; 
+  if ( isample < 0 || isample >= samples) return 0;
+  // a channel that is not enabled has no data (and no offset)
+  if ( ! (enabled_channelmask & ( 1 << ich)) ) return 0;
+
+  return wave[channel_offset[ich] +isample];
 
 }
 
