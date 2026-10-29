@@ -7,6 +7,10 @@ using namespace std;
 
 // this is the clock value for "contiguous samples. 
 #define CONTIGUOUS_CLOCK  164
+// a sample stays open for lines this long after the newest timestamp (links interleave by a sample)
+#define REORDER_WINDOW    (4*CONTIGUOUS_CLOCK)
+// a timestamp this far behind the newest one is a counter reset, not a late line
+#define RESET_CLOCK       100000000
 
 oncsSub_idh2gcroc3_10G::oncsSub_idh2gcroc3_10G(subevtdata_ptr data)
   :oncsSubevent_w4 (data)
@@ -18,7 +22,8 @@ oncsSub_idh2gcroc3_10G::oncsSub_idh2gcroc3_10G(subevtdata_ptr data)
   old_trigger_in  = 0xffffffff;
   old_trigger_out = 0xffffffff;
 
-  _sample =0;
+  _max_timestamp = 0;
+  _closed_before = 0;
   _nr_channels = 0;
   _nr_samples = 0;
   _nr_events = 0;
@@ -88,50 +93,39 @@ int oncsSub_idh2gcroc3_10G::decode_line( uint8_t d[4*48])
   
   CRC = u4frombyte(&d[188]);
   
-  // on the first invocation, old_timestamp is -1 (or 0xfff... as an unsigned)
-  // initializing it this way will make the next check succeed.
-
   if ( ichip >=MAX_CHIPS || ( group != 0 && group != 1) ) return 0;
 
   //let's see if we need to update our nr of channels
   if ( (ichip+1) *72 > _nr_channels) _nr_channels = (ichip+1) *72;
   
-  if ( old_trigger_in == 0xffffffff || old_trigger_out == 0xffffffff) // first data
+  // a timestamp far behind everything seen so far is a counter reset: close what we have first
+  if ( _max_timestamp > RESET_CLOCK && timestamp + RESET_CLOCK < _max_timestamp)
     {
-      old_timestamp = timestamp;
-      old_trigger_in = trigger_in;
-      old_trigger_out = trigger_out;
-      _sample = new sample;
-      memset (_sample, 0 , sizeof(sample) );
-      _sample->timestamp = timestamp;
-
+      close_samples( 0xffffffffffffffffULL);
+      _closed_before = 0;
+      _max_timestamp = 0;
     }
-  
-  // if the time stamp changes, we are done with this smaple.
-  // me are pushing this on the stack and move on to the next. 
-  //if ( old_trigger_out != trigger_out || old_trigger_in != trigger_in)
+  if ( timestamp > _max_timestamp) _max_timestamp = timestamp;
 
-  //coutfl << "new, old timestamp " << timestamp << "  " <<  old_timestamp << " diff " << timestamp - old_timestamp  << endl;
+  // this line's sample is already closed - it arrived too late to be used
+  if ( timestamp < _closed_before) return 0;
 
-  if (  ( timestamp >= old_timestamp && timestamp - old_timestamp >  5 ) || ( timestamp < old_timestamp && old_timestamp - timestamp >  5 ))
+  // the lines of a sample arrive within 5 clocks of each other (some links latch a clock or so
+  // late), but the links can run a sample ahead of each other, so lines of neighbouring samples
+  // interleave. Find the open sample this line belongs to, or open one.
+  sample *s = 0;
+  auto it = _open.lower_bound( timestamp > 5 ? timestamp - 5 : 0);
+  if ( it != _open.end() && it->first <= timestamp + 5)
     {
-      waveform.push_back(_sample);
-      _nr_samples++;
-      
-      //      coutfl << "*** complete, size of waveform " << waveform.size() << " timestamp: " << _sample->timestamp  << " sample nr " << _nr_samples << endl;
-      _sample = new sample;
-      memset (_sample, 0 , sizeof(sample) );
-      _sample->timestamp = timestamp;
-      
-      // if ( timestamp - old_timestamp > CONTIGUOUS_CLOCK) // we jump to a new trigger here
-      // 	{
-      // 	  _nr_events++;
-      // 	}
-      
+      s = it->second;
     }
-  old_timestamp = timestamp;
-  old_trigger_in = trigger_in;
-  old_trigger_out = trigger_out;
+  else
+    {
+      s = new sample;
+      memset (s, 0 , sizeof(sample) );
+      s->timestamp = timestamp;
+      _open[timestamp] = s;
+    }
   
   int chip_offset =0;
   chip_offset = ichip * 72;
@@ -142,9 +136,9 @@ int oncsSub_idh2gcroc3_10G::decode_line( uint8_t d[4*48])
   //for the next section, we continue to fill the various vlaues of that "sample" structure
   for ( int c = 0; c< 36; c++)
     {
-      _sample->ADC[chip_offset + group_offset + c] = (ch[c] >> 20) & 0x3ff;
-      _sample->tot[chip_offset + group_offset + c] = (ch[c] >> 10) & 0x3ff;
-      _sample->toa[chip_offset + group_offset + c] = ch[c] & 0x3ff;
+      s->ADC[chip_offset + group_offset + c] = (ch[c] >> 20) & 0x3ff;
+      s->tot[chip_offset + group_offset + c] = (ch[c] >> 10) & 0x3ff;
+      s->toa[chip_offset + group_offset + c] = ch[c] & 0x3ff;
       
       // coutfl << setw(4) << chip_offset + group_offset + c << " " << hex
 	  // 		 << " ADC " << _sample->ADC[chip_offset + group_offset + c]
@@ -157,17 +151,32 @@ int oncsSub_idh2gcroc3_10G::decode_line( uint8_t d[4*48])
   // the ROC header is 0101 + 12b Bx + 6b Event + 3b Orbit + H1 H2 H3 + 0101
   // (H2GCROC3 datasheet p. 30); H1 = error in the header, H2 in CM and
   // channels 0-17, H3 in Calib and channels 18-35 of this half-chip
-  _sample->error[(chip_offset + group_offset) / 36] = (ROC_HDR >> 4) & 0x7;
+  s->error[(chip_offset + group_offset) / 36] = (ROC_HDR >> 4) & 0x7;
 
-  _sample->trigger_in   = trigger_in;
-  _sample->trigger_out  = trigger_out;
-  _sample->event_counter  = evt_ctr;
-  _sample->cmn          = CMN;
-  _sample->calib        = CALIB;
-  _sample->crc32        = CRC;
+  s->trigger_in   = trigger_in;
+  s->trigger_out  = trigger_out;
+  s->event_counter  = evt_ctr;
+  s->cmn          = CMN;
+  s->calib        = CALIB;
+  s->crc32        = CRC;
   
+  // samples far enough behind the newest timestamp cannot receive lines anymore
+  if ( _max_timestamp > REORDER_WINDOW) close_samples( _max_timestamp - REORDER_WINDOW);
   
   return 0;
+}
+
+// hand the open samples below "before" to the timeline, in timestamp order
+void oncsSub_idh2gcroc3_10G::close_samples(const uint64_t before)
+{
+  auto it = _open.begin();
+  while ( it != _open.end() && it->first < before)
+    {
+      waveform.push_back(it->second);
+      _nr_samples++;
+      it = _open.erase(it);
+    }
+  if ( before > _closed_before) _closed_before = before;
 }
 
 
@@ -199,7 +208,7 @@ int oncsSub_idh2gcroc3_10G::decode()
 
 
       packetlength += 8;
-      
+
       // each UDP datagram starts with the marker and its length; without them we cannot find the
       // next one, so the rest of the packet is lost
       if ( u4swapfrombyte(&cbuffer[current_index_bytes]) != 0xaabbccdd || packetlength < 22
@@ -207,6 +216,7 @@ int oncsSub_idh2gcroc3_10G::decode()
 	{
 	  break;
 	}
+      
 
       //unsigned int hdr0 = u4swap(buffer[current_index+2]);
       // coutfl << "current_index_bytes = " << current_index_bytes << "  marker " << hex
@@ -269,14 +279,8 @@ int oncsSub_idh2gcroc3_10G::decode()
       //      coutfl << " number of lines: " << lines << endl;
     }
 
-  // the last sample is complete too - no later timestamp will come
-  // along to close it
-  if ( _sample)
-    {
-      waveform.push_back(_sample);
-      _nr_samples++;
-      _sample = 0;
-    }
+  // the samples still open are complete too - no later line will come along for them
+  close_samples( 0xffffffffffffffffULL);
 
   parse_timeline ();
   
@@ -319,6 +323,7 @@ unsigned long long oncsSub_idh2gcroc3_10G::u8frombyte(uint8_t* v)
 	
   return r;
 }
+
 
 
 
@@ -367,6 +372,7 @@ int oncsSub_idh2gcroc3_10G::iValue(const int n, const char *what)
       if (n < 0 ||  un >= waveform.size() ) return 0;
       return waveform[n]->calib;
     }
+
 
 
   return 0;
@@ -690,6 +696,10 @@ oncsSub_idh2gcroc3_10G::~oncsSub_idh2gcroc3_10G()
    for (auto itr =  _eventlist.begin(); itr != _eventlist.end(); ++itr)
     {
       delete *itr;
+    }
+   for (auto itr =  _open.begin(); itr != _open.end(); ++itr)
+    {
+      delete itr->second;
     }
  
 

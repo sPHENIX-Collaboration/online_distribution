@@ -4,6 +4,7 @@
 #include "oncsSubevent.h"
 #include <cstdint>
 #include<vector>
+#include<map>
 
 
 #ifndef __CINT__
@@ -60,7 +61,14 @@ protected:
     unsigned int crc32;
   } ;
 
-  sample *_sample;
+  // The lines of one sample arrive within a few clocks of each other, but the links can run a
+  // sample ahead of each other now and then, so lines of neighbouring samples interleave. Samples
+  // that can still receive lines stay open here, keyed by timestamp, and are handed to the
+  // "waveform" timeline in timestamp order once the stream is REORDER_WINDOW clocks past them.
+  std::map<uint64_t, sample *> _open;
+  uint64_t _max_timestamp;
+  uint64_t _closed_before;      // samples below this timestamp are closed; a line for one is "late"
+  void close_samples(const uint64_t before);
   
   std::vector<sample *> waveform;
 
