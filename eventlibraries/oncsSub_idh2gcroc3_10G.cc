@@ -31,7 +31,7 @@ int oncsSub_idh2gcroc3_10G::decode_line( uint8_t d[4*48])
       
   //  int o,c;
 
-  if ( d[0] != 0xaa && d[1] != 0x5a) return 0;
+  if ( d[0] != 0xaa || d[1] != 0x5a) return 0;
 
   // cout << "new line " << hex << " " ;
   // for (int i = 0; i < 32; i++)
@@ -91,7 +91,7 @@ int oncsSub_idh2gcroc3_10G::decode_line( uint8_t d[4*48])
   // on the first invocation, old_timestamp is -1 (or 0xfff... as an unsigned)
   // initializing it this way will make the next check succeed.
 
-  if ( ichip >=MAX_CHIPS) return 0;
+  if ( ichip >=MAX_CHIPS || ( group != 0 && group != 1) ) return 0;
 
   //let's see if we need to update our nr of channels
   if ( (ichip+1) *72 > _nr_channels) _nr_channels = (ichip+1) *72;
@@ -200,6 +200,13 @@ int oncsSub_idh2gcroc3_10G::decode()
 
       packetlength += 8;
       
+      // each UDP datagram starts with the marker and its length; without them we cannot find the
+      // next one, so the rest of the packet is lost
+      if ( u4swapfrombyte(&cbuffer[current_index_bytes]) != 0xaabbccdd || packetlength < 22
+	   || packetstart + packetlength > (unsigned int) (4*getDataLength()) )
+	{
+	  break;
+	}
 
       //unsigned int hdr0 = u4swap(buffer[current_index+2]);
       // coutfl << "current_index_bytes = " << current_index_bytes << "  marker " << hex
@@ -244,7 +251,7 @@ int oncsSub_idh2gcroc3_10G::decode()
       lines = 0;
       // here we are at the beginning of an "a0 or "a1" line 
 
-      for ( pos = current_index_bytes; pos < packet_end_bytes; pos += 4*48)
+      for ( pos = current_index_bytes; pos + 4*48 <= packet_end_bytes + 4; pos += 4*48)
 	{
 	  // coutfl << "line start " << hex << (unsigned int) cbuffer[pos] << dec << " at index " << pos << endl;
 	  decode_line(&cbuffer[pos]);
