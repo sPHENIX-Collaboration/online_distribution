@@ -7,6 +7,10 @@ using namespace std;
 
 // this is the clock value for "contiguous samples. 
 #define CONTIGUOUS_CLOCK  164
+// a sample stays open for lines this long after the newest timestamp (links interleave by a sample)
+#define REORDER_WINDOW    (4*CONTIGUOUS_CLOCK)
+// a timestamp this far behind the newest one is a counter reset, not a late line
+#define RESET_CLOCK       100000000
 
 oncsSub_idh2gcroc3_10G::oncsSub_idh2gcroc3_10G(subevtdata_ptr data)
   :oncsSubevent_w4 (data)
@@ -18,10 +22,17 @@ oncsSub_idh2gcroc3_10G::oncsSub_idh2gcroc3_10G(subevtdata_ptr data)
   old_trigger_in  = 0xffffffff;
   old_trigger_out = 0xffffffff;
 
-  _sample =0;
+  _max_timestamp = 0;
+  _closed_before = 0;
   _nr_channels = 0;
   _nr_samples = 0;
   _nr_events = 0;
+  _crc_errors = 0;
+  _hamming_errors = 0;
+  _bad_frames = 0;
+  _bad_lines = 0;
+  _late_lines = 0;
+  _resets = 0;
 }
 
 
@@ -31,7 +42,11 @@ int oncsSub_idh2gcroc3_10G::decode_line( uint8_t d[4*48])
       
   //  int o,c;
 
-  if ( d[0] != 0xaa && d[1] != 0x5a) return 0;
+  if ( d[0] != 0xaa || d[1] != 0x5a)
+    {
+      _bad_lines++;
+      return 0;
+    }
 
   // cout << "new line " << hex << " " ;
   // for (int i = 0; i < 32; i++)
@@ -88,50 +103,52 @@ int oncsSub_idh2gcroc3_10G::decode_line( uint8_t d[4*48])
   
   CRC = u4frombyte(&d[188]);
   
-  // on the first invocation, old_timestamp is -1 (or 0xfff... as an unsigned)
-  // initializing it this way will make the next check succeed.
+  if ( ichip >=MAX_CHIPS || ( group != 0 && group != 1) )
+    {
+      _bad_lines++;
+      return 0;
+    }
 
-  if ( ichip >=MAX_CHIPS) return 0;
+  // frame integrity (H2GCROC3 datasheet 1.3.1): CRC-32 over the 39 words header..ch35
+  int link = 2*ichip + group;
+  unsigned int crc_error = ( crc32_frame(&d[32], 156) != CRC ) ? 1 : 0;
 
   //let's see if we need to update our nr of channels
   if ( (ichip+1) *72 > _nr_channels) _nr_channels = (ichip+1) *72;
   
-  if ( old_trigger_in == 0xffffffff || old_trigger_out == 0xffffffff) // first data
+  // a timestamp far behind everything seen so far is a counter reset: close what we have first
+  if ( _max_timestamp > RESET_CLOCK && timestamp + RESET_CLOCK < _max_timestamp)
     {
-      old_timestamp = timestamp;
-      old_trigger_in = trigger_in;
-      old_trigger_out = trigger_out;
-      _sample = new sample;
-      memset (_sample, 0 , sizeof(sample) );
-      _sample->timestamp = timestamp;
+      close_samples( 0xffffffffffffffffULL);
+      _closed_before = 0;
+      _max_timestamp = 0;
+      _resets++;
+    }
+  if ( timestamp > _max_timestamp) _max_timestamp = timestamp;
 
+  // this line's sample is already closed - it arrived too late to be used
+  if ( timestamp < _closed_before)
+    {
+      _late_lines++;
+      return 0;
     }
   
-  // if the time stamp changes, we are done with this smaple.
-  // me are pushing this on the stack and move on to the next. 
-  //if ( old_trigger_out != trigger_out || old_trigger_in != trigger_in)
-
-  //coutfl << "new, old timestamp " << timestamp << "  " <<  old_timestamp << " diff " << timestamp - old_timestamp  << endl;
-
-  if (  ( timestamp >= old_timestamp && timestamp - old_timestamp >  5 ) || ( timestamp < old_timestamp && old_timestamp - timestamp >  5 ))
+  // the lines of a sample arrive within 5 clocks of each other (some links latch a clock or so
+  // late), but the links can run a sample ahead of each other, so lines of neighbouring samples
+  // interleave. Find the open sample this line belongs to, or open one.
+  sample *s = 0;
+  auto it = _open.lower_bound( timestamp > 5 ? timestamp - 5 : 0);
+  if ( it != _open.end() && it->first <= timestamp + 5)
     {
-      waveform.push_back(_sample);
-      _nr_samples++;
-      
-      //      coutfl << "*** complete, size of waveform " << waveform.size() << " timestamp: " << _sample->timestamp  << " sample nr " << _nr_samples << endl;
-      _sample = new sample;
-      memset (_sample, 0 , sizeof(sample) );
-      _sample->timestamp = timestamp;
-      
-      // if ( timestamp - old_timestamp > CONTIGUOUS_CLOCK) // we jump to a new trigger here
-      // 	{
-      // 	  _nr_events++;
-      // 	}
-      
+      s = it->second;
     }
-  old_timestamp = timestamp;
-  old_trigger_in = trigger_in;
-  old_trigger_out = trigger_out;
+  else
+    {
+      s = new sample;
+      memset (s, 0 , sizeof(sample) );
+      s->timestamp = timestamp;
+      _open[timestamp] = s;
+    }
   
   int chip_offset =0;
   chip_offset = ichip * 72;
@@ -142,9 +159,9 @@ int oncsSub_idh2gcroc3_10G::decode_line( uint8_t d[4*48])
   //for the next section, we continue to fill the various vlaues of that "sample" structure
   for ( int c = 0; c< 36; c++)
     {
-      _sample->ADC[chip_offset + group_offset + c] = (ch[c] >> 20) & 0x3ff;
-      _sample->tot[chip_offset + group_offset + c] = (ch[c] >> 10) & 0x3ff;
-      _sample->toa[chip_offset + group_offset + c] = ch[c] & 0x3ff;
+      s->ADC[chip_offset + group_offset + c] = (ch[c] >> 20) & 0x3ff;
+      s->tot[chip_offset + group_offset + c] = (ch[c] >> 10) & 0x3ff;
+      s->toa[chip_offset + group_offset + c] = ch[c] & 0x3ff;
       
       // coutfl << setw(4) << chip_offset + group_offset + c << " " << hex
 	  // 		 << " ADC " << _sample->ADC[chip_offset + group_offset + c]
@@ -157,17 +174,35 @@ int oncsSub_idh2gcroc3_10G::decode_line( uint8_t d[4*48])
   // the ROC header is 0101 + 12b Bx + 6b Event + 3b Orbit + H1 H2 H3 + 0101
   // (H2GCROC3 datasheet p. 30); H1 = error in the header, H2 in CM and
   // channels 0-17, H3 in Calib and channels 18-35 of this half-chip
-  _sample->error[(chip_offset + group_offset) / 36] = (ROC_HDR >> 4) & 0x7;
+  s->error[(chip_offset + group_offset) / 36] = (ROC_HDR >> 4) & 0x7;
 
-  _sample->trigger_in   = trigger_in;
-  _sample->trigger_out  = trigger_out;
-  _sample->event_counter  = evt_ctr;
-  _sample->cmn          = CMN;
-  _sample->calib        = CALIB;
-  _sample->crc32        = CRC;
+  s->trigger_in   = trigger_in;
+  s->trigger_out  = trigger_out;
+  s->event_counter  = evt_ctr;
+  s->cmn          = CMN;
+  s->calib        = CALIB;
+  s->crc32        = CRC;
+  s->crc_error[link] = crc_error;
+  if ( crc_error) _crc_errors++;
+  if ( s->error[link]) _hamming_errors++;
   
+  // samples far enough behind the newest timestamp cannot receive lines anymore
+  if ( _max_timestamp > REORDER_WINDOW) close_samples( _max_timestamp - REORDER_WINDOW);
   
   return 0;
+}
+
+// hand the open samples below "before" to the timeline, in timestamp order
+void oncsSub_idh2gcroc3_10G::close_samples(const uint64_t before)
+{
+  auto it = _open.begin();
+  while ( it != _open.end() && it->first < before)
+    {
+      waveform.push_back(it->second);
+      _nr_samples++;
+      it = _open.erase(it);
+    }
+  if ( before > _closed_before) _closed_before = before;
 }
 
 
@@ -199,6 +234,16 @@ int oncsSub_idh2gcroc3_10G::decode()
 
 
       packetlength += 8;
+
+      // each UDP datagram starts with the marker and its length; without them we cannot find the
+      // next one, so the rest of the packet is lost
+      if ( u4swapfrombyte(&cbuffer[current_index_bytes]) != 0xaabbccdd || packetlength < 22
+	   || packetstart + packetlength > (unsigned int) (4*getDataLength()) )
+	{
+	  _bad_frames++;
+	  break;
+	}
+      if ( (packetlength - 22) % (4*48) ) _bad_frames++;   // a partial line at the end is skipped below
       
 
       //unsigned int hdr0 = u4swap(buffer[current_index+2]);
@@ -244,7 +289,7 @@ int oncsSub_idh2gcroc3_10G::decode()
       lines = 0;
       // here we are at the beginning of an "a0 or "a1" line 
 
-      for ( pos = current_index_bytes; pos < packet_end_bytes; pos += 4*48)
+      for ( pos = current_index_bytes; pos + 4*48 <= packet_end_bytes + 4; pos += 4*48)
 	{
 	  // coutfl << "line start " << hex << (unsigned int) cbuffer[pos] << dec << " at index " << pos << endl;
 	  decode_line(&cbuffer[pos]);
@@ -262,14 +307,8 @@ int oncsSub_idh2gcroc3_10G::decode()
       //      coutfl << " number of lines: " << lines << endl;
     }
 
-  // the last sample is complete too - no later timestamp will come
-  // along to close it
-  if ( _sample)
-    {
-      waveform.push_back(_sample);
-      _nr_samples++;
-      _sample = 0;
-    }
+  // the samples still open are complete too - no later line will come along for them
+  close_samples( 0xffffffffffffffffULL);
 
   parse_timeline ();
   
@@ -311,6 +350,36 @@ unsigned long long oncsSub_idh2gcroc3_10G::u8frombyte(uint8_t* v)
     }
 	
   return r;
+}
+
+// CRC-32 of the DAQ frame as the ASIC computes it (datasheet 1.3.1): polynomial 0x04C11DB7,
+// initial value 0, no bit reflection, no final xor, MSB first. Reproduces the datasheet example
+// (0x56370C85 0x000ABCDE 0xA30C2BEC -> 0x2CCB229A).
+unsigned int oncsSub_idh2gcroc3_10G::crc32_frame(const uint8_t* d, const int n)
+{
+  static uint32_t table[256];
+  static int table_done = 0;
+
+  if ( !table_done)
+    {
+      for ( uint32_t i = 0; i < 256; i++)
+	{
+	  uint32_t c = i << 24;
+	  for ( int k = 0; k < 8; k++)
+	    {
+	      c = ( c & 0x80000000u) ? ( c << 1) ^ 0x04C11DB7u : ( c << 1);
+	    }
+	  table[i] = c;
+	}
+      table_done = 1;
+    }
+
+  uint32_t crc = 0;
+  for ( int i = 0; i < n; i++)
+    {
+      crc = ( crc << 8) ^ table[ ( ( crc >> 24) ^ d[i]) & 0xff];
+    }
+  return crc;
 }
 
 
@@ -359,6 +428,41 @@ int oncsSub_idh2gcroc3_10G::iValue(const int n, const char *what)
     {
       if (n < 0 ||  un >= waveform.size() ) return 0;
       return waveform[n]->calib;
+    }
+
+  else if ( strcmp(what,"CRCERRORS") == 0 )   // lines in this packet whose CRC-32 did not match
+    {
+      return _crc_errors;
+    }
+
+  else if ( strcmp(what,"HAMMINGERRORS") == 0 )   // lines with any H1 H2 H3 flag set
+    {
+      return _hamming_errors;
+    }
+
+  else if ( strcmp(what,"BADFRAMES") == 0 )   // UDP datagrams without marker or with a bad length
+    {
+      return _bad_frames;
+    }
+
+  else if ( strcmp(what,"BADLINES") == 0 )   // lines without marker, or chip / half out of range
+    {
+      return _bad_lines;
+    }
+
+  else if ( strcmp(what,"LATELINES") == 0 )   // lines that came after their sample was closed (dropped)
+    {
+      return _late_lines;
+    }
+
+  else if ( strcmp(what,"RESETS") == 0 )   // timestamp counter resets seen in this packet
+    {
+      return _resets;
+    }
+
+  else if ( strcmp(what,"DECODEERRORS") == 0 )   // all of the above
+    {
+      return _bad_frames + _bad_lines + _late_lines + _resets;
     }
 
 
@@ -500,6 +604,10 @@ int oncsSub_idh2gcroc3_10G::iValue(const int wf, const int sample, const int ch,
     {
       return waveform[n+sample]->event_counter;
     }
+  else if ( strcmp(what,"CRCERROR") == 0 )   // 1 if the line that carried this channel failed its CRC-32
+    {
+      return waveform[n+sample]->crc_error[ 2*(ch/72) + (ch%72)/36 ];
+    }
 
   return 0;
 }
@@ -542,7 +650,11 @@ void oncsSub_idh2gcroc3_10G::dump(std::ostream &os)
   
   int e = iValue(0, "NR_WF");
   os << " Number of Channels:  " << iValue(0, "CHANNELS") << endl;
-  os << " Number of Waveforms: " << e << endl << endl;
+  os << " Number of Waveforms: " << e << endl;
+  os << " Lines with CRC errors: " << iValue(0, "CRCERRORS") << "  with hamming flags: " << iValue(0, "HAMMINGERRORS")
+     << "  decoding errors: " << iValue(0, "DECODEERRORS") << " (bad frames " << iValue(0, "BADFRAMES")
+     << ", bad lines " << iValue(0, "BADLINES") << ", late lines " << iValue(0, "LATELINES")
+     << ", resets " << iValue(0, "RESETS") << ")" << endl << endl;
 
   for ( int n = 0; n < e; n++)
     {
@@ -683,6 +795,10 @@ oncsSub_idh2gcroc3_10G::~oncsSub_idh2gcroc3_10G()
    for (auto itr =  _eventlist.begin(); itr != _eventlist.end(); ++itr)
     {
       delete *itr;
+    }
+   for (auto itr =  _open.begin(); itr != _open.end(); ++itr)
+    {
+      delete itr->second;
     }
  
 
