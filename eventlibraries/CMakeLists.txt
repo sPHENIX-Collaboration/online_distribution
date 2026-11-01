@@ -172,11 +172,13 @@ add_library(NoRootEvent SHARED
   oncsSub_idcstr.cc
   oncsSub_id2evt.cc
   oncsSub_id4evt.cc
+  oncsSub_id8evt.cc
   oncsSub_idrtclock.cc
   oncsSub_idsis3300.cc
   oncsSub_idsis3300r.cc
   oncsSub_idcaenv792.cc
   oncsSub_idcaenv1742.cc
+  oncsSub_idcaenv1742calib.cc
   oncsSub_idbspetdata.cc
   oncsSub_idrcpetdata.cc
   oncsSub_iduppetdata.cc
@@ -224,6 +226,7 @@ add_library(NoRootEvent SHARED
   packet_cdevbuckets.cc
   packet_cdevdvm.cc
   caen_correction.cc
+  caen_calibration.cc
   ${IOSELECT_H})
 
 target_include_directories(NoRootEvent PUBLIC
@@ -345,7 +348,7 @@ set(EVENTLIB_INSTALL_HEADERS
   packetPublic.h packetV1Public.h errorBlock.h packetRoutines.h
   decoding_routines.h packetHeaders.h Cpacket.h packetHdr.h
   packetHdrV1.h formatError.h dataBlock.h framePackets.h framePublic.h
-  frameV1Public.h caen_correction.h md5.h
+  frameV1Public.h caen_correction.h caen_calibration.h md5.h
   msg_control.h msg_profile.h msg_buffer.h date_filter_msg_buffer.h
   filter_msg_buffer.h remote_msg_buffer.h strnstr.h)
 
