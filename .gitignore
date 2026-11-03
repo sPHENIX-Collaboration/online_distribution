@@ -1,0 +1,18 @@
+# Files that autogen.sh (autoreconf) generates in the source directories
+# eventlibraries/ and pmonitor/. They are made fresh on every build.
+Makefile.in
+aclocal.m4
+autom4te.cache/
+compile
+config.guess
+config.sub
+configure
+configure~
+depcomp
+install-sh
+ltmain.sh
+missing
+
+# CMake build directories inside the source tree, as in the README
+# (build, build-eventlibraries, build-pmonitor)
+/build*/
