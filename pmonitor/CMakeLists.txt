@@ -11,9 +11,10 @@ endif()
 # use one or the other, they don't interfere with each other as long
 # as you build out-of-source here (cmake -S . -B build).
 #
-# Requires online_distribution/eventlibraries to already be built and
-# installed (its own CMakeLists.txt), same as the Automake build needs
-# $ONLINE_MAIN/lib/libEvent.so + libmessage.so.
+# Built on its own, this requires online_distribution/eventlibraries to
+# already be built and installed (its own CMakeLists.txt), same as the
+# Automake build needs $ONLINE_MAIN/lib/libEvent.so + libmessage.so.
+# The top-level CMakeLists.txt builds both together.
 
 include(GNUInstallDirs)
 
@@ -27,17 +28,31 @@ endif()
 find_package(ROOT REQUIRED)
 
 # ----------------------------------------------------------------------
-# eventlibraries (Event, NoRootEvent, message) - external, not a CMake
-# package, same find_library/find_path pattern as everywhere else.
+# eventlibraries (Event, NoRootEvent, message)
 # ----------------------------------------------------------------------
-find_library(EVENT_LIBRARY Event)
-# looking for Event/Event.h (not Event.h with PATH_SUFFIXES Event) so
-# EVENT_INCLUDE_DIR ends up as the parent of Event/, matching
-# pmonitor.h's #include <Event/Event.h>
-find_path(EVENT_INCLUDE_DIR Event/Event.h)
-if(NOT EVENT_LIBRARY OR NOT EVENT_INCLUDE_DIR)
-  message(FATAL_ERROR "Event (from online_distribution/eventlibraries) not found - "
-                       "build and install it first")
+if(TARGET Event)
+  # built together with the eventlibraries (top-level CMakeLists.txt):
+  # use the Event target directly. #include <Event/Event.h> needs a
+  # directory "Event" with the headers, so make a link of that name to
+  # the eventlibraries sources. ioselect.h is generated in the
+  # eventlibraries build directory, so that goes on the list, too.
+  set(EVENT_LIBRARY Event)
+  set(EVENT_LINK_DIR ${CMAKE_CURRENT_BINARY_DIR}/eventlibraries-include)
+  file(MAKE_DIRECTORY ${EVENT_LINK_DIR})
+  file(CREATE_LINK ${eventlibraries_SOURCE_DIR} ${EVENT_LINK_DIR}/Event SYMBOLIC)
+  set(EVENT_INCLUDE_DIR ${EVENT_LINK_DIR} ${eventlibraries_BINARY_DIR})
+else()
+  # built on its own: the eventlibraries must already be installed. They
+  # are not a CMake package, so find them directly.
+  find_library(EVENT_LIBRARY Event)
+  # looking for Event/Event.h (not Event.h with PATH_SUFFIXES Event) so
+  # EVENT_INCLUDE_DIR ends up as the parent of Event/, matching
+  # pmonitor.h's #include <Event/Event.h>
+  find_path(EVENT_INCLUDE_DIR Event/Event.h)
+  if(NOT EVENT_LIBRARY OR NOT EVENT_INCLUDE_DIR)
+    message(FATAL_ERROR "Event (from online_distribution/eventlibraries) not found - "
+                         "build and install it first, or build both from the top-level directory")
+  endif()
 endif()
 
 # ----------------------------------------------------------------------
@@ -55,6 +70,13 @@ endif()
 # ----------------------------------------------------------------------
 # libpmonitor - libpmonitor_la_SOURCES in Makefile.am
 # ----------------------------------------------------------------------
+# ROOT_GENERATE_DICTIONARY looks up headers via the current directory's
+# plain INCLUDE_DIRECTORIES property, not target_include_directories(),
+# so rootcling needs EVENT_INCLUDE_DIR here as well (without it, the
+# dictionary only built when ROOT_INCLUDE_PATH happened to point to
+# installed eventlibraries headers)
+include_directories(${EVENT_INCLUDE_DIR})
+
 ROOT_GENERATE_DICTIONARY(pmonitor_Dict
   pmonitor.h
   pmonstate.h
