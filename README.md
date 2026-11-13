@@ -97,3 +97,7 @@ export ROOT_INCLUDE_PATH=$ONLINE_MAIN/include:$ONLINE_MAIN/include/Event:$ONLINE
 Code includes the headers with their directory, e.g. `#include <Event/Event.h>`
 and `#include <pmonitor/pmonitor.h>`. `writePmonProject.sh <name>` creates a new
 pmonitor project.
+
+For the UDP-based ROC formats (302, 310), whose waveforms are split across
+Packets, eventlibraries has pool classes that put them back together; see
+[eventlibraries/ROC_pool.md](eventlibraries/ROC_pool.md).

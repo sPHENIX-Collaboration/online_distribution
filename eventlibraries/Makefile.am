@@ -75,6 +75,9 @@ installedheaders = \
   frameV1Public.h \
   caen_correction.h \
   caen_calibration.h \
+  ROC_pool.h \
+  h2gcroc3_10G_pool.h \
+  caloroc1b_pool.h \
   md5.h
 
 allheaders = \
@@ -206,7 +209,10 @@ allheaders = \
   packet_cdevbuckets.h \
   packet_cdevdvm.h \
   caen_correction.h \
-  caen_calibration.h
+  caen_calibration.h \
+  ROC_pool.h \
+  h2gcroc3_10G_pool.h \
+  caloroc1b_pool.h
 
 
 allsources = \
@@ -307,7 +313,10 @@ allsources = \
   packet_cdevbuckets.cc \
   packet_cdevdvm.cc \
   caen_correction.cc \
-  caen_calibration.cc
+  caen_calibration.cc \
+  ROC_pool.cc \
+  h2gcroc3_10G_pool.cc \
+  caloroc1b_pool.cc
 
 
 AM_LDFLAGS = -L$(libdir) -L$(ONLINE_MAIN)/lib
@@ -380,7 +389,8 @@ bin_PROGRAMS = \
   eventServer \
   eventServer_classic \
   eventClient \
-  lastEvent
+  lastEvent \
+  pool_validate
 
 
 
@@ -402,6 +412,7 @@ eventServer_SOURCES = eventServer.cc
 eventServer_classic_SOURCES = eventServer_classic.cc
 eventClient_SOURCES = eventClient.cc
 lastEvent_SOURCES = lastEvent.cc
+pool_validate_SOURCES = pool_validate.cc
 
 
 dpipe_LDADD = libNoRootEvent.la libmessage.la  -ldl
@@ -420,6 +431,7 @@ eventServer_LDADD = libNoRootEvent.la -ldl -lpthread
 eventServer_classic_LDADD = libNoRootEvent.la -ldl -lpthread
 eventClient_LDADD = libNoRootEvent.la -ldl
 lastEvent_LDADD = libNoRootEvent.la -ldl
+pool_validate_LDADD = libNoRootEvent.la -ldl
 
 
 libmessage_la_SOURCES = \
@@ -505,6 +517,9 @@ event_Dict.C : \
   packet.h \
   testEventiterator.h \
   eventReceiverClient.h \
+  ROC_pool.h \
+  h2gcroc3_10G_pool.h \
+  caloroc1b_pool.h \
   eventLinkDef.h
 	rootcint -f $@ @CINTDEFS@ -c $(DEFS) $(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $^
 

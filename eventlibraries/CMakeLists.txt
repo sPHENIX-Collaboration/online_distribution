@@ -227,6 +227,9 @@ add_library(NoRootEvent SHARED
   packet_cdevdvm.cc
   caen_correction.cc
   caen_calibration.cc
+  ROC_pool.cc
+  h2gcroc3_10G_pool.cc
+  caloroc1b_pool.cc
   ${IOSELECT_H})
 
 target_include_directories(NoRootEvent PUBLIC
@@ -281,6 +284,9 @@ ROOT_GENERATE_DICTIONARY(event_Dict
   packet.h
   testEventiterator.h
   eventReceiverClient.h
+  ROC_pool.h
+  h2gcroc3_10G_pool.h
+  caloroc1b_pool.h
   LINKDEF eventLinkDef.h
   MODULE Event)
 
@@ -308,6 +314,7 @@ add_eventlib_tool(prdf2prdf)
 add_eventlib_tool(prdfcheck)
 add_eventlib_tool(prdfsplit)
 add_eventlib_tool(eventClient)
+add_eventlib_tool(pool_validate)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   target_link_options(dpipe PRIVATE -Wl,-export-dynamic)
@@ -328,7 +335,7 @@ target_link_libraries(eventServer_classic PRIVATE NoRootEvent dl pthread)
 set(EVENTLIB_TOOLS
   dpipe dlist changeid changehitformat eventcombiner prdf2prdf
   prdfcheck prdfsplit eventClient ddump lastEvent eventServer
-  eventServer_classic)
+  eventServer_classic pool_validate)
 
 # ----------------------------------------------------------------------
 # install - mirrors pkginclude_HEADERS (installedheaders + msgheaders)
@@ -348,7 +355,8 @@ set(EVENTLIB_INSTALL_HEADERS
   packetPublic.h packetV1Public.h errorBlock.h packetRoutines.h
   decoding_routines.h packetHeaders.h Cpacket.h packetHdr.h
   packetHdrV1.h formatError.h dataBlock.h framePackets.h framePublic.h
-  frameV1Public.h caen_correction.h caen_calibration.h md5.h
+  frameV1Public.h caen_correction.h caen_calibration.h
+  ROC_pool.h h2gcroc3_10G_pool.h caloroc1b_pool.h md5.h
   msg_control.h msg_profile.h msg_buffer.h date_filter_msg_buffer.h
   filter_msg_buffer.h remote_msg_buffer.h strnstr.h)
 
