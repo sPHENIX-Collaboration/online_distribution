@@ -29,7 +29,7 @@ int oncsSub_idcaloroc1b::decode_packet( const unsigned int *payload, const unsig
   unsigned int w1   = payload[1];
   unsigned int link = w1 & 0xff;
 
-  if ( link >= NUM_LINKS) return 0;   // not one of our 6 link channels - ignore
+  if ( link >= NUM_LINKS) return 0;   // not one of our link channels - ignore
 
   unsigned int idx = 2;
 
@@ -48,10 +48,20 @@ int oncsSub_idcaloroc1b::decode_packet( const unsigned int *payload, const unsig
 	  continue;
 	}
 
-      unsigned int stored    =  specs        & 0x7f;   // words following this specs word
+      unsigned int stored    =  specs        & 0x7f;   // words of the frame (after the timestamp words)
       unsigned int truncated = (specs >>  7) & 0x1;
       unsigned int numhits   = (specs >> 16) & 0x1f;
       unsigned int af_flag   = (specs >> 24) & 0x1;
+      unsigned int has_ts    = (specs >> 29) & 0x1;
+
+      // the 48-bit global timestamp, in 2 words before the frame (TSH, TSL)
+      unsigned long long global_ts = 0;
+      if ( has_ts)
+	{
+	  if ( idx + 2 > payload_words) break;
+	  global_ts = ( (unsigned long long) (payload[idx] & 0xffff) << 32 ) | payload[idx+1];
+	  idx += 2;
+	}
 
       if ( stored == 0 || idx + stored > payload_words) break;   // malformed/truncated - bail
 
@@ -73,6 +83,7 @@ int oncsSub_idcaloroc1b::decode_packet( const unsigned int *payload, const unsig
       f.mode        = mode;
       f.evt_counter = evt_counter;
       f.timestamp   = timestamp;
+      f.global_ts   = global_ts;
       f.hitmap      = hitmap;
       f.numhits     = numhits;
       f.truncated   = truncated;
@@ -290,6 +301,17 @@ int oncsSub_idcaloroc1b::iValue(const int wf, const int sample, const int ch, co
   return 0;
 }
 
+long long oncsSub_idcaloroc1b::lValue(const int wf, const int sample, const int ch)
+{
+  decode();
+
+  int localch;
+  const caloroc_frame *f = getFrame(wf, sample, ch, localch);
+  if ( !f) return 0;
+
+  return (long long) f->global_ts;
+}
+
 void oncsSub_idcaloroc1b::dump(std::ostream &os)
 {
   identify(os);
@@ -318,6 +340,14 @@ void oncsSub_idcaloroc1b::dump(std::ostream &os)
       int ssize = iValue(w, "SAMPLESIZE");
 
       os << " ----- Waveform " << w << "  Samples: " << ssize << endl;
+
+      // the global timestamp of the first sample, per link
+      for ( int link = 0; link < NUM_LINKS; link++)
+	{
+	  if ( !iValue(link, "LINKPRESENT") ) continue;
+	  long long ts = lValue(w, 0, link * NUM_CHANNELS_PER_LINK);
+	  if ( ts) os << "  link " << link << " timestamp 0x" << hex << ts << dec << " (" << ts << ")" << endl;
+	}
 
       for ( int ch = 0; ch < iValue(0,"CHANNELS"); ch++)
 	{

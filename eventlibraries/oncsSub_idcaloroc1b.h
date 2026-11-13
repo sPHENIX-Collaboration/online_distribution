@@ -10,8 +10,8 @@
 // A subevent's data area can hold several received UDP datagrams back to
 // back (each one prefixed with the "0xaabbccdd" + received-length safety
 // belt added by the capturing plugin), and each UDP datagram can in turn
-// hold several CALOROC data frames for one link channel (0..5, i.e. 2 links
-// per ASIC x 3 ASICs, any of which can be individually absent).
+// hold several CALOROC data frames for one link channel (0..11, i.e. 2 links
+// per ASIC x 6 ASICs on 2 boards, any of which can be individually absent).
 //
 // Within one link, a "waveform" is N_VALUE (<=7 in self-trigger mode, more
 // under a forced multi-L1A burst) consecutive frames: consecutive frames of
@@ -21,13 +21,18 @@
 // step can be used to find it. Confirmed by the IN2P3/LLR firmware group
 // (2026-10-12) and validated against real N<=7 self-trigger data.
 //
+// Since the 2026 firmware, each frame can carry the 48-bit global
+// timestamp (40 MHz) in two words between the frame's Specs word and its
+// Data Header (Specs bit 29 says that they are there). It is read with
+// lValue(wf, sample, ch), as in oncsSub_idh2gcroc3_10G.
+//
 // Reporting follows oncsSub_idh2gcroc3_10G's scheme: ask how many waveforms
 // were found (NR_WF), then iValue(wf, sample, channel [, what]) - channel
-// spans a single combined address space across all 6 links (link =
+// spans a single combined address space across all 12 links (link =
 // channel/18, local channel = channel%18), the same way oncsSub_idcaenv1742
 // sizes CHANNELS from the highest enabled group (see its constructor): here
 // CHANNELS = 18 * (highest link that produced any data + 1), so a disabled
-// link in the middle (e.g. 0,1,4,5 present) still reports the full 108 and
+// link in the middle (e.g. 0,1,4,5 present) still reports 108 and
 // just reads back as 0 for the missing link's channels. LINKPRESENT mirrors
 // oncsSub_idcaenv1742's GROUPPRESENT.
 
@@ -46,7 +51,7 @@ public:
   // "CHANNELS"    - total addressable channels (n ignored)
   // "NR_WF"       - number of waveforms found, across all links (n ignored)
   // "SAMPLESIZE"  - number of samples in waveform n
-  // "LINKPRESENT" - 1 if link n (0..5) produced any data, else 0
+  // "LINKPRESENT" - 1 if link n (0..11) produced any data, else 0
   int    iValue(const int n, const char *what);
 
   // per-channel, per-sample access within waveform wf. channel is
@@ -57,7 +62,11 @@ public:
   // "what" is one of "ADC1", "ADC2", "TOA", "GAIN"
   int    iValue(const int wf, const int sample, const int ch, const char *what);
 
-  static const int NUM_LINKS = 6;
+  // the 48-bit global timestamp of this sample (frame) of the channel's
+  // link, 0 if the frame has none
+  long long lValue(const int wf, const int sample, const int ch);
+
+  static const int NUM_LINKS = 12;
   static const int NUM_CHANNELS_PER_LINK = 18;
 
 protected:
@@ -73,7 +82,8 @@ protected:
   {
     unsigned int mode;
     unsigned int evt_counter;
-    unsigned int timestamp;
+    unsigned int timestamp;           // the ASIC's 16b timestamp
+    unsigned long long global_ts;     // 48b global timestamp, 0 if not sent
 
     unsigned int hitmap;
     unsigned int numhits;
