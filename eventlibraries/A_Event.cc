@@ -615,154 +615,18 @@ std::vector<Packet*>  A_Event::getPacketVector()
 Packet *A_Event::makePacket(PHDWORD *pp, const int hitFormat)
 {
 
-  int wanted_hitformat;
-
   if (getPacketStructure(pp) != Unstructured) return 0;
-	  
 
+  int wanted_hitformat;
   if (hitFormat)  wanted_hitformat = hitFormat;
   else wanted_hitformat  = getUnstructPacketHitFormat(pp);
 
+  // the decoders for the PHENIX/sPHENIX detectors are gone; only the
+  // simple formats keep their classes (IDCSTR holds e.g. the setup script
+  // in the begin-run event), any other packet in this format is read with
+  // the generic class for its word size
   switch (wanted_hitformat)
     {
-
-      // pbsc "32 channel format"
-
-    case 50400:
-    case IDHBD_FPGA:
-    case IDHBD_FPGA0SUP:
-    case IDFOCAL_FPGATEST:
-      return new Packet_hbd_fpga(pp);
-      break;
-
-    case IDHBD_FPGASHORT:
-    case IDHBD_FPGASHORT0SUP:
-      return new Packet_hbd_fpgashort(pp);
-      break;
-
-    case IDFVTX_DCM0:
-    case IDFVTX_SIM:
-      return new Packet_fvtx_dcm0(pp);
-      break;
-      
-    case IDCDEVPOLARIMETER:
-      return new Packet_cdevpolarimeter(pp);
-      break;
-
-    case IDCDEVPOLARIMETERTARGET:
-      return new Packet_cdevpoltarget(pp);
-      break;
-
-    case IDCDEVIR:
-      return new Packet_cdevir(pp);
-      break;
-
-    case IDCDEVWCMHISTORY:
-      return new Packet_cdevwcm(pp);
-      break;
-
-    case IDCDEVBPM:
-      return new Packet_cdevbpm(pp);
-      break;
-
-    case IDCDEVDVM:
-      return new Packet_cdevdvm(pp);
-      break;
-
-    case IDCDEVRING:
-      return new Packet_cdevring(pp);
-      break;
-
-    case IDCDEVRINGPOL:
-      return new Packet_cdevring(pp);
-      break;
-
-    case IDCDEVRINGFILL:
-      return new Packet_cdevring(pp);
-      break;
-
-    case IDCDEVRINGNOPOL:
-      return new Packet_cdevringnopol(pp);
-      break;
-
-    case IDCDEVBUCKETS:
-      return new Packet_cdevbuckets(pp);
-      break;
-
-      //mlp 10/27/03 added this - the SIS is a straight array of numbers.
-    case IDCDEVSIS:
-      return new Packet_id4evt(pp);
-      break;
-
-    case IDCDEVMADCH:
-      return new Packet_cdevmadch(pp);
-      break;
-
-    case ID4SCALER:
-      return new Packet_id4scaler(pp);
-      break;
-
-    case IDDIGITIZER_12S:
-    case IDDIGITIZER_16S:
-    case IDDIGITIZER_31S:
-      return new Packet_iddigitizerv2(pp);
-      break;
-
-    case  IDDIGITIZERV3_2S:
-    case  IDDIGITIZERV3_4S:
-    case  IDDIGITIZERV3_6S:
-    case  IDDIGITIZERV3_8S:
-    case  IDDIGITIZERV3_12S:
-    case  IDDIGITIZERV3_14S:
-    case  IDDIGITIZERV3_16S:
-    case  IDDIGITIZERV3_18S:
-    case  IDDIGITIZERV3_20S:
-    case  IDDIGITIZERV3_22S:
-    case  IDDIGITIZERV3_24S:
-    case  IDDIGITIZERV3_26S:
-    case  IDDIGITIZERV3_28S:
-    case  IDDIGITIZERV3_30S:
-
-      return new Packet_iddigitizerv3(pp);
-      break;
-
-    case IDLL1_20S:
-    case IDLL1v2_20S:
-      return new Packet_idll1v1(pp);
-      break;
-
-    case IDLL1_MBD:
-    case IDLL1_EMCAL_MON0:
-    case IDLL1_EMCAL_MON1:
-    case IDLL1_EMCAL_MON2:
-    case IDLL1_EMCAL_MON3:
-    case IDLL1_JET_EMCAL_MON0:
-    case IDLL1_JET_EMCAL_MON1:
-    case IDLL1_JET_EMCAL_MON2:
-    case IDLL1_JET_EMCAL_MON3:
-    case IDLL1_JET_EMCAL_MON4:
-    case IDLL1_JET_HCAL_MON0:
-    case IDLL1_JET_HCAL_MON1:
-    case IDLL1_JET_HCAL_MON2:
-    case IDLL1_JET_HCAL_MON3:
-    case IDLL1_JET_HCAL_MON4:
-
-      return new Packet_idll1v2(pp);
-      break;
-
-    case IDGL1P:
-      return new Packet_gl1p(pp);
-      break;
-
-    case IDGL1_EVCLOCK:
-      return new Packet_gl1_evclocks(pp);
-      break;
-
-    case IDGL1PSUM:
-    case IDGL1PSUMOBS:
-      return new Packet_gl1psum(pp);
-      break;
-
     case ID4EVT:
       return new Packet_id4evt(pp);
       break;
@@ -770,32 +634,30 @@ Packet *A_Event::makePacket(PHDWORD *pp, const int hitFormat)
     case ID2EVT:
       return new Packet_id2evt(pp);
       break;
-      
+
     case IDCSTR:
       return new Packet_idcstr(pp);
       break;
-      
-    case IDSTARSCALER:
-      return new Packet_starscaler(pp);
-      break;
 
     default:
-      switch (getUnstructPacketWordSize (pp))
-	{
-	case 1:
-	  return new Packet_w1(pp);
-	  break;
-	case 2:
-	  return new Packet_w2(pp);
-	  break;
-	case 4:
-	  return new Packet_w4(pp);
-	  break;
-	default:
-	  return new Packet_w4(pp); 
-	}
+      break;
     }
-  
+
+  switch (getUnstructPacketWordSize (pp))
+    {
+    case 1:
+      return new Packet_w1(pp);
+      break;
+    case 2:
+      return new Packet_w2(pp);
+      break;
+    case 4:
+      return new Packet_w4(pp);
+      break;
+    default:
+      return new Packet_w4(pp);
+    }
+
   return 0;
 }
 

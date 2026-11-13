@@ -55,8 +55,6 @@ installedheaders = \
   rcdaqEventiterator.h \
   packet.h \
   packetConstants.h \
-  packet_hbd_fpgashort.h \
-  packet_fvtx_dcm0.h \
   packet_w124.h \
   packet_A.h \
   packetPublic.h \
@@ -170,8 +168,6 @@ allheaders = \
   oncsSub_idfnalmwpcv2.h \
   oncsSub_iddrs4v1.h \
   oncsSub_iddigitizerv1.h \
-  oncsSub_idgl1v0.h \
-  oncsSub_idgl1v1.h \
   oncsSub_idh2gcroc3.h \
   oncsSub_idh2gcroc3_10G.h \
   oncsSub_idcaloroc1b.h \
@@ -182,32 +178,9 @@ allheaders = \
   packetHeaders.h \
   packet_A.h \
   packet_collection.h \
-  packet_gl1.h \
-  packet_gl1p.h \
-  packet_gl1_evclocks.h \
-  packet_gl1psum.h \
   packet_id2evt.h \
   packet_id4evt.h \
-  packet_id4scaler.h \
-  packet_iddigitizerv2.h \
-  packet_iddigitizerv3.h \
-  packet_idll1v1.h \
-  packet_idll1v2.h \
   packet_w124.h \
-  packet_cdevpolarimeter.h \
-  packet_cdevir.h \
-  packet_cdevwcm.h \
-  packet_cdevbpm.h \
-  packet_cdevmadch.h \
-  packet_cdevpoltarget.h \
-  packet_starscaler.h \
-  packet_hbd_fpga.h \
-  packet_hbd_fpgashort.h \
-  packet_fvtx_dcm0.h \
-  packet_cdevring.h \
-  packet_cdevringnopol.h \
-  packet_cdevbuckets.h \
-  packet_cdevdvm.h \
   caen_correction.h \
   caen_calibration.h \
   ROC_pool.h \
@@ -275,8 +248,6 @@ allsources = \
   oncsSub_idfnalmwpc.cc \
   oncsSub_idfnalmwpcv2.cc \
   oncsSub_iddrs4v1.cc \
-  oncsSub_idgl1v0.cc \
-  oncsSub_idgl1v1.cc \
   oncsSub_idh2gcroc3.cc \
   oncsSub_idh2gcroc3_10G.cc \
   oncsSub_idcaloroc1b.cc \
@@ -284,34 +255,11 @@ allsources = \
   oncsSubevent.cc \
   oncs_mnemonic.cc \
   packet_A.cc \
-  packet_gl1.cc \
-  packet_gl1p.cc \
-  packet_gl1_evclocks.cc \
-  packet_gl1psum.cc \
   packet_idcstr.cc \
   packet_id2evt.cc \
   packet_id4evt.cc \
-  packet_id4scaler.cc \
-  packet_iddigitizerv2.cc \
-  packet_iddigitizerv3.cc \
-  packet_idll1v1.cc \
-  packet_idll1v2.cc \
   packet_mnemonic.cc \
   packet_w124.cc \
-  packet_cdevpolarimeter.cc \
-  packet_cdevir.cc \
-  packet_cdevwcm.cc \
-  packet_cdevbpm.cc \
-  packet_cdevmadch.cc \
-  packet_cdevpoltarget.cc \
-  packet_starscaler.cc \
-  packet_hbd_fpga.cc \
-  packet_hbd_fpgashort.cc \
-  packet_fvtx_dcm0.cc \
-  packet_cdevring.cc \
-  packet_cdevringnopol.cc \
-  packet_cdevbuckets.cc \
-  packet_cdevdvm.cc \
   caen_correction.cc \
   caen_calibration.cc \
   ROC_pool.cc \

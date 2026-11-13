@@ -26,10 +26,6 @@ endif()
 # unconditional, so rootcint still runs as a side effect of that
 # dependency - it just never gets compiled into the library). See
 # Makefile.am for the matching fix.
-#
-# Known gap carried over from Makefile.am: oncsSub_idmvtxv0-3.cc/h and
-# mvtx_decoder/ are not part of allsources there either, so they are
-# not built here.
 
 include(GNUInstallDirs)
 include(CheckCXXSourceCompiles)
@@ -188,8 +184,6 @@ add_library(NoRootEvent SHARED
   oncsSub_idfnalmwpc.cc
   oncsSub_idfnalmwpcv2.cc
   oncsSub_iddrs4v1.cc
-  oncsSub_idgl1v0.cc
-  oncsSub_idgl1v1.cc
   oncsSub_idh2gcroc3.cc
   oncsSub_idh2gcroc3_10G.cc
   oncsSub_idcaloroc1b.cc
@@ -197,34 +191,11 @@ add_library(NoRootEvent SHARED
   oncsSubevent.cc
   oncs_mnemonic.cc
   packet_A.cc
-  packet_gl1.cc
-  packet_gl1p.cc
-  packet_gl1_evclocks.cc
-  packet_gl1psum.cc
   packet_idcstr.cc
   packet_id2evt.cc
   packet_id4evt.cc
-  packet_id4scaler.cc
-  packet_iddigitizerv2.cc
-  packet_iddigitizerv3.cc
-  packet_idll1v1.cc
-  packet_idll1v2.cc
   packet_mnemonic.cc
   packet_w124.cc
-  packet_cdevpolarimeter.cc
-  packet_cdevir.cc
-  packet_cdevwcm.cc
-  packet_cdevbpm.cc
-  packet_cdevmadch.cc
-  packet_cdevpoltarget.cc
-  packet_starscaler.cc
-  packet_hbd_fpga.cc
-  packet_hbd_fpgashort.cc
-  packet_fvtx_dcm0.cc
-  packet_cdevring.cc
-  packet_cdevringnopol.cc
-  packet_cdevbuckets.cc
-  packet_cdevdvm.cc
   caen_correction.cc
   caen_calibration.cc
   ROC_pool.cc
@@ -351,7 +322,7 @@ set(EVENTLIB_INSTALL_HEADERS
   oBuffer.h ophBuffer.h ospBuffer.h oEvent.h ospEvent.h ogzBuffer.h
   olzoBuffer.h oamlBuffer.h oncsBuffer.h oncsEventiterator.h
   rcdaqEventiterator.h packet.h packetConstants.h
-  packet_hbd_fpgashort.h packet_fvtx_dcm0.h packet_w124.h packet_A.h
+  packet_w124.h packet_A.h
   packetPublic.h packetV1Public.h errorBlock.h packetRoutines.h
   decoding_routines.h packetHeaders.h Cpacket.h packetHdr.h
   packetHdrV1.h formatError.h dataBlock.h framePackets.h framePublic.h

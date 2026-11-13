@@ -268,16 +268,6 @@ Packet *oncsEvent::makePacket(PHDWORD *pp, const int hitFormat)
       break;
 
 
-    case (IDGL1V0):
-      return new
-	oncsSub_idgl1v0( sevt_ptr );
-      break;
-
-    case (IDGL1V1):
-      return new
-	oncsSub_idgl1v1( sevt_ptr );
-      break;
-
     case (IDH2GCROC3):
       return new
 	oncsSub_idh2gcroc3( sevt_ptr );
