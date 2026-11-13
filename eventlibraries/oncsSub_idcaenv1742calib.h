@@ -8,7 +8,8 @@
 // device_CAENcalibration device of the CAENdrs plugin.
 //
 // The channels are numbered as in the IDCAENV1742 data packet: 0-31 are
-// chip*8 + channel, 32-35 the trigger channel of chips 0-3. The speed is
+// chip*8 + channel, 32-35 the trigger channel of chips 0-3 (a unit with 2
+// chips, DT5742 or N6742, has 0-15 and 32-33). The speed is
 // numbered as the data packet's iValue(0,"FREQUENCY"): 0 = 5GS, 1 = 2.5GS, 2 = 1GS.
 //
 //   iValue(cell, ch, speed, "OFFSET")   cell offset (ADC counts)

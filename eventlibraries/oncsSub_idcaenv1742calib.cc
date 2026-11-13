@@ -35,18 +35,19 @@ int oncsSub_idcaenv1742calib::valid() const
   return 1;
 }
 
-static void chip_and_channel(const int ch, const int chips, int &chip, int &c)
+static void chip_and_channel(const int ch, int &chip, int &c)
 {
-  // 0-31 = chip*8 + channel, then one trigger channel per chip
+  // as in the data packet: 0-31 = chip*8 + channel, 32-35 = the trigger
+  // channel of chip 0-3. A unit with 2 chips has 0-15 and 32-33.
   const int perchip = 8;
-  if ( ch < chips * perchip )
+  if ( ch < 4 * perchip )
     {
       chip = ch / perchip;
       c = ch % perchip;
     }
   else
     {
-      chip = ch - chips * perchip;
+      chip = ch - 4 * perchip;
       c = perchip;
     }
 }
@@ -58,10 +59,11 @@ int *oncsSub_idcaenv1742calib::word(const int cell, const int ch, const int spee
   int chips = header(5);
   int channels = header(6);
   int cells = header(7);
-  if ( speed < 0 || speed >= speeds || cell < 0 || cell >= cells || ch < 0 || ch >= chips * channels) return 0;
+  if ( speed < 0 || speed >= speeds || cell < 0 || cell >= cells || ch < 0 || ch >= 36) return 0;
 
   int chip, c;
-  chip_and_channel(ch, chips, chip, c);
+  chip_and_channel(ch, chip, c);
+  if ( chip >= chips || c >= channels ) return 0;   // a chip this unit does not have
 
   int *d = &SubeventHdr->data + HEADERLENGTH
     + speed * ( 2 + chips * (channels + 1) * cells)
@@ -75,7 +77,7 @@ int *oncsSub_idcaenv1742calib::timeword(const int cell, const int ch, const int 
   int *w = word(0, ch, speed);   // checks everything except the cell
   if ( !w || cell < 0 || cell >= header(7) ) return 0;
   int chip, c;
-  chip_and_channel(ch, header(5), chip, c);
+  chip_and_channel(ch, chip, c);
   int channels = header(6);
   int cells = header(7);
   // back to the start of this chip, then past its channels
@@ -168,7 +170,7 @@ void  oncsSub_idcaenv1742calib::dump ( OSTREAM& os )
 	      os << std::setw(4) << cell << "  ";
 	      for ( int c = 0; c < channels; c++)
 		{
-		  int ch = ( c < 8 ) ? chip * 8 + c : chips * 8 + chip;
+		  int ch = ( c < 8 ) ? chip * 8 + c : 32 + chip;
 		  os << std::setw(6) << iValue(cell, ch, s, "OFFSET");
 		}
 	      os << "  " << std::setw(9) << std::fixed << std::setprecision(4)
@@ -176,7 +178,7 @@ void  oncsSub_idcaenv1742calib::dump ( OSTREAM& os )
 	      os.unsetf(std::ios::fixed);
 	      for ( int c = 0; c < channels; c++)
 		{
-		  int ch = ( c < 8 ) ? chip * 8 + c : chips * 8 + chip;
+		  int ch = ( c < 8 ) ? chip * 8 + c : 32 + chip;
 		  os << std::setw(6) << iValue(cell, ch, s, "NSAMPLE");
 		}
 	      os << std::endl;

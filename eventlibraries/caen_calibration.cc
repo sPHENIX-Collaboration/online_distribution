@@ -33,7 +33,8 @@ caen_calibration::caen_calibration(Packet *calib)
       return;
     }
 
-  if ( calib->iValue(0,"CELLS") != NCELLS || calib->iValue(0,"CHANNELS") != NCHANNELS
+  // a unit with 2 chips (DT5742, N6742) has 18 channels; the others stay zero
+  if ( calib->iValue(0,"CELLS") != NCELLS || calib->iValue(0,"CHANNELS") > NCHANNELS
        || calib->iValue(0,"SPEEDS") != NSPEEDS )
     {
       cout << "caen_calibration: unexpected calibration packet layout" << endl;
