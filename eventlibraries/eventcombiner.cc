@@ -1,7 +1,7 @@
 #include "fileEventiterator.h"
 #include "testEventiterator.h"
 #include "phenixTypes.h"
-#include "oncsEvent.h"
+#include "Event_A.h"
 #include "ospBuffer.h"
 #include "EventTypes.h"
 
@@ -284,7 +284,7 @@ main(int argc, char *argv[])
     
 	if (take_this) 
 	  {
-	    Event *E = new oncsEvent(out);
+	    Event *E = new Event_A(out);
 	    if (identify) E->identify();
 	    
 	    ob->addEvent(E);

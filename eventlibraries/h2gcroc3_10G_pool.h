@@ -4,7 +4,7 @@
 #include "ROC_pool.h"
 
 // Pool for packet format 302 (IDH2GCROC3_10G), same API as
-// oncsSub_idh2gcroc3_10G. A "sample" holds the values of all channels
+// Packet_idh2gcroc3_10G. A "sample" holds the values of all channels
 // for one timestamp; a waveform is a run of samples less than
 // CONTIGUOUS_CLOCK apart.
 //

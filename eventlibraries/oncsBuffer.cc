@@ -195,7 +195,7 @@ Event * oncsBuffer::getEvent()
     }
 
   Event *evt;
-  evt =  new oncsEvent( &bptr->data[current_index]);
+  evt =  new Event_A( &bptr->data[current_index]);
   evt->setOriginBuffer(getBufferSequence());
 
   

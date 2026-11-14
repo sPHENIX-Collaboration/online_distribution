@@ -16,7 +16,7 @@ caloroc1b_pool::caloroc1b_pool(const unsigned int low_mark, const unsigned int h
 }
 
 // one datagram, starting after the marker/length (same as
-// oncsSub_idcaloroc1b::decode_packet())
+// Packet_idcaloroc1b::decode_packet())
 int caloroc1b_pool::decode_datagram(const uint32_t *payload, const unsigned int nbytes)
 {
   const unsigned int payload_words = nbytes / 4;
@@ -93,7 +93,7 @@ int caloroc1b_pool::decode_datagram(const uint32_t *payload, const unsigned int 
   return 0;
 }
 
-// same grouping rule as oncsSub_idcaloroc1b::groupWaveforms()
+// same grouping rule as Packet_idcaloroc1b::groupWaveforms()
 void caloroc1b_pool::add_frame(const unsigned int link, const caloroc_frame &f)
 {
   std::vector<caloroc_frame> &open = _open[link].samples;

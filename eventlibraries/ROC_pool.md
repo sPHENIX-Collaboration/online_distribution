@@ -7,8 +7,8 @@ Formats covered:
 
 | hit format | name             | pool class          | per-Packet decoder        |
 |-----------:|------------------|---------------------|---------------------------|
-| 302        | IDH2GCROC3_10G   | `h2gcroc3_10G_pool` | `oncsSub_idh2gcroc3_10G`  |
-| 310        | IDCALOROC1B      | `caloroc1b_pool`    | `oncsSub_idcaloroc1b`     |
+| 302        | IDH2GCROC3_10G   | `h2gcroc3_10G_pool` | `Packet_idh2gcroc3_10G`  |
+| 310        | IDCALOROC1B      | `caloroc1b_pool`    | `Packet_idcaloroc1b`     |
 
 Format 301 is deprecated and not supported.
 

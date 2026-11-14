@@ -39,7 +39,7 @@ uint64_t h2gcroc3_10G_pool::u8frombyte(const uint8_t *v)
 
 // one datagram, starting after the marker/length: 14 header bytes, then
 // 192-byte lines, the last 4 bytes are not part of any line (same
-// boundaries as oncsSub_idh2gcroc3_10G::decode())
+// boundaries as Packet_idh2gcroc3_10G::decode())
 int h2gcroc3_10G_pool::decode_datagram(const uint32_t *d, const unsigned int nbytes)
 {
   const uint8_t *b = (const uint8_t *) d;
@@ -52,7 +52,7 @@ int h2gcroc3_10G_pool::decode_datagram(const uint32_t *d, const unsigned int nby
   return 0;
 }
 
-// same as oncsSub_idh2gcroc3_10G::decode_line()
+// same as Packet_idh2gcroc3_10G::decode_line()
 int h2gcroc3_10G_pool::decode_line(const uint8_t *d)
 {
   if ( d[0] != 0xaa && d[1] != 0x5a) return 0;
@@ -129,7 +129,7 @@ int h2gcroc3_10G_pool::decode_line(const uint8_t *d)
 }
 
 // the open sample is complete; append it to the open waveform, or close
-// that and start a new one (same rule as oncsSub_idh2gcroc3_10G::parse_timeline())
+// that and start a new one (same rule as Packet_idh2gcroc3_10G::parse_timeline())
 void h2gcroc3_10G_pool::close_sample()
 {
   if ( !_have_open_sample) return;

@@ -12,7 +12,7 @@
 #include <iostream>
 #include <iomanip>
 
-#include "oncsEvent.h"
+#include "Event_A.h"
 
 using namespace std;
 
@@ -161,7 +161,7 @@ Event *eventReceiverClient::getEvent(const int eventnumber, const int flag )
 	  return NULL;
 	}	  
 
-      Event *e = new oncsEvent(buffer);
+      Event *e = new Event_A(buffer);
       e->convert();
       if (_verbosity) e->identify();
       return e;

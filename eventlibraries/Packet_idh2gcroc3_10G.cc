@@ -1,0 +1,807 @@
+#include "Packet_idh2gcroc3_10G.h"
+
+#include <string.h>
+#include "buffer.h"
+
+using namespace std;
+
+// this is the clock value for "contiguous samples. 
+#define CONTIGUOUS_CLOCK  164
+// a sample stays open for lines this long after the newest timestamp (links interleave by a sample)
+#define REORDER_WINDOW    (4*CONTIGUOUS_CLOCK)
+// a timestamp this far behind the newest one is a counter reset, not a late line
+#define RESET_CLOCK       100000000
+
+Packet_idh2gcroc3_10G::Packet_idh2gcroc3_10G(subevtdata_ptr data)
+  :Packet_w4 (data)
+{
+
+  is_decoded = 0;
+  _broken = 0;
+  old_timestamp   = 0xffffffffffffffff;
+  old_trigger_in  = 0xffffffff;
+  old_trigger_out = 0xffffffff;
+
+  _max_timestamp = 0;
+  _closed_before = 0;
+  _nr_channels = 0;
+  _nr_samples = 0;
+  _nr_events = 0;
+  _crc_errors = 0;
+  _hamming_errors = 0;
+  _bad_frames = 0;
+  _bad_lines = 0;
+  _late_lines = 0;
+  _resets = 0;
+}
+
+
+int Packet_idh2gcroc3_10G::decode_line( uint8_t d[4*48])
+{
+
+      
+  //  int o,c;
+
+  if ( d[0] != 0xaa || d[1] != 0x5a)
+    {
+      _bad_lines++;
+      return 0;
+    }
+
+  // cout << "new line " << hex << " " ;
+  // for (int i = 0; i < 32; i++)
+  //   {
+  //     if ( i > 0 && i%4 == 0) cout << " ";
+  //     cout << setw(3) << (unsigned int) d[i];
+  //   }
+  // cout << dec << endl;
+  
+
+  //      int ifpga = ((u4swap(d[0])>>16) & 0xff );
+  //coutfl << " d[2] " << (unsigned int) d[2] << endl;
+  int ichip = d[2] & 0xf;
+  int group = d[3] - 36;  // needs check...
+  
+  uint32_t trigger_in = u4frombyte(&d[4]);
+  uint32_t trigger_out = u4frombyte(&d[8]);
+  uint32_t evt_ctr = u4frombyte(&d[12]);
+  uint64_t timestamp = u8frombyte(&d[16]);
+  //uint64_t spare = u8frombyte(&d[24]);
+  
+  
+  // cout << hex << " ichip = " << ichip
+  //      << " group " << group
+  //      << " trigger_in " << trigger_in
+  //      << " trigger_out " << trigger_out
+  //      << " evt_ctr " << evt_ctr
+  //      << " timestamp " << timestamp
+  //      << " spare " << spare 
+  //      << dec << endl;
+  
+  uint32_t ROC_HDR;
+  uint32_t CMN;
+  uint32_t CALIB;
+  uint32_t CRC;
+  uint32_t ch[36];
+  
+  ROC_HDR = u4frombyte(&d[32 + 0]);
+  CMN     = u4frombyte(&d[32 + 4]);
+  
+  // coutfl << "ROC_HDR " << hex << ROC_HDR << " CMN: " << CMN << dec << endl;
+  
+  for (int n = 0; n < 18; n++)
+    {
+      ch[n] = u4frombyte(&d[32 + 8 + n*4]);
+    }
+  
+  CALIB = u4frombyte(&d[112]);
+  
+  for (int n = 0; n < 18; n++)
+    {
+      ch[n+18] = u4frombyte(&d[112 + 4 + n*4]);
+    }
+  
+  CRC = u4frombyte(&d[188]);
+  
+  if ( ichip >=MAX_CHIPS || ( group != 0 && group != 1) )
+    {
+      _bad_lines++;
+      return 0;
+    }
+
+  // frame integrity (H2GCROC3 datasheet 1.3.1): CRC-32 over the 39 words header..ch35
+  int link = 2*ichip + group;
+  unsigned int crc_error = ( crc32_frame(&d[32], 156) != CRC ) ? 1 : 0;
+
+  //let's see if we need to update our nr of channels
+  if ( (ichip+1) *72 > _nr_channels) _nr_channels = (ichip+1) *72;
+  
+  // a timestamp far behind everything seen so far is a counter reset: close what we have first
+  if ( _max_timestamp > RESET_CLOCK && timestamp + RESET_CLOCK < _max_timestamp)
+    {
+      close_samples( 0xffffffffffffffffULL);
+      _closed_before = 0;
+      _max_timestamp = 0;
+      _resets++;
+    }
+  if ( timestamp > _max_timestamp) _max_timestamp = timestamp;
+
+  // this line's sample is already closed - it arrived too late to be used
+  if ( timestamp < _closed_before)
+    {
+      _late_lines++;
+      return 0;
+    }
+  
+  // the lines of a sample arrive within 5 clocks of each other (some links latch a clock or so
+  // late), but the links can run a sample ahead of each other, so lines of neighbouring samples
+  // interleave. Find the open sample this line belongs to, or open one.
+  sample *s = 0;
+  auto it = _open.lower_bound( timestamp > 5 ? timestamp - 5 : 0);
+  if ( it != _open.end() && it->first <= timestamp + 5)
+    {
+      s = it->second;
+    }
+  else
+    {
+      s = new sample;
+      memset (s, 0 , sizeof(sample) );
+      s->timestamp = timestamp;
+      _open[timestamp] = s;
+    }
+  
+  int chip_offset =0;
+  chip_offset = ichip * 72;
+  
+  int group_offset =0;
+  if ( group) group_offset = 36;
+  
+  //for the next section, we continue to fill the various vlaues of that "sample" structure
+  for ( int c = 0; c< 36; c++)
+    {
+      s->ADC[chip_offset + group_offset + c] = (ch[c] >> 20) & 0x3ff;
+      s->tot[chip_offset + group_offset + c] = (ch[c] >> 10) & 0x3ff;
+      s->toa[chip_offset + group_offset + c] = ch[c] & 0x3ff;
+      
+      // coutfl << setw(4) << chip_offset + group_offset + c << " " << hex
+	  // 		 << " ADC " << _sample->ADC[chip_offset + group_offset + c]
+	  // 		 << " TOT " << _sample->tot[chip_offset + group_offset + c]
+	  // 		 << " TOA " << _sample->toa[chip_offset + group_offset + c]
+	  // 		 << dec << endl;
+    }
+  
+  
+  // the ROC header is 0101 + 12b Bx + 6b Event + 3b Orbit + H1 H2 H3 + 0101
+  // (H2GCROC3 datasheet p. 30); H1 = error in the header, H2 in CM and
+  // channels 0-17, H3 in Calib and channels 18-35 of this half-chip
+  s->error[(chip_offset + group_offset) / 36] = (ROC_HDR >> 4) & 0x7;
+
+  s->trigger_in   = trigger_in;
+  s->trigger_out  = trigger_out;
+  s->event_counter  = evt_ctr;
+  s->cmn          = CMN;
+  s->calib        = CALIB;
+  s->crc32        = CRC;
+  s->crc_error[link] = crc_error;
+  if ( crc_error) _crc_errors++;
+  if ( s->error[link]) _hamming_errors++;
+  
+  // samples far enough behind the newest timestamp cannot receive lines anymore
+  if ( _max_timestamp > REORDER_WINDOW) close_samples( _max_timestamp - REORDER_WINDOW);
+  
+  return 0;
+}
+
+// hand the open samples below "before" to the timeline, in timestamp order
+void Packet_idh2gcroc3_10G::close_samples(const uint64_t before)
+{
+  auto it = _open.begin();
+  while ( it != _open.end() && it->first < before)
+    {
+      waveform.push_back(it->second);
+      _nr_samples++;
+      it = _open.erase(it);
+    }
+  if ( before > _closed_before) _closed_before = before;
+}
+
+
+int Packet_idh2gcroc3_10G::decode()
+{
+  if (is_decoded) return 0;
+  is_decoded = 1;
+
+  
+  //unsigned int *buffer = ( unsigned int *)  &SubeventHdr->data;
+  uint8_t *cbuffer = ( uint8_t *)  &SubeventHdr->data;
+
+  
+  //int current_index  = 0;
+  int current_index_bytes =0;
+  
+  int lines = 0;
+  int pos;
+  
+  std::vector<unsigned int>  incomplete_line;
+  
+  
+  while ( current_index_bytes < 4*getDataLength() )
+    {
+
+      unsigned int packetstart = current_index_bytes; // we remember where the packet began
+      
+      unsigned int packetlength = u4swapfrombyte(&cbuffer[current_index_bytes + 4]);
+
+
+      packetlength += 8;
+
+      // each UDP datagram starts with the marker and its length; without them we cannot find the
+      // next one, so the rest of the packet is lost
+      if ( u4swapfrombyte(&cbuffer[current_index_bytes]) != 0xaabbccdd || packetlength < 22
+	   || packetstart + packetlength > (unsigned int) (4*getDataLength()) )
+	{
+	  _bad_frames++;
+	  break;
+	}
+      if ( (packetlength - 22) % (4*48) ) _bad_frames++;   // a partial line at the end is skipped below
+      
+
+      //unsigned int hdr0 = u4swap(buffer[current_index+2]);
+      // coutfl << "current_index_bytes = " << current_index_bytes << "  marker " << hex
+      // 	     <<  setw(2) << (short) cbuffer[current_index_bytes+4] << " "
+      // 	     << setw(2) << (short) cbuffer[current_index_bytes+4+1] << " "
+      // 	     << setw(2) << (short) cbuffer[current_index_bytes+4+2] << " "
+      // 	     << setw(2) << (short) cbuffer[current_index_bytes+4+3] << " "
+      // 	     << dec << " Length " << packetlength <<  endl;
+
+      int packet_end_bytes = current_index_bytes + packetlength -4;
+
+      current_index_bytes += 22;
+
+      // coutfl << " incomplete_line_size " << incomplete_line.size() << endl;
+      
+      // if ( incomplete_line.size() )
+      // 	{
+      // 	  long unsigned int n = 0;
+      // 	  for ( ; n < 10 - incomplete_line.size() ; n++)
+      // 	    {
+      // 	      incomplete_line.push_back(buffer[current_index + n]);
+      // 	    }
+      // 	  coutfl << " incomplete_line_size " << incomplete_line.size() << endl;
+      // 	  decode_line(&incomplete_line[0]);
+      // 	  incomplete_line.clear();
+      // 	  current_index =n;
+      // 	}
+
+
+
+      
+      // for ( n = current_index_bytes; n < packet_end_bytes ; n++)
+      // 	{
+      // 	  if ( (cbuffer[n] & 0xffff) == 0x00a0 || (buffer[n] & 0xffff) == 0x00a1)
+      // 	    {
+      // 	      coutfl << " found line start at " << n - current_index << " value " << hex << buffer[n] << dec << endl;
+      // 	      break;
+      // 	    }
+
+      // 	}
+
+      lines = 0;
+      // here we are at the beginning of an "a0 or "a1" line 
+
+      for ( pos = current_index_bytes; pos + 4*48 <= packet_end_bytes + 4; pos += 4*48)
+	{
+	  // coutfl << "line start " << hex << (unsigned int) cbuffer[pos] << dec << " at index " << pos << endl;
+	  decode_line(&cbuffer[pos]);
+	  lines++;
+	}
+
+      // current_index = pos;
+      // for ( pos = current_index; pos < packet_end; pos++)
+      // 	{
+      // 	  incomplete_line.push_back(buffer[pos]);
+      // 	}
+      
+      
+      current_index_bytes = packetstart + packetlength;
+      //      coutfl << " number of lines: " << lines << endl;
+    }
+
+  // the samples still open are complete too - no later line will come along for them
+  close_samples( 0xffffffffffffffffULL);
+
+  parse_timeline ();
+  
+  return 0;  
+}
+
+
+unsigned int Packet_idh2gcroc3_10G::u4swapfrombyte(uint8_t* v)
+{
+  unsigned int r = (v[3] << 24)
+	|  (v[2] << 16)
+	|  (v[1] << 8)
+	|  (v[0]);
+
+  return r;
+}
+
+unsigned int Packet_idh2gcroc3_10G::u4frombyte(uint8_t* v)
+{
+
+  unsigned int r = (v[0] << 24)
+	|  (v[1] << 16)
+	|  (v[2] << 8)
+	|  (v[3]);
+
+  return r;
+}
+
+unsigned long long Packet_idh2gcroc3_10G::u8frombyte(uint8_t* v)
+{
+
+  unsigned long long r = 0;
+  
+  for ( int i = 0; i < 8; i++)
+    {
+      unsigned long long x = v[i];
+      x <<= 8*(7-i);
+      r |= x;
+    }
+	
+  return r;
+}
+
+// CRC-32 of the DAQ frame as the ASIC computes it (datasheet 1.3.1): polynomial 0x04C11DB7,
+// initial value 0, no bit reflection, no final xor, MSB first. Reproduces the datasheet example
+// (0x56370C85 0x000ABCDE 0xA30C2BEC -> 0x2CCB229A).
+unsigned int Packet_idh2gcroc3_10G::crc32_frame(const uint8_t* d, const int n)
+{
+  static uint32_t table[256];
+  static int table_done = 0;
+
+  if ( !table_done)
+    {
+      for ( uint32_t i = 0; i < 256; i++)
+	{
+	  uint32_t c = i << 24;
+	  for ( int k = 0; k < 8; k++)
+	    {
+	      c = ( c & 0x80000000u) ? ( c << 1) ^ 0x04C11DB7u : ( c << 1);
+	    }
+	  table[i] = c;
+	}
+      table_done = 1;
+    }
+
+  uint32_t crc = 0;
+  for ( int i = 0; i < n; i++)
+    {
+      crc = ( crc << 8) ^ table[ ( ( crc >> 24) ^ d[i]) & 0xff];
+    }
+  return crc;
+}
+
+
+
+
+int Packet_idh2gcroc3_10G::iValue(const int n, const char *what)
+{
+  decode();
+  unsigned int un = n;
+  
+  if ( strcmp(what,"CHANNELS") == 0 )
+    {
+      return _nr_channels; // might be dynamic in the future
+    }
+  
+  if ( strcmp(what,"SAMPLES") == 0 )
+    {
+      return (int) waveform.size();
+    }
+  
+  if ( strcmp(what,"NR_WF") == 0 )
+    {
+      return (int) _eventlist.size();
+    }
+
+  if ( strcmp(what,"SAMPLESIZE") == 0 )
+    {
+      if ( un >= _eventlist.size()) return 0; // no such event number
+      event_bounds *eb = _eventlist[n];
+      return eb->length;
+    }
+  
+  else if ( strcmp(what,"TIMESTAMP") == 0 )
+    {
+      if (n < 0 ||  un >= waveform.size() ) return 0;
+      return waveform[n]->timestamp;
+    }
+
+  else if ( strcmp(what,"CMN") == 0 )
+    {
+      if (n < 0 ||  un >= waveform.size() ) return 0;
+      return waveform[n]->cmn;
+    }
+
+  else if ( strcmp(what,"CALIB") == 0 )
+    {
+      if (n < 0 ||  un >= waveform.size() ) return 0;
+      return waveform[n]->calib;
+    }
+
+  else if ( strcmp(what,"CRCERRORS") == 0 )   // lines in this packet whose CRC-32 did not match
+    {
+      return _crc_errors;
+    }
+
+  else if ( strcmp(what,"HAMMINGERRORS") == 0 )   // lines with any H1 H2 H3 flag set
+    {
+      return _hamming_errors;
+    }
+
+  else if ( strcmp(what,"BADFRAMES") == 0 )   // UDP datagrams without marker or with a bad length
+    {
+      return _bad_frames;
+    }
+
+  else if ( strcmp(what,"BADLINES") == 0 )   // lines without marker, or chip / half out of range
+    {
+      return _bad_lines;
+    }
+
+  else if ( strcmp(what,"LATELINES") == 0 )   // lines that came after their sample was closed (dropped)
+    {
+      return _late_lines;
+    }
+
+  else if ( strcmp(what,"RESETS") == 0 )   // timestamp counter resets seen in this packet
+    {
+      return _resets;
+    }
+
+  else if ( strcmp(what,"DECODEERRORS") == 0 )   // all of the above
+    {
+      return _bad_frames + _bad_lines + _late_lines + _resets;
+    }
+
+
+  return 0;
+}
+
+
+int Packet_idh2gcroc3_10G::iValue(const int sample, const int ch)
+{
+  decode();
+  if ( ch < 0 || ch >=_nr_channels || sample < 0) return 0;
+
+  unsigned int un = sample;
+  
+  if ( un >= waveform.size() ) return 0;
+
+  return waveform[sample]->ADC[ch];
+}
+
+long long   Packet_idh2gcroc3_10G::lValue(const int wf, const int sample, const int ch)
+{
+  decode();
+  if ( ch < 0 || ch >= _nr_channels || sample < 0) return 0;
+  
+  unsigned int ue = wf;  //preventing a warning as size() is unsigned
+  if ( wf < 0 || ue >= _eventlist.size() ) return 0;
+
+  unsigned int un = sample;   //preventing a warning as size() is unsigned
+  
+  if ( un >= waveform.size() ) return 0;
+
+  event_bounds *eb = _eventlist[wf];
+  int n = eb->first;
+  int l = eb->length;
+  if (sample >= l)  return 0;   // this event has only l samnples
+  if ( (unsigned int) (n+sample) >= waveform.size())
+    {
+      coutfl << "element out of bounds " << n + sample << "   size = " <<  waveform.size() << endl;
+      return 0;
+    }
+  return (long long) waveform[n+sample]->timestamp;
+}
+
+
+
+int Packet_idh2gcroc3_10G::iValue(const int wf, const int sample, const int ch)
+{
+  decode();
+  if ( ch < 0 || ch >=_nr_channels || sample < 0) return 0;
+
+  // only known once we decode
+  
+  unsigned int ue = wf;  //preventing a warning as size() is unsigned
+  if ( wf < 0 || ue >= _eventlist.size() ) return 0;
+
+  unsigned int un = sample;   //preventing a warning as size() is unsigned
+  
+  if ( un >= waveform.size() ) return 0;
+
+  event_bounds *eb = _eventlist[wf];
+  int n = eb->first;
+  int l = eb->length;
+  if (sample >= l)  return 0;   // this event has only l samnples
+  if ( (unsigned int) (n+sample) >= waveform.size())
+    {
+      coutfl << "element out of bounds " << n + sample << "   size = " <<  waveform.size() << endl;
+      return 0;
+    }
+  return waveform[n+sample]->ADC[ch];
+}
+  
+int Packet_idh2gcroc3_10G::iValue(const int sample, const int ch, const char *what)
+{
+  decode();
+  if ( ch < 0 || ch >=_nr_channels || sample < 0) return 0;
+
+  unsigned int un = sample;
+  if ( un >= waveform.size() ) return 0;
+
+  if ( strcmp(what,"TOT") == 0 )
+    {
+      return waveform[sample]->tot[ch];
+    }
+
+  else if ( strcmp(what,"TOA") == 0 )
+    {
+      return waveform[sample]->toa[ch];
+    }
+
+  return 0;
+}
+  
+// this is for the TOT and TOA values
+int Packet_idh2gcroc3_10G::iValue(const int wf, const int sample, const int ch, const char *what)
+{
+  // these are the easy checks we can do w/o decoding the data
+  if ( ch < 0 || ch >=_nr_channels || sample < 0) return 0;
+  if ( wf < 0) return 0;
+
+  // now the ones where we need the decoded data
+  decode();
+
+  
+  
+  if ( (unsigned int ) wf  >= _eventlist.size()) return 0; // no such wf number
+  event_bounds *eb = _eventlist[wf];
+  if ( (unsigned int ) sample >= eb->length) return 0;
+
+  int n = eb->first;
+  
+  if ( (unsigned int) (n+sample) >= waveform.size())
+    {
+      coutfl << "element out of bounds " << n + sample << "   size = " <<  waveform.size() << endl;
+      return 0;
+    }
+
+ 
+  if ( strcmp(what,"TOT") == 0 )
+    {
+      return waveform[n+sample]->tot[ch];
+    }
+  else if ( strcmp(what,"TOA") == 0 )
+    {
+      return waveform[n+sample]->toa[ch];
+    }
+  else if ( strcmp(what,"ERROR") == 0 )
+    {
+      return waveform[n+sample]->error[ch / 36];
+    }
+  else if ( strcmp(what,"TRIGGER_IN") == 0 )
+    {
+      return waveform[n+sample]->trigger_in;
+    }
+  else if ( strcmp(what,"TRIGGER_OUT") == 0 )
+    {
+      return waveform[n+sample]->trigger_out;
+    }
+  else if ( strcmp(what,"EVENT_COUNTER") == 0 )
+    {
+      return waveform[n+sample]->event_counter;
+    }
+  else if ( strcmp(what,"CRCERROR") == 0 )   // 1 if the line that carried this channel failed its CRC-32
+    {
+      return waveform[n+sample]->crc_error[ 2*(ch/72) + (ch%72)/36 ];
+    }
+
+  return 0;
+}
+  
+  
+
+void Packet_idh2gcroc3_10G::dump(std::ostream &os)
+{
+  identify(os);
+  if ( _broken) 
+    {
+      os << " ** corrupt packet **" << endl;
+      return;
+    }
+
+  decode();
+
+  /*  
+  os << "Nr of samples: " << iValue(0, "SAMPLES") << endl;
+
+  for (int s = 0; s < iValue(0,"SAMPLES"); s++)
+    {
+      os << iValue(s,"TIMESTAMP") << " ";
+    }
+  os << endl;
+  
+  for ( int i = 0; i < 144; i++)
+    {
+      os << setw(3) << i  << " | ";
+      
+      for (int s = 0; s < iValue(0,"SAMPLES"); s++)
+	{
+	  os << setw(4) << iValue(i,s);
+	}
+      os << endl;
+    }
+
+  os << endl << "---------------------------------------------------------------------" << endl << endl;
+  */
+  
+  int e = iValue(0, "NR_WF");
+  os << " Number of Channels:  " << iValue(0, "CHANNELS") << endl;
+  os << " Number of Waveforms: " << e << endl;
+  os << " Lines with CRC errors: " << iValue(0, "CRCERRORS") << "  with hamming flags: " << iValue(0, "HAMMINGERRORS")
+     << "  decoding errors: " << iValue(0, "DECODEERRORS") << " (bad frames " << iValue(0, "BADFRAMES")
+     << ", bad lines " << iValue(0, "BADLINES") << ", late lines " << iValue(0, "LATELINES")
+     << ", resets " << iValue(0, "RESETS") << ")" << endl << endl;
+
+  for ( int n = 0; n < e; n++)
+    {
+      os << " ----- Waveform  " << n << " Samples: " << iValue(n, "SAMPLESIZE") << "  Timestamp: 0x" << hex << lValue(n,0,0) << "  " << dec << lValue(n,0,0)  << endl;
+      for ( int ic =0; ic < iValue(0,"CHANNELS"); ic++)
+	{
+
+	  int show_this = 0;
+	  for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
+	    {
+	      if ( iValue (n, is, ic) || iValue (n, is, ic, "TOT") || iValue (n, is, ic, "TOA") ) show_this =1;
+	    }
+	  
+	  if ( show_this)
+	    {
+	      os << setw(4) << ic << " | ADC | " << hex;
+	      for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
+		{
+		  os << " " << setw(4)  << iValue (n, is, ic);
+		}
+	      os << dec << endl;
+
+	      // for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
+	      // 	{
+	      // 	  os << " " << setw(10)  <<  lValue(n,is,ic);;
+	      // 	}
+	      // os << dec << endl;
+
+
+
+	      
+	      os << setw(4) << ic << " | TOT | " << hex;
+	      for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
+		{
+		  os << " " << setw(4) << iValue (n, is, ic, "TOT");
+		}
+	      os << dec << endl;
+	      
+	      os << setw(4) << ic << " | TOA | " << hex;
+	      for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
+		{
+		  os << " " << setw(4) << iValue (n, is, ic, "TOA");
+		}
+	      os << dec << endl;
+
+	      // the hamming error bits (H1 H2 H3), only if there are any
+	      int has_error = 0;
+	      for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
+		{
+		  if ( iValue (n, is, ic, "ERROR") ) has_error = 1;
+		}
+	      if ( has_error)
+		{
+		  os << setw(4) << ic << " | ERR | ";
+		  for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
+		    {
+		      os << " " << setw(4) << iValue (n, is, ic, "ERROR");
+		    }
+		  os << endl;
+		}
+	      
+	      // os << "ECTR" << " | " ;
+	      // for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
+	      //   {
+	      //     os << " " << setw(4) << iValue (n, is, ic, "EVENT_COUNTER");
+	      //   }
+	      // os << dec << endl;
+	      // os << "TOUT" << " | " ;
+	      // for ( int is = 0; is < iValue(n, "SAMPLESIZE") ; is++)
+	      //   {
+	      //     os << " " << setw(4) << iValue (n, is, ic, "TRIGGER_OUT");
+	      //   }
+	      // os << dec << endl;
+	      os << dec << endl;
+	    }
+	}
+    }
+  
+  
+}
+
+int Packet_idh2gcroc3_10G::parse_timeline ()
+{
+  //coutfl << "Waveform size " << waveform.size() << endl; // first one
+  auto itr =  waveform.begin();  // first one
+  if ( itr == waveform.end()) return -1;
+  
+  uint64_t old_timestamp = (*itr)->timestamp;  // get the initial values
+  //  unsigned int old_trigger_in = (*itr)->trigger_in;  // get the initial values
+  //unsigned int old_trigger_out = (*itr)->trigger_out;  // get the initial values
+
+  int pos = 0;
+  event_bounds *eb = new event_bounds;
+  eb->first = pos;
+  eb->length=1;
+
+
+  for (; itr != waveform.end(); ++itr)
+    {
+      // coutfl << "sample trigger " << (*itr)->trigger_out << " pos " << pos << " diff: " << (*itr)->timestamp - old_timestamp << endl;
+
+      //      if ( (*itr)->trigger_in  != old_trigger_in ||  (*itr)->trigger_out  != old_trigger_out)
+
+      //coutfl << " sample   " << pos  << " ts " << (*itr)->timestamp << " diff: " << (*itr)->timestamp - old_timestamp << endl;
+
+
+
+      if ( (*itr)->timestamp - old_timestamp > CONTIGUOUS_CLOCK )
+	{
+	  eb->length--;
+	   // coutfl << "adding new event boundary at index " << eb->first << " with length " <<  eb->length << " pos is " << pos
+	   // 	  << " old ts = " << old_timestamp << " new = " << (*itr)->timestamp << " diff: " << (*itr)->timestamp - old_timestamp << endl;
+	  _eventlist.push_back(eb);
+	  eb = new event_bounds;
+	  eb->first = pos;
+	  eb->length=1;
+	}
+      old_timestamp = (*itr)->timestamp;
+      //old_trigger_in = (*itr)->trigger_in;  // get the initial values
+      //old_trigger_out = (*itr)->trigger_out;  // get the initial values
+      eb->length++;
+      pos++;
+    }
+  
+  eb->length--;
+  //  coutfl << "adding new event boundary at index " << eb->first << " with length " <<  eb->length << " pos is " << pos << endl;
+  _eventlist.push_back(eb);
+  return 0;
+}
+
+Packet_idh2gcroc3_10G::~Packet_idh2gcroc3_10G()
+{
+
+  for (auto itr =  waveform.begin(); itr != waveform.end(); ++itr)
+    {
+      delete *itr;
+    }
+   for (auto itr =  _eventlist.begin(); itr != _eventlist.end(); ++itr)
+    {
+      delete *itr;
+    }
+   for (auto itr =  _open.begin(); itr != _open.end(); ++itr)
+    {
+      delete itr->second;
+    }
+ 
+
+}
+
+

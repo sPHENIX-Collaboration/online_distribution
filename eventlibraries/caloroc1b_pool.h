@@ -3,7 +3,7 @@
 
 #include "ROC_pool.h"
 
-// Pool for packet format 310 (IDCALOROC1B), same API as oncsSub_idcaloroc1b.
+// Pool for packet format 310 (IDCALOROC1B), same API as Packet_idcaloroc1b.
 //
 // Waveforms are found per link (a timestamp step of more than
 // CONTIGUOUS_CLOCK starts a new one) and, as in the Packet, waveform wf

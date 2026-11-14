@@ -17,12 +17,12 @@ installedheaders = \
   event_io.h \
   ioselect.h \
   Event.h \
-  oncsEvent.h \
+  Event_A.h \
   oncsEvtConstants.h \
   oncsEvtStructures.h \
   oncsStructures.h \
   oncsSubConstants.h \
-  oncsSubevent.h \
+  Packet_A.h \
   EventTypes.h \
   Eventiterator.h \
   EvtConstants.h \
@@ -89,38 +89,38 @@ allheaders = \
   ospBuffer.h \
   ospEvent.h \
   oncsBuffer.h \
-  oncsCollection.h \
-  oncsEvent.h \
+  packet_collection.h \
+  Event_A.h \
   oncsEventiterator.h \
   rcdaqEventiterator.h \
   oncsEvtConstants.h \
   oncsEvtStructures.h \
   oncsStructures.h \
   oncsSubConstants.h \
-  oncsSub_id2evt.h \
-  oncsSub_id4evt.h \
-  oncsSub_id8evt.h \
-  oncsSub_idrtclock.h \
-  oncsSub_idsis3300.h \
-  oncsSub_idsis3300r.h \
-  oncsSub_idcaenv792.h \
-  oncsSub_idcaenv1742.h \
-  oncsSub_idcaenv1742calib.h \
-  oncsSub_idbspetdata.h \
-  oncsSub_idrcpetdata.h \
-  oncsSub_iduppetdata.h \
-  oncsSub_iduppetdata_v104.h \
-  oncsSub_iduppetparams.h \
-  oncsSub_idsrs_v01.h \
-  oncsSub_idfnalmwpc.h \
-  oncsSub_idfnalmwpcv2.h \
-  oncsSub_iddrs4v1.h \
-  oncsSub_iddigitizerv1.h \
-  oncsSub_idh2gcroc3.h \
-  oncsSub_idh2gcroc3_10G.h \
-  oncsSub_idcaloroc1b.h \
-  oncsSub_idastrov1.h \
-  oncsSubevent.h \
+  Packet_id2evt.h \
+  Packet_id4evt.h \
+  Packet_id8evt.h \
+  Packet_idrtclock.h \
+  Packet_idsis3300.h \
+  Packet_idsis3300r.h \
+  Packet_idcaenv792.h \
+  Packet_idcaenv1742.h \
+  Packet_idcaenv1742calib.h \
+  Packet_idbspetdata.h \
+  Packet_idrcpetdata.h \
+  Packet_iduppetdata.h \
+  Packet_iduppetdata_v104.h \
+  Packet_iduppetparams.h \
+  Packet_idsrs_v01.h \
+  Packet_idfnalmwpc.h \
+  Packet_idfnalmwpcv2.h \
+  Packet_iddrs4v1.h \
+  Packet_iddigitizerv1.h \
+  Packet_idh2gcroc3.h \
+  Packet_idh2gcroc3_10G.h \
+  Packet_idcaloroc1b.h \
+  Packet_idastrov1.h \
+  Packet_A.h \
   packet.h \
   packetConstants.h \
   caen_correction.h \
@@ -149,33 +149,33 @@ allsources = \
   oBuffer.cc \
   ospBuffer.cc \
   oncsBuffer.cc \
-  oncsEvent.cc \
+  Event_A.cc \
   oncsEventiterator.cc \
   rcdaqEventiterator.cc \
-  oncsSub_idcstr.cc \
-  oncsSub_id2evt.cc \
-  oncsSub_id4evt.cc \
-  oncsSub_id8evt.cc \
-  oncsSub_idrtclock.cc \
-  oncsSub_idsis3300.cc \
-  oncsSub_idsis3300r.cc \
-  oncsSub_idcaenv792.cc \
-  oncsSub_idcaenv1742.cc \
-  oncsSub_idcaenv1742calib.cc \
-  oncsSub_idbspetdata.cc \
-  oncsSub_idrcpetdata.cc \
-  oncsSub_iduppetdata.cc \
-  oncsSub_iduppetdata_v104.cc \
-  oncsSub_iduppetparams.cc \
-  oncsSub_idsrs_v01.cc \
-  oncsSub_idfnalmwpc.cc \
-  oncsSub_idfnalmwpcv2.cc \
-  oncsSub_iddrs4v1.cc \
-  oncsSub_idh2gcroc3.cc \
-  oncsSub_idh2gcroc3_10G.cc \
-  oncsSub_idcaloroc1b.cc \
-  oncsSub_idastrov1.cc \
-  oncsSubevent.cc \
+  Packet_idcstr.cc \
+  Packet_id2evt.cc \
+  Packet_id4evt.cc \
+  Packet_id8evt.cc \
+  Packet_idrtclock.cc \
+  Packet_idsis3300.cc \
+  Packet_idsis3300r.cc \
+  Packet_idcaenv792.cc \
+  Packet_idcaenv1742.cc \
+  Packet_idcaenv1742calib.cc \
+  Packet_idbspetdata.cc \
+  Packet_idrcpetdata.cc \
+  Packet_iduppetdata.cc \
+  Packet_iduppetdata_v104.cc \
+  Packet_iduppetparams.cc \
+  Packet_idsrs_v01.cc \
+  Packet_idfnalmwpc.cc \
+  Packet_idfnalmwpcv2.cc \
+  Packet_iddrs4v1.cc \
+  Packet_idh2gcroc3.cc \
+  Packet_idh2gcroc3_10G.cc \
+  Packet_idcaloroc1b.cc \
+  Packet_idastrov1.cc \
+  Packet_A.cc \
   oncs_mnemonic.cc \
   packet_mnemonic.cc \
   caen_correction.cc \

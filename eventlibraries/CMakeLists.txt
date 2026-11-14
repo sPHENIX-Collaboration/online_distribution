@@ -143,33 +143,33 @@ add_library(NoRootEvent SHARED
   oBuffer.cc
   ospBuffer.cc
   oncsBuffer.cc
-  oncsEvent.cc
+  Event_A.cc
   oncsEventiterator.cc
   rcdaqEventiterator.cc
-  oncsSub_idcstr.cc
-  oncsSub_id2evt.cc
-  oncsSub_id4evt.cc
-  oncsSub_id8evt.cc
-  oncsSub_idrtclock.cc
-  oncsSub_idsis3300.cc
-  oncsSub_idsis3300r.cc
-  oncsSub_idcaenv792.cc
-  oncsSub_idcaenv1742.cc
-  oncsSub_idcaenv1742calib.cc
-  oncsSub_idbspetdata.cc
-  oncsSub_idrcpetdata.cc
-  oncsSub_iduppetdata.cc
-  oncsSub_iduppetdata_v104.cc
-  oncsSub_iduppetparams.cc
-  oncsSub_idsrs_v01.cc
-  oncsSub_idfnalmwpc.cc
-  oncsSub_idfnalmwpcv2.cc
-  oncsSub_iddrs4v1.cc
-  oncsSub_idh2gcroc3.cc
-  oncsSub_idh2gcroc3_10G.cc
-  oncsSub_idcaloroc1b.cc
-  oncsSub_idastrov1.cc
-  oncsSubevent.cc
+  Packet_idcstr.cc
+  Packet_id2evt.cc
+  Packet_id4evt.cc
+  Packet_id8evt.cc
+  Packet_idrtclock.cc
+  Packet_idsis3300.cc
+  Packet_idsis3300r.cc
+  Packet_idcaenv792.cc
+  Packet_idcaenv1742.cc
+  Packet_idcaenv1742calib.cc
+  Packet_idbspetdata.cc
+  Packet_idrcpetdata.cc
+  Packet_iduppetdata.cc
+  Packet_iduppetdata_v104.cc
+  Packet_iduppetparams.cc
+  Packet_idsrs_v01.cc
+  Packet_idfnalmwpc.cc
+  Packet_idfnalmwpcv2.cc
+  Packet_iddrs4v1.cc
+  Packet_idh2gcroc3.cc
+  Packet_idh2gcroc3_10G.cc
+  Packet_idcaloroc1b.cc
+  Packet_idastrov1.cc
+  Packet_A.cc
   oncs_mnemonic.cc
   packet_mnemonic.cc
   caen_correction.cc
@@ -285,9 +285,9 @@ set(EVENTLIB_TOOLS
 # install - mirrors pkginclude_HEADERS (installedheaders + msgheaders)
 # ----------------------------------------------------------------------
 set(EVENTLIB_INSTALL_HEADERS
-  generalDefinitions.h event_io.h Event.h oncsEvent.h
+  generalDefinitions.h event_io.h Event.h Event_A.h
   oncsEvtConstants.h oncsEvtStructures.h oncsStructures.h
-  oncsSubConstants.h oncsSubevent.h EventTypes.h Eventiterator.h
+  oncsSubConstants.h Packet_A.h EventTypes.h Eventiterator.h
   EvtConstants.h EvtStructures.h BufferConstants.h phenixTypes.h
   phenixOnline.h testEventiterator.h fileEventiterator.h
   listEventiterator.h dpipe_filter.h buffer.h simpleRandom.h

@@ -6,7 +6,7 @@
 
 #include "oncsSubConstants.h"
 #include "oncsEvtStructures.h"
-#include "oncsSubevent.h"
+#include "Packet_A.h"
 
 
 class  ospEvent {

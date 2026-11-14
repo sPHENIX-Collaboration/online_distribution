@@ -1,0 +1,33 @@
+#include "Packet_id2evt.h"
+#include <string.h>
+
+Packet_id2evt::Packet_id2evt(subevtdata_ptr data)
+  :Packet_w2 (data){}
+
+
+int *Packet_id2evt::decode ( int *nwout)
+{
+  int *p,*k;
+  int olength;
+  int temp[MAX_OUTLENGTH];
+  int dlength = ( getLength()-4)*2 - getPadding();
+  int i;
+  short *SubeventData = (short * ) &SubeventHdr->data;
+
+  int status = decode_id2evt( temp, SubeventData, dlength
+			  ,MAX_OUTLENGTH, &olength);
+  if (status) return NULL;
+
+  p = new int[olength];
+  k = p;
+  for (i =0; i<olength; i++) *k++ = temp[i];
+  *nwout = olength;
+  return p;
+}
+
+
+int Packet_id2evt::iValue(const int ch, const char *what)
+{
+  if ( strcmp(what, "CHANNELS") == 0) return getArraylength(what);
+  return Packet_A::iValue(ch, what);
+}

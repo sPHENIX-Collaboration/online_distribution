@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "oncsEvent.h"
+#include "Event_A.h"
 
 testEventiterator::~testEventiterator()
 {
@@ -171,7 +171,7 @@ testEventiterator::getNextEvent()
       scale *= 10.;
     }
 
-  Event *e = new  oncsEvent(e_data);
+  Event *e = new  Event_A(e_data);
   e->convert();
 
   return e;
