@@ -34,7 +34,7 @@ Eventiterator *it;
 
 void exitmsg()
 {
-  COUT << "** usage: ddump -ecnstdfghiIFTOv datastream" << std::endl;
+  COUT << "** usage: ddump -ecnstdfghiTOv datastream" << std::endl;
   COUT << "    type  ddump -h   for more help" << std::endl;
   exit(0);
 }
@@ -83,7 +83,6 @@ void exithelp()
   COUT << "      56 |  0038 0039 003a 003b 003c 003d 003e 003f" << std::endl;
   COUT << std::endl;
   COUT << "   The -i option also lets the event identify itself." << std::endl;
-  COUT << "   The -I option gets you an in-depth identification of the packets." << std::endl;
 
   COUT << std::endl;
   COUT << "   > ddump -p 1002 -T -i" << std::endl;
@@ -97,12 +96,6 @@ void exithelp()
   COUT << "      40 |  0028 0029 002a 002b 002c 002d 002e 002f" << std::endl;
   COUT << "      48 |  0030 0031 0032 0033 0034 0035 0036 0037" << std::endl;
   COUT << "      56 |  0038 0039 003a 003b 003c 003d 003e 003f" << std::endl;
-
-  COUT << std::endl;
-  COUT << "   The -F option also causes the frames in the event to be listed." << std::endl;
-  COUT << "   If you list a particular packet, you will get the frame where" << std::endl; 
-  COUT << "   this packet is in. This only applies to the legacy PHENIX-format" << std::endl; 
-  COUT << "   packets; the ePIC packets have no frames." << std::endl; 
 
   COUT << std::endl;
 
@@ -122,7 +115,6 @@ void exithelp()
   COUT << " -p <Packet Id>" << std::endl;
   COUT << " -t <event type>" << std::endl;
   COUT << " -i <print event identity>" << std::endl;
-  COUT << " -I <print in-depth packet identity (default is short form)>" << std::endl;
   COUT << " -f (stream is a file)" << std::endl;
   COUT << " -T (stream is a test stream)" << std::endl;
   COUT << " -r (stream is a rcdaq monitoring stream)" << std::endl;
@@ -173,10 +165,6 @@ main(int argc, char *argv[])
   int ittype = FILEEVENTITERATOR;
   int dumpstyle = EVT_HEXADECIMAL;
   int identify = 0;
-  int fullidentify = 0;
-  int listframe = 0;
-  int listHistory = 0;
-  int listError = 0;
   int generic = 0;
 
   extern char *optarg;
@@ -184,7 +172,7 @@ main(int argc, char *argv[])
 
   std::vector<int> packetSelection;
 
-  while ((c = getopt(argc, argv, "n:c:e:p:t:idsxfrghIFTOHEv")) != EOF)
+  while ((c = getopt(argc, argv, "n:c:e:p:t:idsxfrghTOv")) != EOF)
     switch (c) 
       {
       case 'e':
@@ -233,22 +221,6 @@ main(int argc, char *argv[])
 
       case 'i':
 	identify = 1;
-	break;
-
-      case 'I':
-	fullidentify = 1;
-	break;
-
-      case 'F':
-	listframe = 1;
-	break;
-
-      case 'H':
-	listHistory = 1;
-	break;
-
-      case 'E':
-	listError = 1;
 	break;
 
       case 'g':
@@ -423,30 +395,22 @@ main(int argc, char *argv[])
 		{
 		  if ( (s = evt->getPacket(*vit)) )  // get the subevent
 		    {
-		      if (listframe)  evt->listFrame (*vit);
-		      if (fullidentify) s->fullIdentify();
 		      if (generic) s->gdump(dumpstyle);
 		      else s->dump();
-		      if (listHistory) evt->listHistory();
-		      if (listError) evt->listError();
 		      delete s;
 		    }
 		}
 	    }
 	  else
 	    {
-	      if (listframe)  evt->listFrame();
 	      Packet *p[10000];
 	      int nw = evt->getPacketList(p, 10000);
 	      for (i=0; i<nw; i++)
 		{
-		  if (fullidentify) p[i]->fullIdentify();
 		  if (generic) p[i]->gdump(dumpstyle);
 		  else p[i]->dump();
 		  delete p[i];
 		}
-	      if (listHistory) evt->listHistory();
-	      if (listError) evt->listError();
 	    }
 	  
 		

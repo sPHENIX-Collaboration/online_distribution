@@ -34,7 +34,7 @@ Eventiterator *it;
 
 void exitmsg()
 {
-  COUT << "** usage: dlist -ecntfTOiIh datastream" << std::endl;
+  COUT << "** usage: dlist -ecntfTOih datastream" << std::endl;
   COUT << "    type  dlist -h  for more help" << std::endl;
   exit(0);
 }
@@ -89,7 +89,6 @@ void exithelp()
   COUT << "  -n <number> repeat for n events (0: until end of stream)" << std::endl;
   COUT << "  -t <event type>" << std::endl;
   COUT << "  -i <print event identity>" << std::endl;
-  COUT << "  -I <print in-depth packet identity>" << std::endl;
   COUT << "  -f (stream is a file)" << std::endl;
   COUT << "  -T (stream is a test stream)" << std::endl;
   COUT << "  -r (stream is a rcdaq monitoring stream)" << std::endl;
@@ -129,7 +128,6 @@ main(int argc, char *argv[])
 
   int ittype = FILEEVENTITERATOR;
   int identify = 0;
-  int fullidentify = 0;
 
   extern char *optarg;
   extern int optind;
@@ -137,7 +135,7 @@ main(int argc, char *argv[])
   if (argc < 2) exitmsg();
 
 
-  while ((c = getopt(argc, argv, "n:c:e:t:iIrfhTOv")) != EOF)
+  while ((c = getopt(argc, argv, "n:c:e:t:irfhTOv")) != EOF)
     switch (c) 
       {
       case 'e':
@@ -180,10 +178,6 @@ main(int argc, char *argv[])
 
       case 'i':
 	identify = 1;
-	break;
-
-      case 'I':
-	fullidentify = 1;
 	break;
 
        case 'T':
@@ -336,8 +330,7 @@ main(int argc, char *argv[])
 	  int nw = evt->getPacketList(p, 10000);
 	  for (i=0; i<nw; i++)
 	    {
-	      if (fullidentify) p[i]->fullIdentify();
-	      else p[i]->identify();
+	      p[i]->identify();
 	      delete p[i];
 	    }
 	  delete evt;
