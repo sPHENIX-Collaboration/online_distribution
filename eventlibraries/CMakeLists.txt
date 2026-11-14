@@ -299,6 +299,12 @@ set(EVENTLIB_INSTALL_HEADERS
   date_filter_msg_buffer.h filter_msg_buffer.h remote_msg_buffer.h
   strnstr.h)
 
+# the same version numbers as the Automake (libtool) build: libX.so.0.0.0,
+# with libX.so.0 and libX.so pointing to it. Programs record libX.so.0, so
+# programs linked against either build run with the other one.
+set_target_properties(NoRootEvent message Event Rootmessage PROPERTIES
+  VERSION 0.0.0 SOVERSION 0)
+
 install(TARGETS NoRootEvent message Event Rootmessage ${EVENTLIB_TOOLS}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

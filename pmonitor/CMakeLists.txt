@@ -108,6 +108,9 @@ if(FROG_INCLUDE_DIR)
   target_compile_definitions(pmonitor PRIVATE HAVE_FROG)
 endif()
 
+# the same version numbers as the Automake (libtool) build, see eventlibraries
+set_target_properties(pmonitor PROPERTIES VERSION 0.0.0 SOVERSION 0)
+
 install(TARGETS pmonitor LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/libpmonitor_rdict.pcm
