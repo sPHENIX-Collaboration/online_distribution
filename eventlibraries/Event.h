@@ -69,6 +69,15 @@ public:
 
   virtual void identify(std::ostream& os = std::cout) const = 0;
 
+  // These four did something only for the old PHENIX format, which is gone.
+  // They must stay, in this place: programs compiled against older versions
+  // of this library find the virtual functions by their position, and would
+  // otherwise call the wrong function (e.g. getPacket) without being rebuilt.
+  virtual void listFrame(  const int /*id*/=0, std::ostream& /*os*/=std::cout) const {};
+  virtual void listHistory(  const int /*id*/=0, std::ostream& /*os*/=std::cout) const {};
+  virtual void listError(  const int /*id*/=0, std::ostream& /*os*/=std::cout) const {};
+  virtual unsigned int getFrameEntry(  const char * /*what*/, const int /*id*/=0, const int /*index */=0) const { return 0; };
+
 
 
   // ***** packet handling *****
