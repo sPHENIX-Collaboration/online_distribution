@@ -36,7 +36,14 @@ gzbuffer::gzbuffer (PHDWORD *array , const int length )
 
   uncompress ( (Bytef*) bufferarray, &i,  (Bytef*) &array[4], bytes); 
 
-  theBuffer = new prdfBuffer(bufferarray, outputlength);
+  if ( bufferarray[1]== ONCSBUFFERMARKER || buffer::u4swap(bufferarray[1])== ONCSBUFFERMARKER )
+    {
+      theBuffer = new oncsBuffer(bufferarray, outputlength);
+    }
+  else
+    {
+      theBuffer = 0;
+    }
 
 }
 
@@ -50,7 +57,8 @@ int gzbuffer::getBufferSequence() const
 // ---------------------------------------------------------
 Event * gzbuffer::getEvent()
 {
-  return theBuffer->getEvent();
+  if ( theBuffer) return theBuffer->getEvent();
+  return 0;
 }
 
 // ---------------------------------------------------------

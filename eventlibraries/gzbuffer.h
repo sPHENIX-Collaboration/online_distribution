@@ -1,12 +1,12 @@
 #ifndef __GZBUFFER_H
 #define __GZBUFFER_H
 
-#include "prdfBuffer.h"
+#include "oncsBuffer.h"
 
 #ifndef __CINT__
-class WINDOWSEXPORT gzbuffer : public prdfBuffer{
+class WINDOWSEXPORT gzbuffer : public buffer {
 #else
-class  gzbuffer : public prdfBuffer{
+class  gzbuffer : public buffer {
 #endif
 
 public:
@@ -18,11 +18,14 @@ public:
 
   Event * getEvent();
   int getBufferSequence() const;
+  int * getEventData() { return ( theBuffer ? theBuffer->getEventData() : 0); };
+  int isGood() const { return is_good; };
 
 protected:
 
   PHDWORD  *bufferarray;
   buffer *theBuffer;
+  int is_good;
 
 
 };

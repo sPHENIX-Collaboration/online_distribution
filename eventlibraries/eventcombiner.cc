@@ -1,12 +1,9 @@
 #include "fileEventiterator.h"
 #include "testEventiterator.h"
 #include "phenixTypes.h"
-#include "A_Event.h"
-#include "ogzBuffer.h"
-#include "ophBuffer.h"
+#include "oncsEvent.h"
 #include "ospBuffer.h"
 #include "EventTypes.h"
-#include "oEvent.h"
 
 #include <cstdlib>
 #include <unistd.h>
@@ -59,7 +56,7 @@ void exithelp()
   COUT <<  std::endl;
   COUT << " Syntax:"<< std::endl;
   COUT <<  std::endl;
-  COUT << "      eventcombiner [-v] [-i] [-n number] [-u] [-p] [-h]  inputfile1 inputfile2 ..."<< std::endl;
+  COUT << "      eventcombiner [-v] [-i] [-n number] [-f] [-x] [-h]  inputfile1 inputfile2 ..."<< std::endl;
   COUT << " e.g  eventcombiner -v /export/rcfdata/dcm_data/built_evt/rc_3612.prdfz /export/rcfdata/dcm_data/rc/*3612*" << std::endl;
   COUT << " will combine all the *3612* (from one run number) together in the file. "<< std::endl;
   COUT << " Options:" << std::endl;
@@ -68,7 +65,6 @@ void exithelp()
   COUT << "  -e <event number> start with event number (number in evt. header)" << std::endl;
   COUT << "  -c <event number> start with nth event" << std::endl;
   COUT << "  -n <number>   stop after so many events" << std::endl;
-  COUT << "  -p  read and write legacy PHENIX format data, default is sPHENIX "<< std::endl;
   //  COUT << "  -u  write uncompressed data, default is compressed "<< std::endl;
   COUT << "  -f  force output file overwrite, normally you cannot overwrite an existing file (safety belt)"<< std::endl;
   COUT << "  -x  ignore event numbers (allow non-matching evt nrs to be combined, DANGEROUS)"<< std::endl;
@@ -102,7 +98,6 @@ main(int argc, char *argv[])
   int eventnr = 0;
   int ignoreeventnr = 0;
   //  int gzipcompress = 0;
-  int legacyphenix = 0;
   
   extern char *optarg;
   extern int optind;
@@ -118,7 +113,7 @@ main(int argc, char *argv[])
 
 
 
-  while ((c = getopt(argc, argv, "n:c:e:vipfhx")) != EOF)
+  while ((c = getopt(argc, argv, "n:c:e:vifhx")) != EOF)
     {
 
       switch (c) 
@@ -140,11 +135,7 @@ main(int argc, char *argv[])
 	//   gzipcompress = 1;
 	//   break;
 
-	case 'p':   // do not gzip-compress
-	  legacyphenix = 1;
-	  break;
-
-	case 'x':   // do not gzip-compress
+	case 'x':   // ignore event numbers
 	  ignoreeventnr = 1;
 	  break;
 
@@ -228,14 +219,7 @@ main(int argc, char *argv[])
       }
     if (verbose) COUT << "Opened file: " <<  filename << std::endl;
     
-    if (legacyphenix) 
-      {
-	ob = new ophBuffer (fd, buffer, buffer_size);
-      }
-    else
-      {
-	ob = new ospBuffer (fd, buffer, buffer_size);
-      }
+    ob = new ospBuffer (fd, buffer, buffer_size);
     
     int count = 0;
 

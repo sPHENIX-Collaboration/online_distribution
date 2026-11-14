@@ -17,7 +17,6 @@ installedheaders = \
   event_io.h \
   ioselect.h \
   Event.h \
-  A_Event.h \
   oncsEvent.h \
   oncsEvtConstants.h \
   oncsEvtStructures.h \
@@ -41,36 +40,15 @@ installedheaders = \
   gzbuffer.h \
   lzobuffer.h \
   bz2buffer.h \
-  prdfBuffer.h \
   oBuffer.h \
-  ophBuffer.h \
   ospBuffer.h \
-  oEvent.h \
   ospEvent.h \
-  ogzBuffer.h \
-  olzoBuffer.h \
-  oamlBuffer.h \
   oncsBuffer.h \
   oncsEventiterator.h \
   rcdaqEventiterator.h \
   packet.h \
   packetConstants.h \
-  packet_w124.h \
-  packet_A.h \
-  packetPublic.h \
-  packetV1Public.h \
-  errorBlock.h \
-  packetRoutines.h \
   decoding_routines.h \
-  packetHeaders.h \
-  Cpacket.h \
-  packetHdr.h \
-  packetHdrV1.h \
-  formatError.h \
-  dataBlock.h \
-  framePackets.h \
-  framePublic.h \
-  frameV1Public.h \
   caen_correction.h \
   caen_calibration.h \
   ROC_pool.h \
@@ -87,30 +65,6 @@ allheaders = \
   phenixOnline.h \
   phenixTypes.h \
   printmsg.h \
-  Cframe.h \
-  CframeV1.h \
-  Cpacket.h \
-  CpacketV1.h \
-  dataBlock.h \
-  dataBlockHdr.h \
-  dataBlockPublic.h \
-  errorBlock.h \
-  fakeFrame.h \
-  formatError.h \
-  formatIO.h \
-  frameHdr.h \
-  frameHdrV1.h \
-  framePackets.h \
-  framePublic.h \
-  frameRoutines.h \
-  frameSourceIds.h \
-  frameV1Public.h \
-  packetHdr.h \
-  packetHdrV1.h \
-  packetPublic.h \
-  packetRoutines.h \
-  packetV1Public.h \
-  A_Event.h \
   BufferConstants.h \
   Event.h \
   EventTypes.h \
@@ -127,19 +81,13 @@ allheaders = \
   dpipe_filter.h \
   PHmd5Value.h \
   buffer.h \
-  prdfBuffer.h \
   decoding_routines.h \
   generalDefinitions.h \
   gzbuffer.h \
   lzobuffer.h \
   oBuffer.h \
-  ophBuffer.h \
   ospBuffer.h \
-  oEvent.h \
   ospEvent.h \
-  ogzBuffer.h \
-  olzoBuffer.h \
-  oamlBuffer.h \
   oncsBuffer.h \
   oncsCollection.h \
   oncsEvent.h \
@@ -175,12 +123,6 @@ allheaders = \
   oncsSubevent.h \
   packet.h \
   packetConstants.h \
-  packetHeaders.h \
-  packet_A.h \
-  packet_collection.h \
-  packet_id2evt.h \
-  packet_id4evt.h \
-  packet_w124.h \
   caen_correction.h \
   caen_calibration.h \
   ROC_pool.h \
@@ -189,21 +131,7 @@ allheaders = \
 
 
 allsources = \
-  Cframe.C \
-  CframeV1.C \
-  Cpacket.C \
-  CpacketV1.C \
-  dataBlock.C \
-  errorBlock.C \
-  fakeFrame.C \
-  formatError.C \
-  formatIO.C \
-  framePackets.C \
-  frameRoutines.C \
-  packetRoutines.C \
-  A_Event.cc \
   buffer.cc \
-  prdfBuffer.cc \
   decoding_routines.cc \
   evt_mnemonic.cc \
   simpleRandom.cc \
@@ -217,14 +145,9 @@ allsources = \
   gzbuffer.cc \
   lzobuffer.cc \
   bz2buffer.cc \
-  oEvent.cc \
   ospEvent.cc \
   oBuffer.cc \
-  ophBuffer.cc \
-  ogzBuffer.cc \
-  olzoBuffer.cc \
   ospBuffer.cc \
-  oamlBuffer.cc \
   oncsBuffer.cc \
   oncsEvent.cc \
   oncsEventiterator.cc \
@@ -254,12 +177,7 @@ allsources = \
   oncsSub_idastrov1.cc \
   oncsSubevent.cc \
   oncs_mnemonic.cc \
-  packet_A.cc \
-  packet_idcstr.cc \
-  packet_id2evt.cc \
-  packet_id4evt.cc \
   packet_mnemonic.cc \
-  packet_w124.cc \
   caen_correction.cc \
   caen_calibration.cc \
   ROC_pool.cc \
@@ -328,10 +246,7 @@ bin_PROGRAMS = \
   dpipe \
   ddump \
   dlist \
-  changeid \
-  changehitformat \
   eventcombiner \
-  prdf2prdf \
   prdfcheck \
   prdfsplit \
   eventServer \
@@ -351,9 +266,6 @@ if LINUX
 dpipe_LDFLAGS = -Wl,-export-dynamic
 endif
 
-changeid_SOURCES = changeid.cc
-changehitformat_SOURCES	= changehitformat.cc
-prdf2prdf_SOURCES = prdf2prdf.cc
 prdfcheck_SOURCES = prdfcheck.cc
 prdfsplit_SOURCES = prdfsplit.cc
 eventServer_SOURCES = eventServer.cc
@@ -369,9 +281,6 @@ ddump_LDADD = libNoRootEvent.la libmessage.la  -ldl
 eventcombiner_LDADD = libNoRootEvent.la libmessage.la -ldl
 
 
-changeid_LDADD = libNoRootEvent.la libmessage.la -ldl
-changehitformat_LDADD = libNoRootEvent.la libmessage.la -ldl
-prdf2prdf_LDADD = libNoRootEvent.la libmessage.la -ldl
 prdfcheck_LDADD = libNoRootEvent.la -ldl
 prdfsplit_LDADD = libNoRootEvent.la -ldl
 

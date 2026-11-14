@@ -271,8 +271,6 @@ unsigned long long ospBuffer::getBytesWritten() const
 int ospBuffer::writeout()
 {
 
-  //  void *writeThread(void *);
-
   if ( ! good_object || fd <= 0 ) return -1;
 
 
@@ -300,42 +298,6 @@ int ospBuffer::writeout()
       dirty = 0;
       byteswritten += ip;
       return 0;
-#ifdef WITHTHREADS
-  
-    }
-  else
-    {
-      //wait for a potential old thread to complete
-      if (ThreadId) 
-	{
-	  pthread_join(ThreadId, NULL);
-	  byteswritten += thread_arg[2];  // the number of bytes written from previosu thread
-	}
-      if (! dirty) return 0;
-      
-      if (! has_end) addEoB();
-     
-      if (fd <  0) return 0;
-
-      //swap the buffers around
-      buffer_ptr tmp = bptr_being_written;
-      bptr_being_written = bptr;
-      bptr = tmp;
-      dirty = 0;
-      // now fork off the write thread
-
-      thread_arg[0] = (int) fd;
-      thread_arg[1] = (int)  bptr_being_written;
-      thread_arg[2] = 0;
-
-      //      COUT << "starting write thread" << std::endl;
-      int s = pthread_create(&ThreadId, NULL, ophBuffer::writeThread, (void *) thread_arg);
-      //COUT << "create status is " << s << std::endl;
-
-      return 0;
-
-    }
-#endif
 }
 
 

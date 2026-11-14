@@ -1,12 +1,12 @@
 #ifndef __BZ2BUFFER_H
 #define __BZ2BUFFER_H
 
-#include "prdfBuffer.h"
+#include "oncsBuffer.h"
 
 #ifndef __CINT__
-class WINDOWSEXPORT bz2buffer : public prdfBuffer{
+class WINDOWSEXPORT bz2buffer : public buffer {
 #else
-class  bz2buffer : public prdfBuffer{
+class  bz2buffer : public buffer {
 #endif
 
 public:
@@ -19,11 +19,14 @@ public:
   Event * getEvent();
 
   int getBufferSequence() const;
+  int * getEventData() { return ( theBuffer ? theBuffer->getEventData() : 0); };
+  int isGood() const { return is_good; };
 
 protected:
 
   PHDWORD  *bufferarray;
   buffer *theBuffer;
+  int is_good;
 
   int _broken;
 

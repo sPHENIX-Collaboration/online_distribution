@@ -88,11 +88,7 @@ lzobuffer::lzobuffer (PHDWORD *array , const int length )
 	//	bufferarray = 0;
 	//	return;
      }
-    if ( bufferarray[1]== BUFFERMARKER || buffer::u4swap(bufferarray[1])== BUFFERMARKER )
-      {
-	theBuffer = new prdfBuffer(bufferarray, outputlength);
-      }
-    else if ( bufferarray[1]== ONCSBUFFERMARKER || buffer::u4swap(bufferarray[1])== ONCSBUFFERMARKER )
+    if ( bufferarray[1]== ONCSBUFFERMARKER || buffer::u4swap(bufferarray[1])== ONCSBUFFERMARKER )
       {
 	theBuffer = new oncsBuffer(bufferarray, outputlength);
       }

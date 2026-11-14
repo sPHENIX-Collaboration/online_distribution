@@ -1,8 +1,8 @@
 #include "buffer.h"
+#include <iostream>
 #include "gzbuffer.h"
 #include "lzobuffer.h"
 #include "bz2buffer.h"
-#include "prdfBuffer.h"
 #include "oncsBuffer.h"
 
 
@@ -49,8 +49,7 @@ int buffer::makeBuffer( PHDWORD *bp, const int allocatedsize, buffer **bptr)
 
   else if ( bp[1]== BUFFERMARKER || buffer::u4swap(bp[1])== BUFFERMARKER )
     {
-      *bptr = new prdfBuffer ( bp, allocatedsize );
-      return 0;
+      std::cout << "this is a buffer in the legacy PHENIX (PRDF) format, which is no longer supported" << std::endl;
     }
 
   *bptr = 0;

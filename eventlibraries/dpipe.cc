@@ -11,15 +11,10 @@
 #include "testEventiterator.h"
 #include "listEventiterator.h"
 #include "rcdaqEventiterator.h"
-#include "ogzBuffer.h"
-#include "olzoBuffer.h"
-#include "oamlBuffer.h"
-#include "ophBuffer.h"
 #include "ospBuffer.h"
 #include "dpipe_filter.h"
 
 #include "phenixTypes.h"
-#include "oEvent.h"
 #include "stdio.h"
 #include "EventTypes.h"
 #ifdef HAVE_GETOPT_H
@@ -33,7 +28,6 @@
 #define DFILE 5
 #define DNULL 6
 #define LISTEVENTITERATOR 7
-#define OAML 8
 
 
 #ifndef WIN32
@@ -47,7 +41,7 @@ void sig_handler(...);
 
 void exitmsg()
 {
-  COUT << "** usage: dpipe -s -d -v -w -n -i -z -l -x source destination" << std::endl;
+  COUT << "** usage: dpipe -s -d -v -w -n -i -x source destination" << std::endl;
   COUT << "          dpipe -h for more help" << std::endl;
   exit(0);
 }
@@ -59,19 +53,12 @@ void evtcountexitmsg()
   exit(0);
 }
 
-void compressionexitmsg()
-{
-  COUT << "** cannot specify both -z and -l!" << std::endl;
-  COUT << "    type  dpipe -h  for more help" << std::endl;
-  exit(0);
-}
-
 void exithelp()
 {
   COUT <<  std::endl;
   COUT << " dpipe reads events from one source and writes it to a destination. The source can" << std::endl;
   COUT << " be any of the standard sources (ET pool, file, filelist, or test stream). The destination " << std::endl;
-  COUT << " can be a file, a ET pool, an AML server, or no destination at all (you cannot write to a test " << std::endl;
+  COUT << " can be a file, a ET pool, or no destination at all (you cannot write to a test " << std::endl;
   COUT << " stream). Like with a Unix pipe, you can move events through a chain of sources " << std::endl;
   COUT << " and destinations, for example, from one ET pool into another, or into a file. " << std::endl;
   COUT <<  std::endl;
@@ -90,8 +77,6 @@ void exithelp()
   COUT <<  std::endl;
   COUT << " > dpipe -s etpool -d file -i ONLINE d.evt" << std::endl;
   COUT <<  std::endl;
-  COUT << " If the output is a aml server, specify the destination as hostname:port: " << std::endl;
-  COUT << " > dpipe -s f -d a -i filename phnxbox4.phenix.bnl.gov:8900" << std::endl << std::endl;
   COUT << " Note that you can abbreviate the etpool, file, listfile, and Test to d, f, l, and T." << std::endl;
   COUT << " > dpipe -s etpool -d file  ONLINE d.evt" << std::endl;
   COUT << " is equivalent to " << std::endl;
@@ -100,15 +85,13 @@ void exithelp()
   COUT << "  List of options: " << std::endl;
   COUT << " -s [d or f or l or T] source is et pool, file, listfile, or Test stream" << std::endl;
   COUT << " -b <size in MB> in case you write to a file, specify the buffer size (default 4MB)" << std::endl;
-  COUT << " -d [d or f or a  or n] destination is et pool or file , aml server or nothing" << std::endl;
+  COUT << " -d [d or f or n] destination is et pool, file, or nothing" << std::endl;
   COUT << " -v verbose" << std::endl;
   COUT << " -w (time in milliseconds> wait time interval (in ms) between events to throttle the data flow" << std::endl;
   COUT << " -e <event number>  start from event number" << std::endl;
   COUT << " -c <number> get nth event (-e gives event with number n)" << std::endl;
   COUT << " -n <number> stop after so many events" << std::endl;
   COUT << " -i have each event identify itself" << std::endl;
-  COUT << " -z gzip-compress each output buffer" << std::endl;
-  COUT << " -l LZO-compress each output buffer" << std::endl;
   COUT << " -x sharedlibrary.so load a plugin that can select events" << std::endl;
   COUT << " -h this message" << std::endl << std::endl;
   exit(0);
@@ -159,9 +142,6 @@ main(int argc, char *argv[])
   int identify = 0;
   int maxevents = 0;
   int eventnr = 0;
-  int gzipcompress = 0;
-  int lzocompress = 0;
-  int oncsformat = 0;
   int eventnumber =0;
   int countnumber =0;
   void *voidpointer;
@@ -180,7 +160,7 @@ main(int argc, char *argv[])
   //	COUT << "parsing input" << std::endl;
 
 #ifndef WIN32
-  while ((c = getopt(argc, argv, "e:b:c:s:d:n:w:x:vhizlo")) != EOF)
+  while ((c = getopt(argc, argv, "e:b:c:s:d:n:w:x:vhi")) != EOF)
     {
       switch (c) 
 	{
@@ -211,7 +191,6 @@ main(int argc, char *argv[])
 	  if ( *optarg == 'd' ) destinationtype = ETPOOL;
 	  else if ( *optarg == 'f' ) destinationtype = DFILE;
 	  else if ( *optarg == 'n' ) destinationtype = DNULL;
-	  else if ( *optarg == 'a' ) destinationtype = OAML;
 	  else exitmsg();
 	  break;
 
@@ -229,18 +208,6 @@ main(int argc, char *argv[])
 
 	case 'n':   // number of events
 	  if ( !sscanf(optarg, "%d", &maxevents) ) exitmsg();
-	  break;
-
-	case 'z':   // gzip-compress
-	  gzipcompress = 1;
-	  break;
-
-	case 'l':   // lzo-compress
-	  lzocompress = 1;
-	  break;
-
-	case 'o':   // oncs format
-	  oncsformat = 1;
 	  break;
 
 	case 'x':   // load a filter shared lib
@@ -270,7 +237,7 @@ main(int argc, char *argv[])
   char* pszParam;             // gotten parameter
   char chOpt;
 
-  while ( (chOpt = GetOption(argc, argv, "e:b:c:s:d:n:w:vhiz", &pszParam) ) >1)
+  while ( (chOpt = GetOption(argc, argv, "e:b:c:s:d:n:w:vhi", &pszParam) ) >1)
     {
       // COUT << "option is " << chOpt  << std::endl;
       // chOpt is valid argument
@@ -324,10 +291,6 @@ main(int argc, char *argv[])
 	  if ( !sscanf(pszParam, "%d", &maxevents) ) exitmsg();
 	  break;
 
-	case 'z':   // gzip-compress
-	  gzipcompress = 1;
-	  break;
-
 	case 'h':
 	  exithelp();
 	  break;
@@ -341,8 +304,6 @@ main(int argc, char *argv[])
 
 
   if ( eventnumber && countnumber) evtcountexitmsg();
-  if ( gzipcompress && lzocompress ) compressionexitmsg();
-  if ( (gzipcompress || lzocompress) && oncsformat ) compressionexitmsg();
 
   // install some handlers for the most common signals
 #ifndef WIN32
@@ -408,30 +369,7 @@ main(int argc, char *argv[])
 	  COUT << "Could not open file: " <<  argv[optind+1] << std::endl;
 	  exit (1);
 	}
-      if (gzipcompress) 
-	{
-	  ob = new ogzBuffer (fd, buffer, buffer_size);
-	}
-      else if ( lzocompress)
-	{
-	  ob = new olzoBuffer (fd, buffer, buffer_size);
-	}
-      else if ( oncsformat) 
-	{
-	  ob = new ospBuffer (fd, buffer, buffer_size);
-	}
-      else 
-	{
-	  ob = new ophBuffer (fd, buffer, buffer_size);
-	}
-
-    }
-
-
-  else if (  destinationtype == OAML)
-    {
-      buffer = new PHDWORD [buffer_size];
-      ob = new oamlBuffer (argv[optind+1], buffer, buffer_size);
+      ob = new ospBuffer (fd, buffer, buffer_size);
     }
 
 			
@@ -470,7 +408,7 @@ main(int argc, char *argv[])
 	  if ( (! filter) ||  filter->select(evt) )
 	    {
 	      if (identify) evt->identify();
-	      if ( destinationtype == DFILE || destinationtype == OAML )
+	      if ( destinationtype == DFILE )
 		{
 		  status = ob->addEvent(evt);
 		}
@@ -502,13 +440,6 @@ main(int argc, char *argv[])
       close(fd);
 #endif
     }
-
-#ifndef WIN32
-  else if ( destinationtype == OAML  )
-    {
-      delete ob;
-    }
-#endif
 
   
   return 0;

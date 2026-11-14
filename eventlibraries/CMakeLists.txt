@@ -125,21 +125,7 @@ endif()
 # libNoRootEvent - allsources in Makefile.am
 # ----------------------------------------------------------------------
 add_library(NoRootEvent SHARED
-  Cframe.C
-  CframeV1.C
-  Cpacket.C
-  CpacketV1.C
-  dataBlock.C
-  errorBlock.C
-  fakeFrame.C
-  formatError.C
-  formatIO.C
-  framePackets.C
-  frameRoutines.C
-  packetRoutines.C
-  A_Event.cc
   buffer.cc
-  prdfBuffer.cc
   decoding_routines.cc
   evt_mnemonic.cc
   simpleRandom.cc
@@ -153,14 +139,9 @@ add_library(NoRootEvent SHARED
   gzbuffer.cc
   lzobuffer.cc
   bz2buffer.cc
-  oEvent.cc
   ospEvent.cc
   oBuffer.cc
-  ophBuffer.cc
-  ogzBuffer.cc
-  olzoBuffer.cc
   ospBuffer.cc
-  oamlBuffer.cc
   oncsBuffer.cc
   oncsEvent.cc
   oncsEventiterator.cc
@@ -190,12 +171,7 @@ add_library(NoRootEvent SHARED
   oncsSub_idastrov1.cc
   oncsSubevent.cc
   oncs_mnemonic.cc
-  packet_A.cc
-  packet_idcstr.cc
-  packet_id2evt.cc
-  packet_id4evt.cc
   packet_mnemonic.cc
-  packet_w124.cc
   caen_correction.cc
   caen_calibration.cc
   ROC_pool.cc
@@ -207,7 +183,7 @@ target_include_directories(NoRootEvent PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/Event>
-  # PUBLIC: installed headers (lzobuffer.h, olzoBuffer.h) include
+  # PUBLIC: installed headers (lzobuffer.h) include
   # <lzo/...>, so consumers like dpipe need this too - invisible on hosts
   # where lzo lives in /usr/include, breaks when it's in a custom prefix
   ${LZO_INCLUDE_DIR})
@@ -278,10 +254,7 @@ endfunction()
 
 add_eventlib_tool(dpipe)
 add_eventlib_tool(dlist)
-add_eventlib_tool(changeid)
-add_eventlib_tool(changehitformat)
 add_eventlib_tool(eventcombiner)
-add_eventlib_tool(prdf2prdf)
 add_eventlib_tool(prdfcheck)
 add_eventlib_tool(prdfsplit)
 add_eventlib_tool(eventClient)
@@ -304,7 +277,7 @@ add_executable(eventServer_classic eventServer_classic.cc)
 target_link_libraries(eventServer_classic PRIVATE NoRootEvent dl pthread)
 
 set(EVENTLIB_TOOLS
-  dpipe dlist changeid changehitformat eventcombiner prdf2prdf
+  dpipe dlist eventcombiner
   prdfcheck prdfsplit eventClient ddump lastEvent eventServer
   eventServer_classic pool_validate)
 
@@ -312,24 +285,19 @@ set(EVENTLIB_TOOLS
 # install - mirrors pkginclude_HEADERS (installedheaders + msgheaders)
 # ----------------------------------------------------------------------
 set(EVENTLIB_INSTALL_HEADERS
-  generalDefinitions.h event_io.h Event.h A_Event.h oncsEvent.h
+  generalDefinitions.h event_io.h Event.h oncsEvent.h
   oncsEvtConstants.h oncsEvtStructures.h oncsStructures.h
   oncsSubConstants.h oncsSubevent.h EventTypes.h Eventiterator.h
   EvtConstants.h EvtStructures.h BufferConstants.h phenixTypes.h
   phenixOnline.h testEventiterator.h fileEventiterator.h
   listEventiterator.h dpipe_filter.h buffer.h simpleRandom.h
-  eventReceiverClient.h gzbuffer.h lzobuffer.h bz2buffer.h prdfBuffer.h
-  oBuffer.h ophBuffer.h ospBuffer.h oEvent.h ospEvent.h ogzBuffer.h
-  olzoBuffer.h oamlBuffer.h oncsBuffer.h oncsEventiterator.h
-  rcdaqEventiterator.h packet.h packetConstants.h
-  packet_w124.h packet_A.h
-  packetPublic.h packetV1Public.h errorBlock.h packetRoutines.h
-  decoding_routines.h packetHeaders.h Cpacket.h packetHdr.h
-  packetHdrV1.h formatError.h dataBlock.h framePackets.h framePublic.h
-  frameV1Public.h caen_correction.h caen_calibration.h
-  ROC_pool.h h2gcroc3_10G_pool.h caloroc1b_pool.h md5.h
-  msg_control.h msg_profile.h msg_buffer.h date_filter_msg_buffer.h
-  filter_msg_buffer.h remote_msg_buffer.h strnstr.h)
+  eventReceiverClient.h gzbuffer.h lzobuffer.h bz2buffer.h oBuffer.h
+  ospBuffer.h ospEvent.h oncsBuffer.h oncsEventiterator.h
+  rcdaqEventiterator.h packet.h packetConstants.h decoding_routines.h
+  caen_correction.h caen_calibration.h ROC_pool.h h2gcroc3_10G_pool.h
+  caloroc1b_pool.h md5.h msg_control.h msg_profile.h msg_buffer.h
+  date_filter_msg_buffer.h filter_msg_buffer.h remote_msg_buffer.h
+  strnstr.h)
 
 install(TARGETS NoRootEvent message Event Rootmessage ${EVENTLIB_TOOLS}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

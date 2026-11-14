@@ -69,41 +69,6 @@ public:
 
   virtual void identify(std::ostream& os = std::cout) const = 0;
 
-  /**
-   listFrame will write a short descriptor of the frame header to the output stream 
-   provided. If id == 0, it will list all frame headers. Otherwise it will list
-   the header of the frame in which the packet with id resides. 
-  */
-
-
-  virtual void listFrame(  const int /*id*/=0, std::ostream& /*os*/=std::cout) const {};
-
-  virtual void listHistory(  const int /*id*/=0, std::ostream& /*os*/=std::cout) const {};
-  virtual void listError(  const int /*id*/=0, std::ostream& /*os*/=std::cout) const {};
-
-  /**
-   getFrameEntry will return a particular entry from the frame header which contains
-   the packet with the specidied id. If id == 0, the first frame will be selected.
-
-   keywords to return are:
-   
-   FRAMELENGTH
-   FRAMEMARK
-   FRAMEHDRVERSION
-   FRAMEHDRLENGTH
-   FRAMESTATUS
-   FRAMESOURCEID
-   FRAMEDATATYPE
-   FRAMETYPE
-   FRAMEALIGNLENGTH
-   FRAMEALIGNMENTWORD[index]
-
-   The last  FRAMEALIGNMENTWORD is an array, you need to call 
-   getFrameEntry(id,"FRAMEALIGNMENTWORD",1) to get the index 1, and so on. 
-   Asking for a word beyond the number of such words will return 0.
-  */
-
-  virtual unsigned int getFrameEntry(  const char * /*what*/, const int /*id*/=0, const int /*index */=0) const { return 0; };
 
 
   // ***** packet handling *****
