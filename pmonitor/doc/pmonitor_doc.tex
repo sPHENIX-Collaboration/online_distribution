@@ -71,7 +71,7 @@
 
 
 
-\title{The sPHENIX Event Libraries and \pmonitor\  Package}
+\title{The RCDAQ Event Libraries and \pmonitor\  Package}
 \author{Martin L. Purschke}
 \date{\today}
 \maketitle
@@ -91,13 +91,13 @@
 \subsection{What This is About}
 
 The \emph{Event Libraries} are a collection of utilities and assorted
-shared libraries that deal with data in the sPHENIX data format. All
+shared libraries that deal with data in the RCDAQ data format. All
 access to the data is typically achieved through those libraries.
 
 The software suite has its roots at the CERN WA98 experiment, and was
 subsequently improved and given its final shape for the PHENIX
-experiment at RHIC. The software is now in use for the sPHENIX
-experiment. It is also used by a large number of smaller experiments
+experiment at RHIC. It was then used for the sPHENIX experiment, and
+is now in use for the ePIC experiment at the EIC. It is also used by a large number of smaller experiments
 or external groups that use the companion data acquisition system,
 ``RCDAQ''. The data written by RCDAQ use these event libraries to
 access and analyze the data.
@@ -118,7 +118,7 @@ framework for data taken with the RCDAQ data acquisition system.
 I first introduce some information that will make it easier to
 understand the utilities and libraries, and their capabilities.
 
-\section{The sPHENIX Data Format: Buffers, Events and Packets}
+\section{The RCDAQ Data Format: Buffers, Events and Packets}
 \label{dataformat}
 
 \subsection{Packets}
@@ -210,8 +210,8 @@ Although I said above that this ``Events containing Packets'' paradigm
 is what one typically gets from a event/trigger-centric data
 acquisition system with an event builder, our format is equally well
 suited to store \emph{streaming} data, also known as a trigger-less
-readout. This is what sPHENIX will use for the readout of the tracking
-system, using the same format. Instead of making per-device packets
+readout. This is what sPHENIX used for the readout of its tracking
+system, using the same format, and what ePIC will use. Instead of making per-device packets
 for each trigger, we \emph{packetize} the continuously streaming data
 off a detector, storing them either as consecutive packets in one
 event structure, or as individual packets in multiple events, or a
@@ -230,17 +230,15 @@ that it finds in the first data event:
 
 \begin{verbatim}
 $ dlist beam_0000004094-0000.evt
-Packet  1010 23262 -1 (sPHENIX Packet)  70 (IDSRSV01)
-Packet  1020  5126 -1 (sPHENIX Packet)  81 (IDDRS4V1)
+Packet  1010 23262 -1 (ePIC Packet)  70 (IDSRSV01)
+Packet  1020  5126 -1 (ePIC Packet)  81 (IDDRS4V1)
 \end{verbatim}
 
 You can see the two packets from the two devices (the SRS and the
 DRS). The first number is the packet id, followed by the length in
 Dwords (32-bit words), the packet type (-1), and the hitformat number
 with a mnemonic that describes that number. The only packet type in
-sPHENIX is that ``sPHENIX Packet'' denoted ``-1''; there are a number
-of legacy packets that are currently still supported while we
-transition to a full sPHENIX implementation.
+the RCDAQ format is the one denoted ``-1'', shown as ``ePIC Packet''.
 
 
 There are a number of \emph{event types} defined, which denote a
@@ -313,7 +311,7 @@ The event libraries come with a set of ready-made command line
 utilities that make it easy to inspect and manipulate the event
 data.
 
-In your everyday work with sPHENIX data, you'll find that a lot can be
+In your everyday work with the data, you'll find that a lot can be
 accomplished with these ready-made tools. Very often, someone comes up
 with a new creative way to use them in combination with perl, grep, sed,
 wc, and so on to get some answers about the data structure without
@@ -350,8 +348,8 @@ before:
 
 \begin{verbatim}
 $ dlist beam_0000004094-0000.evt
-Packet  1010 23262 -1 (sPHENIX Packet)  70 (IDSRSV01)
-Packet  1020  5126 -1 (sPHENIX Packet)  81 (IDDRS4V1)
+Packet  1010 23262 -1 (ePIC Packet)  70 (IDSRSV01)
+Packet  1020  5126 -1 (ePIC Packet)  81 (IDDRS4V1)
 \end{verbatim}
 
 dlist, ddump, and dpipe have a large number of options to modify their
@@ -376,8 +374,8 @@ print a one-line identification:
 \begin{verbatim}
 $ dlist -i beam_0000004094-0000.evt
  -- Event     2 Run:  4094 length: 28396 type:  1 (Data Event)  1381104934
-Packet  1010 23262 -1 (sPHENIX Packet)  70 (IDSRSV01)
-Packet  1020  5126 -1 (sPHENIX Packet)  81 (IDDRS4V1)
+Packet  1010 23262 -1 (ePIC Packet)  70 (IDSRSV01)
+Packet  1020  5126 -1 (ePIC Packet)  81 (IDDRS4V1)
 \end{verbatim}
 
 You can see that we are listing the packets in event number 2, the
@@ -404,8 +402,8 @@ Here I select the event with the number 10:
 \begin{verbatim}
 $ dlist -i -e 10 beam_0000004094-0000.evt
  -- Event    10 Run:  4094 length: 28396 type:  1 (Data Event)  1381104934
-Packet  1010 23262 -1 (sPHENIX Packet)  70 (IDSRSV01)
-Packet  1020  5126 -1 (sPHENIX Packet)  81 (IDDRS4V1)
+Packet  1010 23262 -1 (ePIC Packet)  70 (IDSRSV01)
+Packet  1020  5126 -1 (ePIC Packet)  81 (IDDRS4V1)
 \end{verbatim}
 
 The ``-n $n$'' switch instructs dlist to display information about $n$
@@ -414,20 +412,20 @@ events total, with the default being 1 as in the previously shown examples.
 \begin{verbatim}
 $ dlist -i -e 10 -n 5 /mac_home/data/srs_with_drs/beam_0000004094-0000.evt
  -- Event    10 Run:  4094 length: 28396 type:  1 (Data Event)  1381104934
-Packet  1010 23262 -1 (sPHENIX Packet)  70 (IDSRSV01)
-Packet  1020  5126 -1 (sPHENIX Packet)  81 (IDDRS4V1)
+Packet  1010 23262 -1 (ePIC Packet)  70 (IDSRSV01)
+Packet  1020  5126 -1 (ePIC Packet)  81 (IDDRS4V1)
  -- Event    11 Run:  4094 length: 28396 type:  1 (Data Event)  1381104934
-Packet  1010 23262 -1 (sPHENIX Packet)  70 (IDSRSV01)
-Packet  1020  5126 -1 (sPHENIX Packet)  81 (IDDRS4V1)
+Packet  1010 23262 -1 (ePIC Packet)  70 (IDSRSV01)
+Packet  1020  5126 -1 (ePIC Packet)  81 (IDDRS4V1)
  -- Event    12 Run:  4094 length: 28396 type:  1 (Data Event)  1381104934
-Packet  1010 23262 -1 (sPHENIX Packet)  70 (IDSRSV01)
-Packet  1020  5126 -1 (sPHENIX Packet)  81 (IDDRS4V1)
+Packet  1010 23262 -1 (ePIC Packet)  70 (IDSRSV01)
+Packet  1020  5126 -1 (ePIC Packet)  81 (IDDRS4V1)
  -- Event    13 Run:  4094 length: 28396 type:  1 (Data Event)  1381104934
-Packet  1010 23262 -1 (sPHENIX Packet)  70 (IDSRSV01)
-Packet  1020  5126 -1 (sPHENIX Packet)  81 (IDDRS4V1)
+Packet  1010 23262 -1 (ePIC Packet)  70 (IDSRSV01)
+Packet  1020  5126 -1 (ePIC Packet)  81 (IDDRS4V1)
  -- Event    14 Run:  4094 length: 28396 type:  1 (Data Event)  1381104934
-Packet  1010 23262 -1 (sPHENIX Packet)  70 (IDSRSV01)
-Packet  1020  5126 -1 (sPHENIX Packet)  81 (IDDRS4V1)
+Packet  1010 23262 -1 (ePIC Packet)  70 (IDSRSV01)
+Packet  1020  5126 -1 (ePIC Packet)  81 (IDDRS4V1)
 \end{verbatim}
 
 Specifying ``-n 0'' means ``all events''. Be warned, though, that
@@ -444,9 +442,9 @@ begin-run event by
 
 \begin{verbatim}
 $ dlist -i -t 9 /mac_home/data/srs_with_drs/beam_0000004094-0000.evt
- -- Event 1 Run: 4094 length: 641 type: 9 (Begin Run Event) 1381104863
- Packet 900 491 -1 (sPHENIX Packet) 4 (IDCSTR) 
- Packet 910 142 -1 (sPHENIX Packet) 4 (IDCSTR)
+ -- Event     1 Run:  4094 length:   641 type:  9 (Begin Run Event)  1381104863
+Packet   900   491 -1 (ePIC Packet)   4 (IDCSTR)
+Packet   910   142 -1 (ePIC Packet)   4 (IDCSTR)
 \end{verbatim}
 
 As you can see (and as described above), this event has a completely
@@ -468,14 +466,14 @@ does not contain any packets in this data file.
 \begin{verbatim}
 $ dlist -i -t A -n 3 beam_0000004094-0000.evt
  -- Event     1 Run:  4094 length:   641 type:  9 (Begin Run Event)  1381104863
-Packet   900   491 -1 (sPHENIX Packet)   4 (IDCSTR)
-Packet   910   142 -1 (sPHENIX Packet)   4 (IDCSTR)
+Packet   900   491 -1 (ePIC Packet)   4 (IDCSTR)
+Packet   910   142 -1 (ePIC Packet)   4 (IDCSTR)
  -- Event     2 Run:  4094 length: 28396 type:  1 (Data Event)  1381104934
-Packet  1010 23262 -1 (sPHENIX Packet)  70 (IDSRSV01)
-Packet  1020  5126 -1 (sPHENIX Packet)  81 (IDDRS4V1)
+Packet  1010 23262 -1 (ePIC Packet)  70 (IDSRSV01)
+Packet  1020  5126 -1 (ePIC Packet)  81 (IDDRS4V1)
  -- Event     3 Run:  4094 length: 28396 type:  1 (Data Event)  1381104934
-Packet  1010 23262 -1 (sPHENIX Packet)  70 (IDSRSV01)
-Packet  1020  5126 -1 (sPHENIX Packet)  81 (IDDRS4V1)
+Packet  1010 23262 -1 (ePIC Packet)  70 (IDSRSV01)
+Packet  1020  5126 -1 (ePIC Packet)  81 (IDDRS4V1)
 \end{verbatim}
 
 or (remember that this is an expensive command; we are reading through
@@ -484,9 +482,9 @@ the entire data file)
 \begin{verbatim}
 $ dlist -i -t S -n 0 beam_0000004094-0000.evt
  -- Event     1 Run:  4094 length:   641 type:  9 (Begin Run Event)  1381104863
-Packet   900   491 -1 (sPHENIX Packet)   4 (IDCSTR)
-Packet   910   142 -1 (sPHENIX Packet)   4 (IDCSTR)
--- Event  3438 Run:  4094 length:     8 type: 12 (End Run Event)  1381105268
+Packet   900   491 -1 (ePIC Packet)   4 (IDCSTR)
+Packet   910   142 -1 (ePIC Packet)   4 (IDCSTR)
+ -- Event  3438 Run:  4094 length:     8 type: 12 (End Run Event)  1381105268
 \end{verbatim}
 
 This data file does not contain any other special event types.
@@ -507,13 +505,14 @@ an actual data file (which might not always be easy to obtain).
 
 \begin{verbatim}
 $ dlist -T
-Packet  1001    24 -1 (sPHENIX Packet)   6 (ID4EVT)
-Packet  1002    36 -1 (sPHENIX Packet)   5 (ID2EVT)
-Packet  1003     8 -1 (sPHENIX Packet)   6 (ID4EVT)
+Packet  1001    24 -1 (ePIC Packet)   6 (ID4EVT)
+Packet  1002    36 -1 (ePIC Packet)   5 (ID2EVT)
+Packet  1003     8 -1 (ePIC Packet)   6 (ID4EVT)
+Packet  1008    68 -1 (ePIC Packet)   8 (ID8EVT)
 \end{verbatim}
 
 The test stream only produces data events, no special events. We'll
-get to the role and purpose of the 3 packets in a minute.
+get to the role and purpose of the 4 packets in a minute.
 
 The ``-r'' switch connects to a running instance of RCDAQ and requests
 an online event stream that is normally used for online
@@ -529,7 +528,7 @@ can do
 \begin{verbatim}
 $ dlist -i -r mlpvm1
  -- Event  5599 Run:     4 length:    16 type:  1 (Data Event)  1555272250
-Packet  1003     8 -1 (sPHENIX Packet)   6 (ID4EVT)
+Packet  1003     8 -1 (ePIC Packet)   6 (ID4EVT)
 \end{verbatim}
 
 When I execute this on the machine itself (localhost), I can omit the name:
@@ -537,12 +536,10 @@ When I execute this on the machine itself (localhost), I can omit the name:
 \begin{verbatim}
 $ dlist -i -r
  -- Event  8401 Run:     4 length:    16 type:  1 (Data Event)  1555272266
-Packet  1003     8 -1 (sPHENIX Packet)   6 (ID4EVT)
+Packet  1003     8 -1 (ePIC Packet)   6 (ID4EVT)
 \end{verbatim}
 
-``dlist -h'' lists a few more options (such as ``-I'') that are useful
-if you are debugging a new packet format (a new hitformat). They are considered
-expert-level switches. 
+``dlist -h'' lists all options.
 
 
 \subsection{ddump}
@@ -567,7 +564,6 @@ stream type specifications work exactly the same way as in dlist.
  -p <Packet Id>
  -t <event type>
  -i <print event identity>
- -I <print in-depth packet identity (default is short form)>
  -f (stream is a file)
  -T (stream is a test stream)
  -r (stream is a rcdaq monitoring stream)
@@ -589,14 +585,14 @@ start with a test stream:
 
 \begin{verbatim}
  $ ddump -T
-Packet  1001    24 -1 (sPHENIX Packet)   6 (ID4EVT)
+Packet  1001    24 -1 (ePIC Packet)   6 (ID4EVT)
     0 |  00000000 00000001 00000002 00000003
     4 |  00000004 00000005 00000006 00000007
     8 |  00000008 00000009 0000000a 0000000b
    12 |  0000000c 0000000d 0000000e 0000000f
    16 |  00000010 00000011 00000012 00000013
 
-Packet  1002    36 -1 (sPHENIX Packet)   5 (ID2EVT)
+Packet  1002    36 -1 (ePIC Packet)   5 (ID2EVT)
     0 |  0000 0001 0002 0003 0004 0005 0006 0007
     8 |  0008 0009 000a 000b 000c 000d 000e 000f
    16 |  0010 0011 0012 0013 0014 0015 0016 0017
@@ -606,12 +602,22 @@ Packet  1002    36 -1 (sPHENIX Packet)   5 (ID2EVT)
    48 |  0030 0031 0032 0033 0034 0035 0036 0037
    56 |  0038 0039 003a 003b 003c 003d 003e 003f
 
-Packet  1003     8 -1 (sPHENIX Packet)   6 (ID4EVT)
+Packet  1003     8 -1 (ePIC Packet)   6 (ID4EVT)
     0 |  fffffff4 fffffff9 fffffcaa 00003a5f
+
+Packet  1008    68 -1 (ePIC Packet)   8 (ID8EVT)
+    0 |  0000000000000000 0000000000000001 0000000000000002 0000000000000003
+    4 |  0000000000000004 0000000000000005 0000000000000006 0000000000000007
+    8 |  0000000000000008 0000000000000009 000000000000000a 000000000000000b
+   12 |  000000000000000c 000000000000000d 000000000000000e 000000000000000f
+   16 |  0000000000000010 0000000000000011 0000000000000012 0000000000000013
+   20 |  0000000000000014 0000000000000015 0000000000000016 0000000000000017
+   24 |  0000000000000018 0000000000000019 000000000000001a 000000000000001b
+   28 |  000000000000001c 000000000000001d 000000000000001e 000000000000001f
 
 \end{verbatim}
 
-So we see human-readable presentations of the 3 packets in that
+So we see human-readable presentations of the 4 packets in that
 made-up event. The first packet pretends to be an ADC with 20
 channels, where channel $i$ always holds the value $i$ ( 0..19).
 Likewise, packet 1002 holds the value $i$ in channel $i$ for 64
@@ -628,6 +634,9 @@ of a given channel must be the channel number when one uses packet
 Packet 1003 holds 4 32-bit values, which are 4 different random
 numbers of different scales with a gaussian distribution with mean = 0
 and a RMS = 10,100,1000, and 10000 for the 4 ``channels''.
+
+Packet 1008 holds 32 64-bit values, again with the value $i$ in channel
+$i$, for testing the handling of 64-bit data.
 
 While these are pseudo-random numbers, they always start with the same
 seed value and give a predictable sequence of numbers, which is
@@ -655,34 +664,34 @@ packet 1003 for a number of events:
 
 \begin{verbatim}
 $ ddump -T -p 1003 -n 10
-Packet  1003     8 -1 (sPHENIX Packet)   6 (ID4EVT)
+Packet  1003     8 -1 (ePIC Packet)   6 (ID4EVT)
     0 |  fffffff4 fffffff9 fffffcaa 00003a5f
 
-Packet  1003     8 -1 (sPHENIX Packet)   6 (ID4EVT)
+Packet  1003     8 -1 (ePIC Packet)   6 (ID4EVT)
     0 |  00000007 ffffffd6 ffffff05 ffffdcd4
 
-Packet  1003     8 -1 (sPHENIX Packet)   6 (ID4EVT)
+Packet  1003     8 -1 (ePIC Packet)   6 (ID4EVT)
     0 |  00000006 00000018 00000157 ffffb5a3
 
-Packet  1003     8 -1 (sPHENIX Packet)   6 (ID4EVT)
+Packet  1003     8 -1 (ePIC Packet)   6 (ID4EVT)
     0 |  0000000e ffffffdb 000003d6 ffffef1a
 
-Packet  1003     8 -1 (sPHENIX Packet)   6 (ID4EVT)
+Packet  1003     8 -1 (ePIC Packet)   6 (ID4EVT)
     0 |  0000000c ffffff84 000003fa 0000192e
 
-Packet  1003     8 -1 (sPHENIX Packet)   6 (ID4EVT)
+Packet  1003     8 -1 (ePIC Packet)   6 (ID4EVT)
     0 |  00000008 00000031 fffffd5e ffffc1cc
 
-Packet  1003     8 -1 (sPHENIX Packet)   6 (ID4EVT)
+Packet  1003     8 -1 (ePIC Packet)   6 (ID4EVT)
     0 |  ffffffff 000000a0 00000006 00004a8d
 
-Packet  1003     8 -1 (sPHENIX Packet)   6 (ID4EVT)
+Packet  1003     8 -1 (ePIC Packet)   6 (ID4EVT)
     0 |  00000004 00000067 fffff887 fffffc89
 
-Packet  1003     8 -1 (sPHENIX Packet)   6 (ID4EVT)
+Packet  1003     8 -1 (ePIC Packet)   6 (ID4EVT)
     0 |  fffffffe ffffff08 0000066f 00001dd9
 
-Packet  1003     8 -1 (sPHENIX Packet)   6 (ID4EVT)
+Packet  1003     8 -1 (ePIC Packet)   6 (ID4EVT)
     0 |  fffffff8 ffffffae ffffff48 000046bb
 \end{verbatim}
 
@@ -706,34 +715,34 @@ sequences in decimal:
 
 \begin{verbatim}
 $ ddump -T -p 1003 -g -d -n 10
-Packet  1003     8 -1 (sPHENIX Packet)   6 (ID4EVT)
+Packet  1003     8 -1 (ePIC Packet)   6 (ID4EVT)
     0 |         -12         -7       -854      14943
 
-Packet  1003     8 -1 (sPHENIX Packet)   6 (ID4EVT)
+Packet  1003     8 -1 (ePIC Packet)   6 (ID4EVT)
     0 |           7        -42       -251      -9004
 
-Packet  1003     8 -1 (sPHENIX Packet)   6 (ID4EVT)
+Packet  1003     8 -1 (ePIC Packet)   6 (ID4EVT)
     0 |           6         24        343     -19037
 
-Packet  1003     8 -1 (sPHENIX Packet)   6 (ID4EVT)
+Packet  1003     8 -1 (ePIC Packet)   6 (ID4EVT)
     0 |          14        -37        982      -4326
 
-Packet  1003     8 -1 (sPHENIX Packet)   6 (ID4EVT)
+Packet  1003     8 -1 (ePIC Packet)   6 (ID4EVT)
     0 |          12       -124       1018       6446
 
-Packet  1003     8 -1 (sPHENIX Packet)   6 (ID4EVT)
+Packet  1003     8 -1 (ePIC Packet)   6 (ID4EVT)
     0 |           8         49       -674     -15924
 
-Packet  1003     8 -1 (sPHENIX Packet)   6 (ID4EVT)
+Packet  1003     8 -1 (ePIC Packet)   6 (ID4EVT)
     0 |          -1        160          6      19085
 
-Packet  1003     8 -1 (sPHENIX Packet)   6 (ID4EVT)
+Packet  1003     8 -1 (ePIC Packet)   6 (ID4EVT)
     0 |           4        103      -1913       -887
 
-Packet  1003     8 -1 (sPHENIX Packet)   6 (ID4EVT)
+Packet  1003     8 -1 (ePIC Packet)   6 (ID4EVT)
     0 |          -2       -248       1647       7641
 
-Packet  1003     8 -1 (sPHENIX Packet)   6 (ID4EVT)
+Packet  1003     8 -1 (ePIC Packet)   6 (ID4EVT)
     0 |          -8        -82       -184      18107
 
 \end{verbatim}
@@ -744,8 +753,8 @@ Let's go back to the file taken in 2013 with the DRS4 and the SRS data:
 \begin{verbatim}
 $ dlist -i beam_0000004094-0000.evt
  -- Event     2 Run:  4094 length: 28396 type:  1 (Data Event)  1381104934
-Packet  1010 23262 -1 (sPHENIX Packet)  70 (IDSRSV01)
-Packet  1020  5126 -1 (sPHENIX Packet)  81 (IDDRS4V1)
+Packet  1010 23262 -1 (ePIC Packet)  70 (IDSRSV01)
+Packet  1020  5126 -1 (ePIC Packet)  81 (IDDRS4V1)
 \end{verbatim}
 
 and ddump the DRS4 packet. The chosen presentation of the data
@@ -760,7 +769,7 @@ negative-going pulse in the data of channel 1, around sample  292:
 
 \begin{verbatim}
 $ ddump -p 1020 beam_0000004094-0000.evt
-Packet  1020  5126 -1 (sPHENIX Packet)  81 (IDDRS4V1)
+Packet  1020  5126 -1 (ePIC Packet)  81 (IDDRS4V1)
  Samples 1024  enabled channnels:   0  1  2  3
    ch |       time          ch0          ch1          ch2          ch3
     0 |          0         -2.2         -1.4         -1.3         -0.4
@@ -878,7 +887,7 @@ I only show part of one block of the output; the entire output consists of 4 suc
 %\tt
 \begin{Verbatim}[fontsize=\tiny]
 ddump -p 1020 srs-00000001-0000.evt
-Packet  1020  8122 -1 (sPHENIX Packet)  70 (IDSRSV01)
+Packet  1020  8122 -1 (ePIC Packet)  70 (IDSRSV01)
 Number of Hybrids: 4
 
 Framecounter: 0
@@ -942,7 +951,7 @@ need to do that). The generic dump shows
 
 \begin{verbatim}
 $ ddump -g dream-00002190-0000.evt | more
-Packet  3000 19174 -1 (sPHENIX Packet) 103 (IDDREAMV0)
+Packet  3000 19174 -1 (ePIC Packet) 103 (IDDREAMV0)
     0 |  ccddaabb 5e176400 64600000 8b610160
     4 |  483403e0 97b260b9 76816830 64815001
     8 |  5b815a01 5b817a81 5f015181 52816301
@@ -986,7 +995,7 @@ information for easy reading:
 \begin{Verbatim}[fontsize=\tiny]
 
 $ ddump  /mac_home/data/dream/dream-00002190-0000.evt | more
-Packet  3000 19174 -1 (sPHENIX Packet) 103 (IDDREAMV0)
+Packet  3000 19174 -1 (ePIC Packet) 103 (IDDREAMV0)
 Nr of FEUs:            1
 FEU_ID:                 0 100
  DreamChips:            8  enabled:   1  1  1  1  1  1  1  1
